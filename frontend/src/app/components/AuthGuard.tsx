@@ -15,32 +15,39 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
+    const verifyAuth = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/users/profile/', {
+          credentials: 'include'
+        });
 
-    if (!userStr) {
-      router.replace('/login');
-      return;
-    }
+        if (res.ok) {
+          const user = await res.json();
+          // Update local storage so Navbar stays synced
+          localStorage.setItem('user', JSON.stringify(user));
 
-    try {
-      const user = JSON.parse(userStr);
-      
-      if (allowedRoles && allowedRoles.length > 0) {
-        const hasRole = allowedRoles.includes(user.role) || (allowedRoles.includes('ADMIN') && user.is_staff);
-        if (!hasRole) {
-          // Redirect to correct dashboard
-          const correctPath = getDashboardPath(user);
-          router.replace(correctPath);
-          return;
+          if (allowedRoles && allowedRoles.length > 0) {
+            const hasRole = allowedRoles.includes(user.role) || (allowedRoles.includes('ADMIN') && user.is_staff);
+            if (!hasRole) {
+              const correctPath = getDashboardPath(user);
+              router.replace(correctPath);
+              return;
+            }
+          }
+          setAuthorized(true);
+        } else {
+          localStorage.removeItem('user');
+          router.replace('/login');
         }
+      } catch (e) {
+        localStorage.removeItem('user');
+        router.replace('/login');
+      } finally {
+        setChecking(false);
       }
+    };
 
-      setAuthorized(true);
-    } catch {
-      router.replace('/login');
-    } finally {
-      setChecking(false);
-    }
+    verifyAuth();
   }, [pathname]);
 
   if (checking || !authorized) {
