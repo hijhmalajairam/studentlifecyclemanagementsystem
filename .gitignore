@@ -1,0 +1,24 @@
+# Python / Django
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+*.log
+backend/media/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS generated files
+.DS_Store
+Thumbs.db

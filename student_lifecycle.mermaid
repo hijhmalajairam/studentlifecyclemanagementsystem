@@ -1,0 +1,274 @@
+flowchart TD
+
+%% ===================== MODULE 1: Admission & Entry =====================
+subgraph MOD1["Module 1: Admission & Entry"]
+    direction TB
+    Start([Prospective Student])
+    EntryType{Entry Type?}
+    OnlineApp[Online Application & Registration]
+    LateralApp[Lateral Entry Application]
+    EntranceExam[Entrance Exam / Merit Evaluation]
+    Selected{Selected?}
+    Rejected1[Application Rejected]
+
+    Start --> EntryType
+    EntryType -->|Regular| OnlineApp
+    EntryType -->|Lateral Entry Yr2| LateralApp
+    OnlineApp --> EntranceExam
+    LateralApp --> EntranceExam
+    EntranceExam --> Selected
+    Selected -->|No| Rejected1
+end
+
+%% ===================== MODULE 2: Document Verification & Scholarship =====================
+subgraph MOD2["Module 2: Document Verification & Scholarship"]
+    direction TB
+    DocVerify[Document Verification]
+    DocsValid{Documents Valid?}
+    Resubmit[Resubmit Documents]
+    Rejected2[Application Rejected + Flagged]
+    ScholarshipApplicable{Scholarship Applicable?}
+    ScholarshipApproved[Scholarship & Fee Concession Approved]
+    SeatAllotment[Seat Allotment & Fee Payment]
+
+    DocVerify --> DocsValid
+    DocsValid -->|Missing| Resubmit
+    Resubmit --> DocVerify
+    DocsValid -->|Forged / Invalid| Rejected2
+    DocsValid -->|All Verified| ScholarshipApplicable
+    ScholarshipApplicable -->|Yes| ScholarshipApproved
+    ScholarshipApplicable -->|No| SeatAllotment
+    ScholarshipApproved --> SeatAllotment
+end
+
+Selected -->|Yes| DocVerify
+
+%% ===================== MODULE 3: Enrollment & Onboarding =====================
+subgraph MOD3["Module 3: Enrollment & Onboarding"]
+    direction TB
+    AdmissionConfirmed[Admission Confirmed - Enrollment No. Generated]
+    PortalAccounts[University Email + Portal Accounts Created]
+    AccountsLinked[Student, Parent & Faculty Accounts Linked]
+
+    AdmissionConfirmed --> PortalAccounts
+    PortalAccounts --> AccountsLinked
+end
+
+SeatAllotment --> AdmissionConfirmed
+
+%% ===================== MODULE 4: Semester Lifecycle & Leave Management =====================
+subgraph MOD4["Module 4: Semester Lifecycle & Leave Management"]
+    direction TB
+    SemesterReg[Semester Registration]
+    RegTimeout{Failed to Register?}
+    AdminWithdrawal[Administrative Withdrawal / Dropout]
+    LOARequested{Leave of Absence Requested?}
+    LOAApproved[LOA Approved - Semester Frozen]
+    ReturnsMax{Returns Within Max Leave Period?}
+    Dropout4[Marked as Dropout]
+    ReAdmission{Re-Admission Request?}
+    TransferOutReq{Transfer Out Request?}
+
+    SemesterReg --> RegTimeout
+    RegTimeout -->|Yes| AdminWithdrawal
+    RegTimeout -->|No| LOARequested
+    
+    LOARequested -->|Yes| LOAApproved
+    LOAApproved --> ReturnsMax
+    ReturnsMax -->|Yes| SemesterReg
+    ReturnsMax -->|No| Dropout4
+    Dropout4 --> ReAdmission
+    ReAdmission -->|Yes| SemesterReg
+    LOARequested -->|No| TransferOutReq
+end
+
+AccountsLinked --> SemesterReg
+
+%% ===================== MODULE 5: Transfer & Exit Documentation =====================
+subgraph MOD5["Module 5: Transfer & Exit Documentation"]
+    direction TB
+    TransferReq[Transfer Out Request]
+    NoDuesTransfer{No-Dues Cleared for Transfer?}
+    ClearDuesTransfer[Clear Fees + Library + Hostel Dues]
+    TCIssuance[TC Issuance - Shared Process]
+    TCIssued[Transfer / Migration Certificate Issued]
+
+    TransferReq --> NoDuesTransfer
+    NoDuesTransfer -->|No| ClearDuesTransfer
+    ClearDuesTransfer --> NoDuesTransfer
+    NoDuesTransfer -->|Yes| TCIssuance
+    TCIssuance --> TCIssued
+end
+
+TransferOutReq -->|Yes| TransferReq
+ReAdmission -->|No| TCIssuance
+AdminWithdrawal --> TCIssuance
+
+%% ===================== MODULE 6: Course & Attendance Management =====================
+subgraph MOD6["Module 6: Course & Attendance Management"]
+    direction TB
+    PrereqCheck{Prerequisite Courses Cleared?}
+    CourseBlocked[Course Blocked - Pick Alternates]
+    Timetable[Timetable & Faculty Allocation]
+    Classes[Attend Classes & Track Attendance]
+    AttendanceWarning{Attendance < Warning Level?}
+    AutoAlert[Auto Alert: Student + Parent + Faculty]
+    FinalAttendance{Final Attendance >= Minimum?}
+    Debarred[Debarred from Exams - Fail]
+    InternalAssessments[Internal Assessments & Coursework]
+
+    PrereqCheck -->|Yes| Timetable
+    PrereqCheck -->|No| CourseBlocked
+    CourseBlocked --> SemesterReg
+    Timetable --> Classes
+    Classes --> AttendanceWarning
+    AttendanceWarning -->|Yes| AutoAlert
+    AutoAlert --> Classes
+    AttendanceWarning -->|No| FinalAttendance
+    FinalAttendance -->|Yes| InternalAssessments
+    FinalAttendance -->|No| Debarred
+end
+
+TransferOutReq -->|No| PrereqCheck
+
+%% ===================== MODULE 7: Academic Assessment & Discipline =====================
+subgraph MOD7["Module 7: Academic Assessment & Discipline"]
+    direction TB
+    MalpracticeCheck{Malpractice / Disciplinary Issue?}
+    DisciplinaryHold[Disciplinary Hold]
+    CommitteeDecision{Committee Decision?}
+    FailBacklog[Fail - Backlog Path]
+    Suspension[Suspension / Year Drop]
+    InternshipEligible{Internship Window Open?}
+
+    InternalAssessments --> MalpracticeCheck
+    MalpracticeCheck -->|Yes| DisciplinaryHold
+    DisciplinaryHold --> CommitteeDecision
+    CommitteeDecision -->|Marks Cancelled| FailBacklog
+    CommitteeDecision -->|Suspension| Suspension
+    MalpracticeCheck -->|No| InternshipEligible
+end
+
+Suspension --> SemesterReg
+
+%% ===================== MODULE 8: Internship & Examination =====================
+subgraph MOD8["Module 8: Internship & Examination"]
+    direction TB
+    ApplyCompanies[Apply to Companies - CV + Portal]
+    NotEligible[Not Eligible - Re-check Next Window]
+    SelectedByCompany{Selected by Company?}
+    MaxWindows{Max Internship Windows Exhausted?}
+    InternshipUndertaken[Internship Undertaken - Evaluated as Credit]
+    InternshipWaived[Internship Waived - Flagged in Academic Profile]
+    SemEndExam[Semester-End Examination]
+    ResultProcessing[Result Processing & Grade Calculation]
+    PassFail{Pass or Fail?}
+    RequestReval{Request Revaluation?}
+    RevalPaid[Revaluation Fee Paid + Request Submitted]
+    RevalOutcome{Revaluation Outcome?}
+    BacklogSummer[Backlog Created - Summer Semester Triggered]
+    SummerEnroll[Summer Term Enrollment + Fee Payment]
+    SummerExam[Summer Examination]
+    SummerPass{Pass?}
+    MaxDuration{Max Degree Duration Exceeded?}
+    ForcedExit[Forced Exit - No Degree]
+    ResultPublished[Result Published]
+
+    InternshipEligible -->|Eligible| ApplyCompanies
+    InternshipEligible -->|Not Eligible| NotEligible
+    NotEligible --> SemEndExam
+    ApplyCompanies --> SelectedByCompany
+    SelectedByCompany -->|Yes| InternshipUndertaken
+    SelectedByCompany -->|No| MaxWindows
+    MaxWindows -->|No| ApplyCompanies
+    MaxWindows -->|Yes| InternshipWaived
+    InternshipUndertaken --> SemEndExam
+    InternshipWaived --> SemEndExam
+    CommitteeDecision -->|Cleared| SemEndExam
+
+    SemEndExam --> ResultProcessing
+    ResultProcessing --> PassFail
+    PassFail -->|Pass| ResultPublished
+    PassFail -->|Fail| RequestReval
+    RequestReval -->|No| BacklogSummer
+    RequestReval -->|Yes| RevalPaid
+    RevalPaid --> RevalOutcome
+    RevalOutcome -->|Now Pass| ResultPublished
+    RevalOutcome -->|Still Fail| BacklogSummer
+    
+    %% Connections from previous modules to Backlog
+    Debarred --> BacklogSummer
+    FailBacklog --> BacklogSummer
+
+    BacklogSummer --> SummerEnroll
+    SummerEnroll --> SummerExam
+    SummerExam --> SummerPass
+    SummerPass -->|Yes| ResultPublished
+    SummerPass -->|No| MaxDuration
+    MaxDuration -->|No| SummerEnroll
+    MaxDuration -->|Yes| ForcedExit
+end
+
+%% ===================== MODULE 9: Fees, Scholarship Renewal & Graduation =====================
+subgraph MOD9["Module 9: Fees, Scholarship Renewal & Graduation"]
+    direction TB
+    MeritReview{Merit Scholarship Review - CGPA >= Threshold?}
+    ScholarshipRenewed[Scholarship Renewed / Newly Awarded]
+    ScholarshipRevoked[Scholarship Revoked - Full Fee Applies Next Semester]
+    FeeStatus{Fee Status?}
+    AutoReminder[Auto Reminder: Student + Parent]
+    FeeNowPaid{Fee Now Paid?}
+    Escalation[Escalation Alert: Student + Parent + HOD]
+    RegHold[Result + Registration Hold Applied]
+    FeeNowPaid2{Fee Now Paid?}
+    HoldReleased[Hold Released]
+    MoreSemesters{More Semesters Remaining?}
+    FinalYearPlacement[Final Year Placement Drive]
+    NoDuesClearance[No-Dues Clearance: Fees + Library + Hostel]
+    ClearAllDues{Clear All Outstanding Dues?}
+    DegreeReq{Degree Requirements Met?}
+    ExitSurvey[Exit Survey + Course Feedback Submitted]
+    Convocation[Convocation - Degree Certificate Issued]
+    Alumni[Student Officially Becomes Alumni]
+    AlumniPortal[Alumni Portal - Career, Events, Donations]
+
+    MeritReview -->|Met| ScholarshipRenewed
+    MeritReview -->|Not Met| ScholarshipRevoked
+    ScholarshipRenewed --> FeeStatus
+    ScholarshipRevoked --> FeeStatus
+    FeeStatus -->|Paid / Before Deadline| MoreSemesters
+    FeeStatus -->|Overdue| AutoReminder
+    AutoReminder --> FeeNowPaid
+    FeeNowPaid -->|Yes| MoreSemesters
+    FeeNowPaid -->|No| Escalation
+    Escalation --> RegHold
+    RegHold --> FeeNowPaid2
+    FeeNowPaid2 -->|No| RegHold
+    FeeNowPaid2 -->|Yes| HoldReleased
+    HoldReleased --> MoreSemesters
+    
+    MoreSemesters -->|No| FinalYearPlacement
+    FinalYearPlacement --> NoDuesClearance
+    NoDuesClearance --> ClearAllDues
+    ClearAllDues -->|No| ClearAllDues
+    ClearAllDues -->|Yes| DegreeReq
+    DegreeReq -->|Not Met - Academic| BacklogSummer
+    DegreeReq -->|Met| ExitSurvey
+    ExitSurvey --> Convocation
+    Convocation --> Alumni
+    Alumni --> AlumniPortal
+end
+
+ResultPublished --> MeritReview
+MoreSemesters -->|Yes| SemesterReg
+
+%% ===================== STYLING =====================
+classDef startEnd fill:#e8f0fe,stroke:#3b6fc9,stroke-width:1px;
+classDef process fill:#eef4fd,stroke:#3b6fc9,stroke-width:1px;
+classDef decision fill:#eef4fd,stroke:#3b6fc9,stroke-width:1px;
+classDef reject fill:#fdecea,stroke:#c0392b,stroke-width:1px;
+classDef success fill:#eafaf1,stroke:#1e8449,stroke-width:1px;
+
+class Start startEnd
+class Rejected1,Rejected2,Dropout4,AdminWithdrawal,Debarred,ForcedExit reject
+class AlumniPortal,Convocation success
