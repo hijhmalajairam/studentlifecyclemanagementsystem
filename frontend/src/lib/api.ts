@@ -20,9 +20,12 @@ export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
+        throw new Error('Session expired. Please log in again.');
       }
     }
-    throw new Error('Session expired. Please log in again.');
+    // If we're on the login page, just throw a generic auth error to be overridden by the actual text later
+    const errorData = await response.text();
+    throw new Error(errorData || 'Invalid username or password.');
   }
 
   if (!response.ok) {

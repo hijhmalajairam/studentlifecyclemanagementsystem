@@ -52,10 +52,10 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
   if (checking || !authorized) {
     return (
-      <div className="min-h-screen bg-slate-950 flex justify-center items-center">
+      <div className="min-h-screen bg-slate-50 flex justify-center items-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-          <p className="text-slate-400">Verifying access…</p>
+          <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-600">Verifying access…</p>
         </div>
       </div>
     );
@@ -69,5 +69,6 @@ export function getDashboardPath(user: any): string {
   if (user.role === 'PROSPECTIVE_STUDENT') return '/dashboard/prospective';
   if (user.role === 'FACULTY') return '/dashboard/faculty';
   if (user.role === 'PARENT') return '/dashboard/parent';
+  if (user.role === 'INTERVIEWER') return '/dashboard/interviewer';
   return '/dashboard/student';
 }

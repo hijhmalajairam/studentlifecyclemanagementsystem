@@ -105,23 +105,50 @@ export default function ProspectiveDashboard() {
   const STATUS_STEPS = ['DRAFT', 'SUBMITTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'FEE_PENDING', 'ENROLLED'];
   const currentStepIndex = application ? STATUS_STEPS.indexOf(application.status) : 0;
 
+  // If no application exists, show the Welcome screen instead of redirecting
+  if (!application) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-3xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 flex flex-col md:flex-row">
+          <div className="w-full md:w-1/3 bg-indigo-600 p-8 flex flex-col items-center justify-center text-white text-center">
+            <svg className="w-20 h-20 mb-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <h2 className="text-2xl font-bold tracking-tight">Begin Your Journey</h2>
+          </div>
+          <div className="w-full md:w-2/3 p-10 lg:p-14 text-center md:text-left flex flex-col justify-center">
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-4">Welcome to Veritas Grove!</h1>
+            <p className="text-slate-500 mb-8 text-lg leading-relaxed">
+              You haven't started an application yet. Explore our world-class programs and take the first step towards your future.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <button 
+                onClick={() => router.push('/dashboard/prospective/apply')}
+                className="px-8 py-3 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all font-semibold"
+              >
+                Start Your Application
+              </button>
+              <button 
+                onClick={() => router.push('/dashboard/prospective/catalog')}
+                className="px-8 py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 hover:-translate-y-0.5 transition-all font-semibold"
+              >
+                Browse Catalog
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-[calc(100vh-64px)] bg-gray-50 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Header */}
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome, {profile?.username || 'Student'}!</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {profile?.username || 'Student'}!</h1>
             <p className="text-gray-500 mt-1">Application No: {application?.application_number || 'N/A'}</p>
           </div>
-          <button onClick={async () => { 
-            await fetch('http://localhost:8000/api/users/logout/', { method: 'POST', credentials: 'include' });
-            localStorage.clear(); 
-            router.push('/login'); 
-          }} className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
-            Sign Out
-          </button>
         </div>
 
         {/* Status Tracker */}

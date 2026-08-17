@@ -9,15 +9,33 @@ class ApplicantProfile(models.Model):
     registration_number = models.CharField(max_length=50, unique=True, blank=True)
     father_name = models.CharField(max_length=255, blank=True)
     mother_name = models.CharField(max_length=255, blank=True)
+    guardian_name = models.CharField(max_length=255, blank=True)
+    guardian_occupation = models.CharField(max_length=255, blank=True)
     family_income = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    address = models.TextField(blank=True)
+    
+    # Demographics
+    date_of_birth = models.DateField(null=True, blank=True)
+    GENDER_CHOICES = (('M', 'Male'), ('F', 'Female'), ('O', 'Other'))
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
+    CATEGORY_CHOICES = (('GEN', 'General'), ('SC', 'SC'), ('ST', 'ST'), ('OBC', 'OBC'), ('OTHER', 'Other'))
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='GEN')
+    blood_group = models.CharField(max_length=5, blank=True)
+    nationality = models.CharField(max_length=50, default='Indian')
+    
+    # Contact & Address
     phone = models.CharField(max_length=15, blank=True)
+    permanent_address = models.TextField(blank=True)
+    correspondence_address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=20, blank=True)
 
     def save(self, *args, **kwargs):
+        import uuid
         if not self.registration_number:
             year = timezone.now().year
             # e.g., REG-2024-XXXX
-            rand_str = ''.join(random.choices(string.digits, k=4))
+            rand_str = uuid.uuid4().hex[:6].upper()
             self.registration_number = f"REG-{year}-{rand_str}"
         super().save(*args, **kwargs)
 
@@ -46,12 +64,25 @@ class AdmissionApplication(models.Model):
     )
 
     profile = models.ForeignKey(ApplicantProfile, on_delete=models.CASCADE, related_name='applications')
+    program = models.ForeignKey('academics.Program', on_delete=models.SET_NULL, null=True, blank=True, related_name='applications')
     application_number = models.CharField(max_length=50, unique=True, blank=True)
     entry_type = models.CharField(max_length=15, choices=ENTRY_CHOICES, default='ONLINE')
     
-    # Academic Details
-    previous_school_name = models.CharField(max_length=255)
-    previous_marks_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    # 10th Academic Details
+    tenth_school_name = models.CharField(max_length=255, blank=True)
+    tenth_board = models.CharField(max_length=100, blank=True)
+    tenth_passing_year = models.IntegerField(null=True, blank=True)
+    tenth_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    # 12th Academic Details
+    twelfth_school_name = models.CharField(max_length=255, blank=True)
+    twelfth_board = models.CharField(max_length=100, blank=True)
+    twelfth_passing_year = models.IntegerField(null=True, blank=True)
+    twelfth_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    extra_curricular_achievements = models.TextField(blank=True)
+    any_gap_years = models.BooleanField(default=False)
+    
     scholarship_requested = models.BooleanField(default=False)
     
     # Interview Tracking
@@ -65,15 +96,16 @@ class AdmissionApplication(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        import uuid
         if not self.application_number and self.status != 'DRAFT':
             year = timezone.now().year
             # In a real app this would lock and increment, using random for prototype
-            rand_str = ''.join(random.choices(string.digits, k=4))
+            rand_str = uuid.uuid4().hex[:6].upper()
             self.application_number = f"APP-{year}-{rand_str}"
         
         if not self.enrollment_number and self.status == 'ENROLLED':
             year = timezone.now().year
-            rand_str = ''.join(random.choices(string.digits, k=4))
+            rand_str = uuid.uuid4().hex[:6].upper()
             self.enrollment_number = f"ENR-{year}-{rand_str}"
             
         super().save(*args, **kwargs)

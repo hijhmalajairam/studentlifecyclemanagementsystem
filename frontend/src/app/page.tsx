@@ -2,25 +2,25 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
       <div className="relative z-10 max-w-3xl space-y-8">
-        <div className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-sm font-semibold tracking-wide uppercase border border-blue-500/20">
+        <div className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold tracking-wide uppercase border border-blue-200">
           University ERP System
         </div>
-        <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
+        <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
           Welcome to the{' '}
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
             Unified Student Portal
           </span>
         </h1>
-        <p className="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
+        <p className="text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
           From admission enquiry to your final alumni transition, manage your entire academic journey in one seamless, connected system.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Link href="/register" className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-blue-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <Link href="/register" className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
             Apply Now
           </Link>
-          <Link href="/login" className="px-8 py-3.5 bg-slate-800 text-slate-200 font-semibold rounded-xl border border-slate-700 hover:border-blue-500/50 hover:bg-slate-700 transition shadow-sm">
+          <Link href="/login" className="px-8 py-3.5 bg-white text-slate-700 font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-slate-50 transition shadow-sm">
             Portal Login
           </Link>
         </div>

@@ -6,12 +6,27 @@ from .models import (
     Fee, Timetable, Notification, RevaluationRequest, TransferRequest, NoDues
 )
 from .serializers import (
-    EnrollmentSerializer, CourseSerializer, SemesterRegistrationSerializer,
+    DepartmentSerializer, ProgramSerializer, EnrollmentSerializer, CourseSerializer, SemesterRegistrationSerializer,
     AttendanceSerializer, LeaveSerializer, ResultSerializer,
     FeeSerializer, TimetableSerializer, NotificationSerializer,
     RevaluationRequestSerializer, TransferRequestSerializer, NoDuesSerializer
 )
 from admission.models import AdmissionApplication
+from .models import Department, Program
+import uuid
+from decimal import Decimal
+from django.utils import timezone
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class ProgramViewSet(viewsets.ModelViewSet):
+    queryset = Program.objects.select_related('department').all()
+    serializer_class = ProgramSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 import uuid
 from decimal import Decimal
 from django.utils import timezone
