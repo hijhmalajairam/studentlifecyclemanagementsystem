@@ -35,7 +35,7 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'my_applications']:
             return [permissions.IsAuthenticated()]
-        if self.action in ['assigned_interviews', 'partial_update', 'update']:
+        if self.action in ['pool_interviews', 'partial_update', 'update']:
             return [permissions.IsAuthenticated()]
         return [IsAdminRole()]
 
@@ -102,17 +102,22 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
                 
             application.status = 'ENROLLED'
             application.save()
+            
+            user = application.profile.user
+            if user.role == 'PROSPECTIVE_STUDENT':
+                user.role = 'STUDENT'
+                user.save()
+
             return Response(self.get_serializer(application).data, status=status.HTTP_200_OK)
         except AdmissionApplication.DoesNotExist:
             return Response({"detail": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['get'])
-    def assigned_interviews(self, request):
-        if request.user.role != 'INTERVIEWER':
+    def pool_interviews(self, request):
+        if request.user.role not in ['INTERVIEWER', 'ADMIN']:
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
         applications = AdmissionApplication.objects.filter(
-            interviewer=request.user,
-            status='INTERVIEW_SCHEDULED'
+            status__in=['SUBMITTED', 'INTERVIEW_SCHEDULED']
         ).select_related('profile__user').prefetch_related('documents')
         serializer = self.get_serializer(applications, many=True)
         return Response(serializer.data)

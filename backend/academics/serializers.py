@@ -1,8 +1,20 @@
 from rest_framework import serializers
 from .models import (
-    Enrollment, Course, SemesterRegistration, Attendance, Leave, Result,
+    Department, Program, Enrollment, Course, SemesterRegistration, Attendance, Leave, Result,
     Fee, Timetable, Notification, RevaluationRequest, TransferRequest, NoDues
 )
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = '__all__'
+
+class ProgramSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source='department.name', read_only=True)
+
+    class Meta:
+        model = Program
+        fields = '__all__'
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:

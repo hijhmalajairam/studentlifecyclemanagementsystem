@@ -1,8 +1,16 @@
 from django.contrib import admin
 from .models import (
-    Leave, Result, Fee, Timetable, Notification,
+    Department, Program, Leave, Result, Fee, Timetable, Notification,
     RevaluationRequest, TransferRequest, NoDues
 )
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name')
+
+@admin.register(Program)
+class ProgramAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name', 'department', 'duration_years')
 
 
 @admin.register(Leave)

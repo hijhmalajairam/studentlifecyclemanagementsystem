@@ -87,8 +87,12 @@ export default function Navbar() {
   if (isAdmin) {
     navLinks.push({ href: '/dashboard/admin', label: 'Admin Panel', icon: '⚙️' });
   }
-  if (role === 'STUDENT' || role === 'PROSPECTIVE_STUDENT') {
+  if (role === 'STUDENT') {
     navLinks.push({ href: '/dashboard/student', label: 'My Portal', icon: '🎓' });
+  }
+  if (role === 'PROSPECTIVE_STUDENT') {
+    navLinks.push({ href: '/dashboard/prospective', label: 'Dashboard', icon: '🏠' });
+    navLinks.push({ href: '/dashboard/prospective/catalog', label: 'Program Catalog', icon: '📖' });
   }
   if (role === 'FACULTY') {
     navLinks.push({ href: '/dashboard/faculty', label: 'Faculty Panel', icon: '📚' });
@@ -103,13 +107,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 px-6 py-3 flex items-center justify-between z-50 shadow-lg sticky top-0">
+    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3 flex items-center justify-between z-50 shadow-sm sticky top-0">
       <div className="flex items-center space-x-6">
         <Link href="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md">
             N
           </div>
-          <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tight hidden sm:inline">
+          <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 tracking-tight hidden sm:inline">
             Veritas Grove University ERP
           </span>
         </Link>
@@ -117,8 +121,8 @@ export default function Navbar() {
           {navLinks.map(link => (
             <Link key={link.href} href={link.href} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname?.startsWith(link.href) 
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}>
               <span className="mr-1.5">{link.icon}</span>
               {link.label}
@@ -129,7 +133,7 @@ export default function Navbar() {
 
       <div className="flex items-center space-x-3">
         {/* Role Badge */}
-        <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${roleBadgeColors[role] || 'bg-slate-700 text-slate-400 border-slate-600'}`}>
+        <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${roleBadgeColors[role] || 'bg-slate-100 text-slate-500 border-slate-200'}`}>
           {role?.replace('_', ' ')}
         </span>
 
@@ -137,7 +141,7 @@ export default function Navbar() {
         <div className="relative">
           <button
             onClick={toggleNotifs}
-            className="relative text-slate-400 hover:text-blue-400 transition p-2 rounded-lg hover:bg-slate-800/50"
+            className="relative text-slate-500 hover:text-blue-600 transition p-2 rounded-lg hover:bg-slate-100"
             title="Notifications"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,11 +156,11 @@ export default function Navbar() {
 
           {/* Notification Dropdown */}
           {showNotifs && (
-            <div className="absolute right-0 top-12 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-                <h3 className="text-sm font-bold text-white">Notifications</h3>
+            <div className="absolute right-0 top-12 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase">
+                  <button onClick={markAllRead} className="text-[10px] text-blue-600 hover:text-blue-700 font-bold uppercase">
                     Mark All Read
                   </button>
                 )}
@@ -166,12 +170,12 @@ export default function Navbar() {
                   <p className="px-4 py-8 text-center text-slate-500 text-sm">No notifications yet.</p>
                 ) : (
                   notifications.slice(0, 10).map((n: any) => (
-                    <div key={n.id} className={`px-4 py-3 border-b border-slate-800/50 ${!n.is_read ? 'bg-blue-500/5' : ''} hover:bg-slate-800/30 transition`}>
+                    <div key={n.id} className={`px-4 py-3 border-b border-slate-50 ${!n.is_read ? 'bg-blue-50' : ''} hover:bg-slate-50 transition`}>
                       <div className="flex items-start space-x-2">
                         <span className="text-sm mt-0.5">{notifTypeIcons[n.notification_type] || '💬'}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-200 truncate">{n.title}</p>
-                          <p className="text-[11px] text-slate-400 line-clamp-2">{n.message}</p>
+                          <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
+                          <p className="text-[11px] text-slate-500 line-clamp-2">{n.message}</p>
                         </div>
                         {!n.is_read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 shrink-0"></div>}
                       </div>
@@ -185,7 +189,7 @@ export default function Navbar() {
 
         {/* User Info */}
         <div className="hidden sm:flex flex-col items-end">
-          <span className="text-sm font-medium text-slate-200 leading-tight">{displayName}</span>
+          <span className="text-sm font-medium text-slate-900 leading-tight">{displayName}</span>
         </div>
 
         {/* Avatar */}
@@ -198,7 +202,7 @@ export default function Navbar() {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="text-slate-500 hover:text-red-400 transition p-2 rounded-lg hover:bg-slate-800/50"
+          className="text-slate-400 hover:text-red-500 transition p-2 rounded-lg hover:bg-slate-100"
           title="Logout"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
