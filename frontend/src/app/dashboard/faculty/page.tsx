@@ -85,6 +85,51 @@ export default function FacultyDashboard() {
     setGradeEntries({});
   };
 
+  // Module 7 State
+  const [assessmentForm, setAssessmentForm] = useState({ title: '', enrollment_id: '', max_marks: 100, marks_obtained: 0, weightage: 10, status: 'EVALUATED' });
+  const [disciplineForm, setDisciplineForm] = useState({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
+
+  const submitAssessment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCourse) return;
+    try {
+      await fetchAPI('/academics/internal-assessments/', {
+        method: 'POST',
+        body: JSON.stringify({
+          course: selectedCourse.id,
+          enrollment: parseInt(assessmentForm.enrollment_id),
+          title: assessmentForm.title,
+          max_marks: assessmentForm.max_marks,
+          marks_obtained: assessmentForm.marks_obtained,
+          weightage: assessmentForm.weightage,
+          status: assessmentForm.status
+        })
+      });
+      alert('Internal assessment recorded!');
+      setAssessmentForm(prev => ({ ...prev, title: '', enrollment_id: '', marks_obtained: 0 }));
+    } catch { alert('Failed to record internal assessment'); }
+  };
+
+  const submitDiscipline = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCourse) return;
+    try {
+      await fetchAPI('/academics/disciplinary-cases/', {
+        method: 'POST',
+        body: JSON.stringify({
+          course: selectedCourse.id,
+          enrollment: parseInt(disciplineForm.enrollment_id),
+          title: disciplineForm.title,
+          description: disciplineForm.description,
+          assessment_type: disciplineForm.assessment_type,
+          date_of_incident: disciplineForm.date_of_incident
+        })
+      });
+      alert('Malpractice incident reported to the committee.');
+      setDisciplineForm({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
+    } catch { alert('Failed to report incident'); }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex justify-center items-center">
@@ -121,6 +166,10 @@ export default function FacultyDashboard() {
                 className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'attendance' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
                 Attendance
               </button>
+              <button onClick={() => setActiveTab('assessments')}
+                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'assessments' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
+                Internal Assessments
+              </button>
               <button onClick={() => setActiveTab('grades')}
                 className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'grades' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
                 Grades
@@ -128,6 +177,10 @@ export default function FacultyDashboard() {
               <button onClick={() => setActiveTab('timetable')}
                 className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'timetable' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
                 Timetable
+              </button>
+              <button onClick={() => setActiveTab('discipline')}
+                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'discipline' ? 'bg-rose-600/20 text-rose-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
+                Report Malpractice
               </button>
             </div>
           </div>
@@ -277,6 +330,113 @@ export default function FacultyDashboard() {
                         <button onClick={submitGrades} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
                           Submit Grades
                         </button>
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab === 'assessments' && (
+                    <>
+                      <h2 className="text-xl font-bold text-white mb-6">Internal Assessments — {selectedCourse.code}</h2>
+                      <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-700/50">
+                        <form onSubmit={submitAssessment} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Student Enrollment ID</label>
+                              <select required className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.enrollment_id} onChange={e => setAssessmentForm({ ...assessmentForm, enrollment_id: e.target.value })}>
+                                <option value="">-- Select Student --</option>
+                                {getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
+                                  <option key={enrId} value={enrId}>ENR-{enrId}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Assessment Title</label>
+                              <input type="text" required placeholder="e.g. Midterm 1" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.title} onChange={e => setAssessmentForm({ ...assessmentForm, title: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Marks Obtained</label>
+                              <input type="number" required min="0" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.marks_obtained} onChange={e => setAssessmentForm({ ...assessmentForm, marks_obtained: parseFloat(e.target.value) })} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Max Marks</label>
+                              <input type="number" required min="1" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.max_marks} onChange={e => setAssessmentForm({ ...assessmentForm, max_marks: parseInt(e.target.value) })} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Weightage (%)</label>
+                              <input type="number" required min="1" max="100" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.weightage} onChange={e => setAssessmentForm({ ...assessmentForm, weightage: parseInt(e.target.value) })} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                              <select required className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
+                                value={assessmentForm.status} onChange={e => setAssessmentForm({ ...assessmentForm, status: e.target.value })}>
+                                <option value="PENDING">Pending Evaluation</option>
+                                <option value="EVALUATED">Evaluated</option>
+                                <option value="FLAGGED_MALPRACTICE">Flagged for Malpractice</option>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">Record Assessment</button>
+                        </form>
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab === 'discipline' && (
+                    <>
+                      <h2 className="text-xl font-bold text-rose-400 mb-6 flex items-center">
+                        <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Report Disciplinary Incident — {selectedCourse.code}
+                      </h2>
+                      <div className="bg-rose-950/20 p-6 rounded-2xl border border-rose-900/50">
+                        <p className="text-rose-300 text-sm mb-6">Submitting this form will automatically put the student on Disciplinary Hold and forward the case to the Disciplinary Committee for review.</p>
+                        <form onSubmit={submitDiscipline} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Student Enrollment ID</label>
+                              <select required className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-rose-500"
+                                value={disciplineForm.enrollment_id} onChange={e => setDisciplineForm({ ...disciplineForm, enrollment_id: e.target.value })}>
+                                <option value="">-- Select Student --</option>
+                                {getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
+                                  <option key={enrId} value={enrId}>ENR-{enrId}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Incident Date</label>
+                              <input type="date" required style={{ colorScheme: 'dark' }} className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-rose-500"
+                                value={disciplineForm.date_of_incident} onChange={e => setDisciplineForm({ ...disciplineForm, date_of_incident: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Assessment Type</label>
+                              <select required className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-rose-500"
+                                value={disciplineForm.assessment_type} onChange={e => setDisciplineForm({ ...disciplineForm, assessment_type: e.target.value })}>
+                                <option value="ASSIGNMENT">Assignment</option>
+                                <option value="INTERNAL_EXAM">Internal Exam</option>
+                                <option value="PROJECT">Project</option>
+                                <option value="SEMESTER_EXAM">Semester Exam</option>
+                                <option value="OTHER">Other</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Incident Title</label>
+                              <input type="text" required placeholder="e.g. Plagiarism in Midterm" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-rose-500"
+                                value={disciplineForm.title} onChange={e => setDisciplineForm({ ...disciplineForm, title: e.target.value })} />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Detailed Description</label>
+                              <textarea required placeholder="Describe the incident, evidence, and any actions taken so far..." className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-rose-500 h-24 resize-none"
+                                value={disciplineForm.description} onChange={e => setDisciplineForm({ ...disciplineForm, description: e.target.value })} />
+                            </div>
+                          </div>
+                          <button type="submit" className="w-full mt-4 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-rose-900/20">Report to Committee</button>
+                        </form>
                       </div>
                     </>
                   )}

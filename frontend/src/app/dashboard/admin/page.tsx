@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   const [timetable, setTimetable] = useState<any[]>([]);
   const [transfers, setTransfers] = useState<any[]>([]);
   const [revaluations, setRevaluations] = useState<any[]>([]);
+  const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
 
   // Forms
   const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '' });
@@ -50,6 +51,7 @@ export default function AdminDashboard() {
     fetchAPI('/academics/timetable/').then(data => setTimetable(data)).catch(() => {});
     fetchAPI('/academics/transfers/').then(data => setTransfers(data)).catch(() => {});
     fetchAPI('/academics/revaluations/').then(data => setRevaluations(data)).catch(() => {});
+    fetchAPI('/academics/disciplinary-cases/').then(data => setDisciplinaryCases(data)).catch(() => {});
   };
 
   useEffect(() => { refreshData(); }, []);
@@ -225,6 +227,7 @@ export default function AdminDashboard() {
     { id: 'timetable', label: 'Timetable', icon: '📅', color: 'pink' },
     { id: 'transfers', label: 'Transfer / Exit', icon: '🚪', color: 'red' },
     { id: 'revaluations', label: 'Revaluations', icon: '📝', color: 'blue' },
+    { id: 'discipline', label: 'Discipline', icon: '⚖️', color: 'rose' },
   ];
 
   const colorMap: Record<string, string> = {
@@ -236,6 +239,7 @@ export default function AdminDashboard() {
     pink: 'bg-pink-600/20 text-pink-400 border-pink-500/30',
     red: 'bg-red-600/20 text-red-400 border-red-500/30',
     orange: 'bg-orange-600/20 text-orange-400 border-orange-500/30',
+    rose: 'bg-rose-600/20 text-rose-400 border-rose-500/30',
   };
 
   return (
@@ -892,33 +896,79 @@ export default function AdminDashboard() {
 
           {/* ─── REVALUATIONS ─── */}
           {activeTab === 'revaluations' && (
-            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Revaluation Requests</h2>
               {revaluations.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {revaluations.map((r: any) => (
-                    <div key={r.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl flex items-start justify-between">
+                    <div key={r.id} className="bg-slate-50/50 p-6 border border-slate-200 rounded-2xl flex items-center justify-between hover:bg-slate-50 transition">
                       <div>
-                        <div className="flex items-center space-x-3 mb-2">
-                          <span className="font-bold text-slate-900">{r.course_code}</span>
-                          <span className="text-xs text-slate-400">Original: {r.original_grade} ({r.original_marks})</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                            r.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                            r.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                          }`}>{r.status}</span>
-                        </div>
-                        <p className="text-sm text-slate-700">{r.reason}</p>
+                        <p className="font-bold text-slate-900 text-lg">Result ID: {r.result}</p>
+                        <p className="text-sm text-slate-500 mb-2">Reason: {r.reason}</p>
+                        <span className={`text-[10px] font-bold px-3 py-1 rounded-full border tracking-wider uppercase ${
+                          r.status === 'APPROVED' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                          r.status === 'REJECTED' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                          'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+                        }`}>{r.status}</span>
                       </div>
                       {r.status === 'PENDING' && (
-                        <div className="flex space-x-2 ml-4">
-                          <button onClick={() => updateRevalStatus(r.id, 'APPROVED')} className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30">Approve</button>
-                          <button onClick={() => updateRevalStatus(r.id, 'REJECTED')} className="bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30">Reject</button>
+                        <div className="flex space-x-2">
+                          <button onClick={() => updateRevalStatus(r.id, 'APPROVED')} className="bg-green-600/10 hover:bg-green-600/20 text-green-700 px-4 py-2 rounded-lg text-sm font-bold transition">Approve</button>
+                          <button onClick={() => updateRevalStatus(r.id, 'REJECTED')} className="bg-red-600/10 hover:bg-red-600/20 text-red-700 px-4 py-2 rounded-lg text-sm font-bold transition">Reject</button>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
-              ) : <p className="text-slate-400 italic text-center py-12">No revaluation requests.</p>}
+              ) : <p className="text-slate-400 italic text-center py-10">No revaluation requests found.</p>}
+            </div>
+          )}
+
+          {/* ─── DISCIPLINE TAB ─── */}
+          {activeTab === 'discipline' && (
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-900">Disciplinary Cases</h2>
+                <div className="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-sm font-semibold border border-rose-200">
+                  {disciplinaryCases.filter(c => c.status !== 'RESOLVED').length} Active Cases
+                </div>
+              </div>
+              <p className="text-slate-500 text-sm mb-6">Disciplinary cases are reviewed and decided by the Disciplinary Committee. Admins can view the queue and status here.</p>
+              
+              {disciplinaryCases.length > 0 ? (
+                <div className="space-y-4">
+                  {disciplinaryCases.map((c: any) => (
+                    <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-900">{c.title}</h3>
+                          <p className="text-sm text-slate-500">Student ENR-{c.enrollment} • Reported on {c.date_of_incident}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider ${
+                          c.status === 'RESOLVED' ? 'bg-slate-200 text-slate-600 border-slate-300' :
+                          c.status === 'UNDER_REVIEW' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                          'bg-rose-100 text-rose-700 border-rose-200'
+                        }`}>{c.status.replace('_', ' ')}</span>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-xl border border-slate-100 text-sm text-slate-700 mb-4">
+                        <p><strong>Assessment Type:</strong> {c.assessment_type.replace('_', ' ')}</p>
+                        <p><strong>Description:</strong> {c.description}</p>
+                        <p><strong>Reported By:</strong> {c.reported_by_name || 'System'}</p>
+                      </div>
+
+                      {c.status === 'RESOLVED' && (
+                        <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 text-sm">
+                          <p className="font-bold text-slate-800 mb-1">Committee Decision: {c.committee_decision.replace('_', ' ')}</p>
+                          {c.committee_remarks && <p className="text-slate-600 italic">"{c.committee_remarks}"</p>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-400 italic text-center py-10">No disciplinary cases reported.</p>
+              )}
             </div>
           )}
 

@@ -109,19 +109,26 @@ class NoDuesSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('enrollment', 'created_at')
 
-from .models import DisciplinaryCase, Internship
+from .models import DisciplinaryCase, Internship, InternalAssessment, InternshipWindow
 
 class DisciplinaryCaseSerializer(serializers.ModelSerializer):
     reported_by_name = serializers.SerializerMethodField()
+    reviewed_by_name = serializers.SerializerMethodField()
+    course_code = serializers.CharField(source='course.code', read_only=True)
 
     class Meta:
         model = DisciplinaryCase
         fields = '__all__'
-        read_only_fields = ('enrollment', 'reported_by', 'created_at')
+        read_only_fields = ('case_number', 'reported_by', 'created_at', 'reviewed_by', 'reviewed_at', 'status', 'committee_decision')
 
     def get_reported_by_name(self, obj):
         if obj.reported_by:
             return f"{obj.reported_by.first_name} {obj.reported_by.last_name}".strip() or obj.reported_by.username
+        return None
+
+    def get_reviewed_by_name(self, obj):
+        if obj.reviewed_by:
+            return f"{obj.reviewed_by.first_name} {obj.reviewed_by.last_name}".strip() or obj.reviewed_by.username
         return None
 
 class InternshipSerializer(serializers.ModelSerializer):
@@ -129,3 +136,17 @@ class InternshipSerializer(serializers.ModelSerializer):
         model = Internship
         fields = '__all__'
         read_only_fields = ('enrollment', 'status', 'created_at')
+
+class InternalAssessmentSerializer(serializers.ModelSerializer):
+    course_code = serializers.CharField(source='course.code', read_only=True)
+    course_name = serializers.CharField(source='course.name', read_only=True)
+
+    class Meta:
+        model = InternalAssessment
+        fields = '__all__'
+        read_only_fields = ('recorded_at',)
+
+class InternshipWindowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InternshipWindow
+        fields = '__all__'

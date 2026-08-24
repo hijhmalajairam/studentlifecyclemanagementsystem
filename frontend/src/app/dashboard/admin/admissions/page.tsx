@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AdminAdmissionsDashboard() {
   const [activeTab, setActiveTab] = useState<'review' | 'offline' | 'allocation'>('review');

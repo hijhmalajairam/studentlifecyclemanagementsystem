@@ -134,19 +134,25 @@ TransferOutReq -->|No| PrereqCheck
 %% ===================== MODULE 7: Academic Assessment & Discipline =====================
 subgraph MOD7["Module 7: Academic Assessment & Discipline"]
     direction TB
-    MalpracticeCheck{Malpractice / Disciplinary Issue?}
-    DisciplinaryHold[Disciplinary Hold]
+    InternalAssessmentsModule[Internal Assessments & Coursework]
+    MalpracticeCheck{Malpractice / Disciplinary Issue Detected?}
+    DisciplinaryHold[Disciplinary Hold - Committee Review]
     CommitteeDecision{Committee Decision?}
     FailBacklog[Fail - Backlog Path]
-    Suspension[Suspension / Year Drop]
-    InternshipEligible{Internship Window Open?}
+    Suspension[Marked as Dropout]
+    InternshipEligible{Internship Window Open & Eligible?}
+    SemesterEndExam[Semester-End Examination]
+    Module8Next[> Module 8]
 
-    InternalAssessments --> MalpracticeCheck
+    InternalAssessments --> InternalAssessmentsModule
+    InternalAssessmentsModule --> MalpracticeCheck
     MalpracticeCheck -->|Yes| DisciplinaryHold
     DisciplinaryHold --> CommitteeDecision
+    CommitteeDecision -->|Cleared| SemesterEndExam
     CommitteeDecision -->|Marks Cancelled| FailBacklog
-    CommitteeDecision -->|Suspension| Suspension
+    CommitteeDecision -->|Suspension / Year Drop| Suspension
     MalpracticeCheck -->|No| InternshipEligible
+    InternshipEligible --> Module8Next
 end
 
 Suspension --> SemesterReg

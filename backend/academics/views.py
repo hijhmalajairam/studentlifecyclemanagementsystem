@@ -446,8 +446,9 @@ class NoDuesViewSet(viewsets.ModelViewSet):
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
 
-from .models import DisciplinaryCase, Internship
-from .serializers import DisciplinaryCaseSerializer, InternshipSerializer
+from .models import DisciplinaryCase, Internship, InternalAssessment, InternshipWindow
+from .serializers import DisciplinaryCaseSerializer, InternshipSerializer, InternalAssessmentSerializer, InternshipWindowSerializer
+from users.permissions import IsAdminOrCommittee
 
 class DisciplinaryCaseViewSet(viewsets.ModelViewSet):
     queryset = DisciplinaryCase.objects.all()
@@ -465,6 +466,117 @@ class DisciplinaryCaseViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({"detail": "Not enrolled."}, status=400)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrCommittee])
+    def record_decision(self, request, pk=None):
+        case = self.get_object()
+        decision = request.data.get('decision')
+        remarks = request.data.get('remarks', '')
+
+        if decision not in ['CLEARED', 'MARKS_CANCELLED', 'SUSPENSION_YEAR_DROP']:
+            return Response({"detail": "Invalid decision."}, status=400)
+
+        case.committee_decision = decision
+        case.committee_remarks = remarks
+        case.status = 'RESOLVED'
+        case.reviewed_by = request.user
+        case.reviewed_at = timezone.now()
+        case.save()
+
+        enrollment = case.enrollment
+
+        if decision == 'CLEARED':
+            if enrollment.academic_status == 'DISCIPLINARY_HOLD':
+                enrollment.academic_status = 'ACTIVE'
+                enrollment.save()
+            Notification.objects.create(
+                user=enrollment.user,
+                title='Disciplinary Case Cleared',
+                message='Your disciplinary case has been cleared. You can proceed to examinations.',
+                notification_type='SUCCESS'
+            )
+        elif decision == 'MARKS_CANCELLED':
+            if enrollment.academic_status == 'DISCIPLINARY_HOLD':
+                enrollment.academic_status = 'ACTIVE'
+                enrollment.save()
+            if case.course:
+                Result.objects.update_or_create(
+                    enrollment=enrollment,
+                    course=case.course,
+                    is_backlog=True,
+                    is_revaluation=False,
+                    defaults={
+                        'marks_obtained': Decimal('0.00'),
+                        'grade': 'F'
+                    }
+                )
+            Notification.objects.create(
+                user=enrollment.user,
+                title='Marks Cancelled',
+                message='Your marks have been cancelled for the reported incident. You will need to take the backlog path.',
+                notification_type='ALERT'
+            )
+        elif decision == 'SUSPENSION_YEAR_DROP':
+            enrollment.academic_status = 'DROPOUT'
+            enrollment.save()
+            Notification.objects.create(
+                user=enrollment.user,
+                title='Suspension / Year Drop',
+                message='You have been suspended for a year due to disciplinary actions.',
+                notification_type='ALERT'
+            )
+
+        return Response(self.get_serializer(case).data)
+
+    @action(detail=False, methods=['get'])
+    def module7_summary(self, request):
+        try:
+            enrollment = Enrollment.objects.get(user=request.user)
+            
+            assessments = InternalAssessment.objects.filter(enrollment=enrollment)
+            cases = DisciplinaryCase.objects.filter(enrollment=enrollment)
+            active_cases = cases.exclude(status='RESOLVED')
+            
+            has_malpractice = cases.exists()
+            on_hold = enrollment.academic_status == 'DISCIPLINARY_HOLD' or active_cases.exists()
+            
+            window = InternshipWindow.objects.filter(is_active=True).first()
+            
+            summary = {
+                'assessments': InternalAssessmentSerializer(assessments, many=True).data,
+                'disciplinary': {
+                    'has_malpractice': has_malpractice,
+                    'on_hold': on_hold,
+                    'cases': DisciplinaryCaseSerializer(cases, many=True).data,
+                    'academic_status': enrollment.academic_status
+                },
+                'internship_window': InternshipWindowSerializer(window).data if window else None,
+                'module8_ready': not on_hold and enrollment.academic_status == 'ACTIVE' and window is not None
+            }
+            return Response(summary)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Not enrolled."}, status=400)
+
+
+class InternalAssessmentViewSet(viewsets.ModelViewSet):
+    queryset = InternalAssessment.objects.all()
+    serializer_class = InternalAssessmentSerializer
+
+    @action(detail=False, methods=['get'])
+    def my_assessments(self, request):
+        try:
+            enrollment = Enrollment.objects.get(user=request.user)
+            assessments = InternalAssessment.objects.filter(enrollment=enrollment)
+            serializer = self.get_serializer(assessments, many=True)
+            return Response(serializer.data)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Not enrolled."}, status=400)
+
+
+class InternshipWindowViewSet(viewsets.ModelViewSet):
+    queryset = InternshipWindow.objects.all()
+    serializer_class = InternshipWindowSerializer
+
 
 class InternshipViewSet(viewsets.ModelViewSet):
     queryset = Internship.objects.all()

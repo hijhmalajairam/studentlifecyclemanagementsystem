@@ -5,7 +5,8 @@ from .views import (
     AttendanceViewSet, LeaveViewSet, ResultViewSet,
     FeeViewSet, TimetableViewSet, NotificationViewSet,
     RevaluationRequestViewSet, TransferRequestViewSet, NoDuesViewSet,
-    DisciplinaryCaseViewSet, InternshipViewSet
+    DisciplinaryCaseViewSet, InternshipViewSet,
+    InternalAssessmentViewSet, InternshipWindowViewSet
 )
 
 router = DefaultRouter()
@@ -25,6 +26,8 @@ router.register(r'transfers', TransferRequestViewSet)
 router.register(r'no-dues', NoDuesViewSet)
 router.register(r'disciplinary-cases', DisciplinaryCaseViewSet)
 router.register(r'internships', InternshipViewSet)
+router.register(r'internal-assessments', InternalAssessmentViewSet)
+router.register(r'internship-windows', InternshipWindowViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
