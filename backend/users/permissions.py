@@ -24,3 +24,15 @@ class IsProspectiveStudent(permissions.BasePermission):
 class IsStudent(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.role == 'STUDENT')
+
+class IsCommitteeRole(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and (request.user.role == 'COMMITTEE' or request.user.is_staff or request.user.role == 'ADMIN'))
+
+class IsAdminOrCommittee(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and (request.user.role in ['ADMIN', 'COMMITTEE'] or request.user.is_staff))
+
+class IsFacultyRole(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and (request.user.role == 'FACULTY' or request.user.is_staff or request.user.role == 'ADMIN'))

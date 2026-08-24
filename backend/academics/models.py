@@ -20,9 +20,17 @@ class Program(models.Model):
         return f"{self.name} ({self.department.code})"
 
 class Enrollment(models.Model):
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Active'),
+        ('DISCIPLINARY_HOLD', 'Disciplinary Hold'),
+        ('SUSPENDED', 'Suspended'),
+        ('DROPOUT', 'Dropout'),
+        ('GRADUATED', 'Graduated'),
+    )
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='enrollment')
     enrollment_number = models.CharField(max_length=50, unique=True)
     fee_paid = models.BooleanField(default=False)
+    academic_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     enrolled_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -223,13 +231,35 @@ class DisciplinaryCase(models.Model):
         ('UNDER_REVIEW', 'Under Review'),
         ('RESOLVED', 'Resolved'),
     )
+    ASSESSMENT_TYPE_CHOICES = (
+        ('INTERNAL_EXAM', 'Internal Exam'),
+        ('ASSIGNMENT', 'Assignment'),
+        ('LAB_PRACTICAL', 'Lab Practical'),
+        ('SEMESTER_EXAM', 'Semester Exam'),
+        ('CONDUCT', 'Conduct'),
+    )
+    COMMITTEE_DECISION_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('CLEARED', 'Cleared'),
+        ('MARKS_CANCELLED', 'Marks Cancelled'),
+        ('SUSPENSION_YEAR_DROP', 'Suspension / Year Drop'),
+    )
+    case_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='disciplinary_cases')
     reported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='reported_cases')
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='disciplinary_cases')
     title = models.CharField(max_length=255)
     description = models.TextField()
+    assessment_type = models.CharField(max_length=20, choices=ASSESSMENT_TYPE_CHOICES, default='CONDUCT')
     date_of_incident = models.DateField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='OPEN')
     action_taken = models.TextField(blank=True, null=True)
+    
+    committee_decision = models.CharField(max_length=25, choices=COMMITTEE_DECISION_CHOICES, default='PENDING')
+    committee_remarks = models.TextField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_cases')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -257,3 +287,34 @@ class Internship(models.Model):
 
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.company_name} ({self.status})'
+
+class InternalAssessment(models.Model):
+    STATUS_CHOICES = (
+        ('SUBMITTED', 'Submitted'),
+        ('EVALUATED', 'Evaluated'),
+        ('FLAGGED_MALPRACTICE', 'Flagged Malpractice'),
+    )
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='internal_assessments')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='internal_assessments')
+    title = models.CharField(max_length=255)
+    max_marks = models.DecimalField(max_digits=5, decimal_places=2, default=50.00)
+    marks_obtained = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    weightage = models.IntegerField(default=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SUBMITTED')
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.enrollment.enrollment_number} - {self.course.code} - {self.title}'
+
+class InternshipWindow(models.Model):
+    title = models.CharField(max_length=255)
+    min_semester = models.IntegerField(default=3)
+    min_cgpa = models.DecimalField(max_digits=4, decimal_places=2, default=6.0)
+    min_attendance_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=75.0)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.title
+

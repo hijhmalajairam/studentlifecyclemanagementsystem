@@ -66,6 +66,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
 export function getDashboardPath(user: any): string {
   if (user.is_staff || user.role === 'ADMIN') return '/dashboard/admin';
+  if (user.role === 'COMMITTEE') return '/dashboard/committee';
   if (user.role === 'PROSPECTIVE_STUDENT') return '/dashboard/prospective';
   if (user.role === 'FACULTY') return '/dashboard/faculty';
   if (user.role === 'PARENT') return '/dashboard/parent';

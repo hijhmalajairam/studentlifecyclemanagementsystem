@@ -52,6 +52,12 @@ export default function StudentDashboard() {
   const [internshipForm, setInternshipForm] = useState({ company_name: '', role: '', start_date: '', end_date: '', stipend: 0 });
 
 
+  // Module 7 State
+  const [assessments, setAssessments] = useState<any[]>([]);
+  const [disciplinary, setDisciplinary] = useState<any>(null);
+  const [internshipWindow, setInternshipWindow] = useState<any>(null);
+  const [module8Ready, setModule8Ready] = useState(false);
+
   const fetchDashboardData = async () => {
     try {
       const appData = await fetchAPI('/admission/applications/my_application/');
@@ -59,7 +65,7 @@ export default function StudentDashboard() {
       try {
         const enrData = await fetchAPI('/academics/enrollment/my_enrollment/');
         setEnrollment(enrData);
-        const [courseList, regList, attList, leaveList, resultData, feeList, ttList, revalList, trList, ndData, dcList, intList] = await Promise.all([
+        const [courseList, regList, attList, leaveList, resultData, feeList, ttList, revalList, trList, ndData, dcList, intList, m7Summary] = await Promise.all([
           fetchAPI('/academics/courses/'),
           fetchAPI('/academics/registrations/my_registrations/'),
           fetchAPI('/academics/attendance/my_attendance/'),
@@ -72,6 +78,7 @@ export default function StudentDashboard() {
           fetchAPI('/academics/no-dues/my_status/').catch(() => null),
           fetchAPI('/academics/disciplinary-cases/my_cases/').catch(() => []),
           fetchAPI('/academics/internships/my_internships/').catch(() => []),
+          fetchAPI('/academics/disciplinary-cases/module7_summary/').catch(() => null)
         ]);
         setCourses(courseList);
         setMyRegistrations(regList);
@@ -87,6 +94,12 @@ export default function StudentDashboard() {
         setNoDues(ndData);
         setDisciplinaryCases(dcList);
         setInternships(intList);
+        if (m7Summary) {
+          setAssessments(m7Summary.assessments || []);
+          setDisciplinary(m7Summary.disciplinary);
+          setInternshipWindow(m7Summary.internship_window);
+          setModule8Ready(m7Summary.module8_ready || false);
+        }
       } catch { /* not enrolled */ }
     } catch { setApplication(null); }
     finally { setLoading(false); }
@@ -798,42 +811,57 @@ export default function StudentDashboard() {
                 {activeTab === 'internship' && (
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-6">Internship Requests</h2>
-                    <form onSubmit={submitInternship} className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200 mb-8 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Company Name</label>
-                          <input type="text" required placeholder="e.g. Google"
-                            className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            value={internshipForm.company_name} onChange={e => setInternshipForm({ ...internshipForm, company_name: e.target.value })} />
+                    {!module8Ready ? (
+                      <div className="bg-red-50 border border-red-200 p-6 rounded-2xl text-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
                         </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Role / Position</label>
-                          <input type="text" required placeholder="e.g. Software Engineer Intern"
-                            className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            value={internshipForm.role} onChange={e => setInternshipForm({ ...internshipForm, role: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
-                          <input type="date" required style={{ colorScheme: 'light' }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            value={internshipForm.start_date} onChange={e => setInternshipForm({ ...internshipForm, start_date: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Date</label>
-                          <input type="date" required style={{ colorScheme: 'light' }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            value={internshipForm.end_date} onChange={e => setInternshipForm({ ...internshipForm, end_date: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Stipend (Monthly ₹)</label>
-                          <input type="number" required placeholder="0"
-                            className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            value={internshipForm.stipend} onChange={e => setInternshipForm({ ...internshipForm, stipend: parseFloat(e.target.value) })} />
-                        </div>
+                        <h4 className="text-lg font-bold text-red-700 mb-2">Access Blocked</h4>
+                        <p className="text-sm text-red-600 mb-4">You are not eligible to register for internships at this time. This may be due to active disciplinary actions, unmet academic requirements, or the internship window being closed.</p>
+                        <button onClick={() => setActiveTab('discipline')} className="bg-white border border-red-200 text-red-600 font-bold px-6 py-2 rounded-xl text-sm transition hover:bg-red-50">
+                          Check Disciplinary Status
+                        </button>
                       </div>
-                      <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-slate-900 px-6 py-2.5 rounded-xl font-semibold transition mt-4">Submit Internship details</button>
-                    </form>
-                    <h3 className="text-lg font-semibold text-slate-700 mb-4">My Internships</h3>
+                    ) : (
+                      <form onSubmit={submitInternship} className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200 mb-8 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Company Name</label>
+                            <input type="text" required placeholder="e.g. Google"
+                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                              value={internshipForm.company_name} onChange={e => setInternshipForm({ ...internshipForm, company_name: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Role / Position</label>
+                            <input type="text" required placeholder="e.g. Software Engineer Intern"
+                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                              value={internshipForm.role} onChange={e => setInternshipForm({ ...internshipForm, role: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
+                            <input type="date" required style={{ colorScheme: 'light' }}
+                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                              value={internshipForm.start_date} onChange={e => setInternshipForm({ ...internshipForm, start_date: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Date</label>
+                            <input type="date" required style={{ colorScheme: 'light' }}
+                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                              value={internshipForm.end_date} onChange={e => setInternshipForm({ ...internshipForm, end_date: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Stipend (Monthly ₹)</label>
+                            <input type="number" required placeholder="0"
+                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                              value={internshipForm.stipend} onChange={e => setInternshipForm({ ...internshipForm, stipend: parseFloat(e.target.value) })} />
+                          </div>
+                        </div>
+                        <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-slate-900 px-6 py-2.5 rounded-xl font-semibold transition mt-4">Submit Internship details</button>
+                      </form>
+                    )}
+                    <h3 className="text-lg font-semibold text-slate-700 mb-4 mt-8">My Internships</h3>
                     {internships.length > 0 ? (
                       <div className="space-y-3">
                         {internships.map((int: any) => (
@@ -854,41 +882,135 @@ export default function StudentDashboard() {
                   </div>
                 )}
 
-                {/* ─── DISCIPLINARY CASES ─── */}
+                {/* ─── DISCIPLINARY CASES / MODULE 7 ─── */}
                 {activeTab === 'discipline' && (
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Disciplinary Record</h2>
-                    {disciplinaryCases.length > 0 ? (
-                      <div className="space-y-4">
-                        {disciplinaryCases.map((dc: any) => (
-                          <div key={dc.id} className="bg-slate-50/50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-                            <div className="flex justify-between items-start mb-4">
-                              <div>
-                                <h3 className="text-lg font-bold text-slate-900">{dc.title}</h3>
-                                <p className="text-xs text-slate-400">Incident Date: {dc.date_of_incident} · Reported By: {dc.reported_by_name || 'System'}</p>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Internal Assessments & Discipline</h2>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                      {/* Assessments */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          Coursework Overview
+                        </h3>
+                        {assessments.length > 0 ? (
+                          <div className="space-y-3">
+                            {assessments.map((a: any) => (
+                              <div key={a.id} className="bg-slate-50/50 p-4 border border-slate-200 rounded-xl">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <p className="font-bold text-slate-900">{a.title}</p>
+                                    <p className="text-xs text-slate-500">{a.course_code} - {a.course_name}</p>
+                                  </div>
+                                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded border uppercase tracking-wide ${
+                                    a.status === 'EVALUATED' ? 'bg-green-50 text-green-600 border-green-200' :
+                                    a.status === 'FLAGGED_MALPRACTICE' ? 'bg-red-50 text-red-600 border-red-200' :
+                                    'bg-blue-50 text-blue-600 border-blue-200'
+                                  }`}>{a.status.replace('_', ' ')}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-slate-500">Weightage: {a.weightage}%</span>
+                                  {a.status === 'EVALUATED' ? (
+                                    <span className="font-bold text-slate-900">{a.marks_obtained} / {a.max_marks}</span>
+                                  ) : (
+                                    <span className="text-slate-400 italic">Pending...</span>
+                                  )}
+                                </div>
                               </div>
-                              <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                                dc.status === 'RESOLVED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                'bg-red-500/10 text-red-400 border-red-500/20'
-                              }`}>{dc.status}</span>
-                            </div>
-                            <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 border border-slate-100">
-                              <p className="mb-2"><strong>Description:</strong> {dc.description}</p>
-                              {dc.action_taken && <p className="text-red-400"><strong>Action Taken:</strong> {dc.action_taken}</p>}
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <p className="text-slate-400 italic text-sm">No internal assessments recorded yet.</p>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-center py-10 bg-slate-50/30 rounded-2xl border border-green-500/20">
-                        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-                          <span className="text-3xl">🌟</span>
-                        </div>
-                        <h3 className="text-xl font-bold text-green-400 mb-2">Clean Record</h3>
-                        <p className="text-slate-400">You have no disciplinary cases against you.</p>
+
+                      {/* Disciplinary Check */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                          </svg>
+                          Disciplinary Check
+                        </h3>
+                        
+                        {!disciplinary?.has_malpractice && enrollment?.academic_status !== 'DROPOUT' ? (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <h4 className="text-lg font-bold text-emerald-700 mb-2">No Malpractice Detected</h4>
+                            <p className="text-sm text-emerald-600">Your record is clean. Keep up the good work!</p>
+                            
+                            {internshipWindow && internshipWindow.is_active && (
+                              <div className="mt-6 pt-6 border-t border-emerald-200/50">
+                                <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-3">Next Steps</p>
+                                {module8Ready ? (
+                                  <button onClick={() => setActiveTab('internship')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition">
+                                    Proceed to Internship (Module 8)
+                                  </button>
+                                ) : (
+                                  <p className="text-sm text-emerald-600 italic">You must meet the internship eligibility criteria (CGPA & Attendance) to proceed.</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {enrollment?.academic_status === 'DROPOUT' && (
+                              <div className="bg-red-50 border border-red-200 p-5 rounded-2xl">
+                                <div className="flex items-center text-red-600 font-bold mb-2">
+                                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  Suspension / Year Drop
+                                </div>
+                                <p className="text-sm text-red-500 mb-4">You have been marked as Dropout due to severe disciplinary actions. Access to further academic modules is revoked.</p>
+                                <button className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition">View Exit Documentation</button>
+                              </div>
+                            )}
+                            
+                            {disciplinary?.on_hold && enrollment?.academic_status !== 'DROPOUT' && (
+                              <div className="bg-yellow-50 border border-yellow-200 p-5 rounded-2xl relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
+                                <h4 className="text-lg font-bold text-yellow-800 mb-1">Disciplinary Hold</h4>
+                                <p className="text-sm text-yellow-700 mb-4">Your profile is currently under Committee Review. You cannot proceed to internships or exams until cleared.</p>
+                                
+                                {disciplinary.cases.filter((c:any) => c.status !== 'RESOLVED').map((c: any) => (
+                                  <div key={c.id} className="bg-white/60 p-3 rounded-lg border border-yellow-200/50 mb-2">
+                                    <p className="font-bold text-yellow-900 text-sm">{c.title}</p>
+                                    <p className="text-xs text-yellow-800 mt-1">Reported on {c.date_of_incident} • {c.assessment_type.replace('_', ' ')}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {disciplinary?.cases.filter((c:any) => c.status === 'RESOLVED').map((c: any) => (
+                              <div key={c.id} className={`p-4 rounded-2xl border ${
+                                c.committee_decision === 'CLEARED' ? 'bg-emerald-50 border-emerald-200' :
+                                c.committee_decision === 'MARKS_CANCELLED' ? 'bg-orange-50 border-orange-200' :
+                                'bg-red-50 border-red-200'
+                              }`}>
+                                <h4 className={`text-sm font-bold mb-1 ${
+                                  c.committee_decision === 'CLEARED' ? 'text-emerald-700' :
+                                  c.committee_decision === 'MARKS_CANCELLED' ? 'text-orange-700' : 'text-red-700'
+                                }`}>
+                                  Decision: {c.committee_decision.replace('_', ' ')}
+                                </h4>
+                                <p className="text-xs text-slate-600 mb-3">Case: {c.title}</p>
+                                {c.committee_remarks && (
+                                  <p className="text-xs bg-white/50 p-2 rounded italic text-slate-700 border border-black/5">"{c.committee_remarks}"</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
