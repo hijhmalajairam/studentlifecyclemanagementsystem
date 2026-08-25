@@ -106,7 +106,7 @@ export default function FacultyDashboard() {
         })
       });
       alert('Internal assessment recorded!');
-      setAssessmentForm(prev => ({ ...prev, title: '', enrollment_id: '', marks_obtained: 0 }));
+      setAssessmentForm((prev: any) => ({ ...prev, title: '', enrollment_id: '', marks_obtained: 0 }));
     } catch { alert('Failed to record internal assessment'); }
   };
 
