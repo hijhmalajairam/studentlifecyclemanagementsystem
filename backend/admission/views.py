@@ -33,7 +33,7 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = AdmissionApplicationSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'my_applications']:
+        if self.action in ['create', 'my_application']:
             return [permissions.IsAuthenticated()]
         if self.action in ['pool_interviews', 'partial_update', 'update']:
             return [permissions.IsAuthenticated()]
@@ -81,14 +81,16 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(application).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
-    def my_applications(self, request):
+    def my_application(self, request):
         try:
             profile = ApplicantProfile.objects.get(user=request.user)
-            applications = AdmissionApplication.objects.filter(profile=profile)
-            serializer = self.get_serializer(applications, many=True)
-            return Response(serializer.data)
+            application = AdmissionApplication.objects.filter(profile=profile).first()
+            if application:
+                serializer = self.get_serializer(application)
+                return Response(serializer.data)
+            return Response({"detail": "No application found."}, status=status.HTTP_404_NOT_FOUND)
         except ApplicantProfile.DoesNotExist:
-            return Response([])
+            return Response({"detail": "No profile found."}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def pay_fees(self, request, pk=None):

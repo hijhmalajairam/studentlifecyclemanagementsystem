@@ -86,7 +86,7 @@ export default function FacultyDashboard() {
   };
 
   // Module 7 State
-  const [assessmentForm, setAssessmentForm] = useState({ title: '', enrollment_id: '', max_marks: 100, marks_obtained: 0, weightage: 10, status: 'EVALUATED' });
+  const [assessmentForm, setAssessmentForm] = useState<any>({ title: '', enrollment_id: '', max_marks: 100, marks_obtained: 0, weightage: 10, status: 'EVALUATED' });
   const [disciplineForm, setDisciplineForm] = useState({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
 
   const submitAssessment = async (e: React.FormEvent) => {
@@ -358,17 +358,17 @@ export default function FacultyDashboard() {
                             <div>
                               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Marks Obtained</label>
                               <input type="number" required min="0" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
-                                value={assessmentForm.marks_obtained} onChange={e => setAssessmentForm({ ...assessmentForm, marks_obtained: parseFloat(e.target.value) })} />
+                                value={assessmentForm.marks_obtained} onChange={e => setAssessmentForm({ ...assessmentForm, marks_obtained: e.target.value === '' ? '' : parseFloat(e.target.value) })} />
                             </div>
                             <div>
                               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Max Marks</label>
                               <input type="number" required min="1" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
-                                value={assessmentForm.max_marks} onChange={e => setAssessmentForm({ ...assessmentForm, max_marks: parseInt(e.target.value) })} />
+                                value={assessmentForm.max_marks} onChange={e => setAssessmentForm({ ...assessmentForm, max_marks: e.target.value === '' ? '' : parseInt(e.target.value) })} />
                             </div>
                             <div>
                               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Weightage (%)</label>
                               <input type="number" required min="1" max="100" className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3 rounded-xl outline-none focus:border-emerald-500"
-                                value={assessmentForm.weightage} onChange={e => setAssessmentForm({ ...assessmentForm, weightage: parseInt(e.target.value) })} />
+                                value={assessmentForm.weightage} onChange={e => setAssessmentForm({ ...assessmentForm, weightage: e.target.value === '' ? '' : parseInt(e.target.value) })} />
                             </div>
                             <div>
                               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Status</label>
