@@ -20,7 +20,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = '__all__'
-        read_only_fields = ('user', 'enrollment_number', 'enrolled_date', 'fee_paid')
+        read_only_fields = ('user', 'enrollment_number', 'enrolled_date', 'fee_paid', 'internship_waived')
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,7 +33,7 @@ class SemesterRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = SemesterRegistration
         fields = '__all__'
-        read_only_fields = ('enrollment', 'registered_at')
+        read_only_fields = ('enrollment', 'registered_at', 'is_summer_term')
 
 class AttendanceSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(source='course.code', read_only=True)

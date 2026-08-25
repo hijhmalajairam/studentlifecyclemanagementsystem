@@ -196,6 +196,7 @@ export default function StudentDashboard() {
   const submitRevaluation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!revalForm.result || !revalForm.reason) return alert('Please fill all fields');
+    if (!confirm('A revaluation fee of ₹500 will be charged. Do you want to proceed?')) return;
     try {
       await fetchAPI('/academics/revaluations/', {
         method: 'POST',
@@ -231,7 +232,39 @@ export default function StudentDashboard() {
       alert('Internship request submitted for approval!');
       setInternshipForm({ company_name: '', role: '', start_date: '', end_date: '', stipend: 0 });
       fetchDashboardData();
-    } catch { alert('Failed to submit internship'); }
+    } catch (err: any) {
+      let msg = 'Failed to submit internship';
+      try { const p = JSON.parse(err.message); msg = p.detail || JSON.stringify(p); } catch {}
+      alert(msg);
+    }
+  };
+
+  const enrollSummerTerm = async (semester: number) => {
+    try {
+      await fetchAPI('/academics/registrations/summer_enroll/', {
+        method: 'POST',
+        body: JSON.stringify({ semester })
+      });
+      alert('Enrolled in Summer Term!');
+      fetchDashboardData();
+    } catch (err: any) {
+      let msg = 'Failed to enroll in Summer Term';
+      try { const p = JSON.parse(err.message); msg = p.detail || msg; } catch {}
+      alert(msg);
+    }
+  };
+
+  const waiveInternship = async () => {
+    if(!confirm("Are you sure you want to waive your internship requirement?")) return;
+    try {
+      await fetchAPI('/academics/internships/waive_internship/', { method: 'POST' });
+      alert('Internship waived!');
+      fetchDashboardData();
+    } catch (err: any) {
+      let msg = 'Failed to waive internship';
+      try { const p = JSON.parse(err.message); msg = p.detail || msg; } catch {}
+      alert(msg);
+    }
   };
 
   if (loading) {
@@ -757,6 +790,16 @@ export default function StudentDashboard() {
                           ))}
                         </div>
 
+                        {results.some(r => r.is_backlog) && (
+                           <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8 text-center">
+                             <h3 className="text-lg font-bold text-red-700 mb-2">Backlogs Detected</h3>
+                             <p className="text-sm text-red-600 mb-4">You have backlogs. You must enroll in the Summer Term to clear them.</p>
+                             <button onClick={() => enrollSummerTerm(myRegistrations[0]?.semester)} className="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2.5 rounded-xl transition">
+                               Enroll in Summer Term
+                             </button>
+                           </div>
+                        )}
+
                         {/* Revaluation Request Form */}
                         <div className="border-t border-slate-200 pt-6">
                           <h3 className="text-lg font-semibold text-slate-700 mb-4">Request Revaluation</h3>
@@ -855,7 +898,7 @@ export default function StudentDashboard() {
                             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Stipend (Monthly ₹)</label>
                             <input type="number" required placeholder="0"
                               className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={internshipForm.stipend} onChange={e => setInternshipForm({ ...internshipForm, stipend: parseFloat(e.target.value) })} />
+                              value={Number.isNaN(internshipForm.stipend) || internshipForm.stipend === 0 ? '' : internshipForm.stipend} onChange={e => setInternshipForm({ ...internshipForm, stipend: parseFloat(e.target.value) })} />
                           </div>
                         </div>
                         <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-slate-900 px-6 py-2.5 rounded-xl font-semibold transition mt-4">Submit Internship details</button>
@@ -879,6 +922,16 @@ export default function StudentDashboard() {
                         ))}
                       </div>
                     ) : <p className="text-slate-400 italic">No internships registered.</p>}
+                    
+                    {module8Ready && (
+                       <div className="mt-8 bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center">
+                          <h3 className="text-sm font-bold text-slate-700 mb-2">Exhausted Windows?</h3>
+                          <p className="text-xs text-slate-500 mb-4 text-center max-w-md">If you have exhausted all your internship windows, you may apply to waive the internship requirement. This will be flagged in your academic profile.</p>
+                          <button onClick={waiveInternship} className="bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-bold px-6 py-2 rounded-xl text-sm transition">
+                             Waive Internship
+                          </button>
+                       </div>
+                    )}
                   </div>
                 )}
 
