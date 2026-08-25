@@ -161,6 +161,57 @@ class SemesterRegistrationViewSet(viewsets.ModelViewSet):
         except Enrollment.DoesNotExist:
             return Response({"detail": "Not enrolled yet."}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['post'])
+    def summer_enroll(self, request):
+        try:
+            target_user = get_target_user(request.user)
+            enrollment = Enrollment.objects.get(user=target_user)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Not enrolled yet."}, status=status.HTTP_404_NOT_FOUND)
+
+        semester = request.data.get('semester')
+        if not semester:
+            return Response({"detail": "Semester is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check max degree duration
+        program = None
+        if hasattr(enrollment.user, 'admission_profile'):
+            program = enrollment.user.admission_profile.program
+        
+        if not program:
+            app = AdmissionApplication.objects.filter(profile__user=enrollment.user).first()
+            if app:
+                program = app.program
+        
+        if program:
+            max_years = program.duration_years + 2
+            years_enrolled = (timezone.now() - enrollment.enrolled_date).days / 365.25
+            if years_enrolled > max_years:
+                enrollment.academic_status = 'DROPOUT'
+                enrollment.save()
+                return Response({"detail": "Max degree duration exceeded. Forced exit."}, status=status.HTTP_403_FORBIDDEN)
+
+        reg, created = SemesterRegistration.objects.get_or_create(
+            enrollment=enrollment,
+            semester=int(semester),
+            is_summer_term=True
+        )
+        course_ids = request.data.get('course_ids', [])
+        if course_ids:
+            reg.courses.add(*course_ids)
+            
+        if created:
+            from datetime import timedelta
+            Fee.objects.create(
+                enrollment=enrollment,
+                semester=int(semester),
+                amount=Decimal('5000.00'),
+                due_date=timezone.now().date() + timedelta(days=15),
+                status='PENDING'
+            )
+
+        return Response(self.get_serializer(reg).data)
+
 
 class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.select_related('enrollment', 'course').all()
@@ -255,7 +306,7 @@ class ResultViewSet(viewsets.ModelViewSet):
     serializer_class = ResultSerializer
 
     def get_permissions(self):
-        if self.action in ['my_results']:
+        if self.action in ['my_results', 'create', 'process_semester']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
@@ -284,6 +335,38 @@ class ResultViewSet(viewsets.ModelViewSet):
             })
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def process_semester(self, request):
+        semester = request.data.get('semester')
+        enrollment_id = request.data.get('enrollment_id')
+        if not semester or not enrollment_id:
+             return Response({"detail": "semester and enrollment_id required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        is_summer_term = request.data.get('is_summer_term', False)
+        
+        try:
+            enrollment = Enrollment.objects.get(id=enrollment_id)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Enrollment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        regs = SemesterRegistration.objects.filter(enrollment=enrollment, semester=semester, is_summer_term=is_summer_term)
+        if not regs.exists():
+             return Response({"detail": "No regular registration found for this semester"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        course_ids = regs.first().courses.values_list('id', flat=True)
+        results = Result.objects.filter(enrollment=enrollment, course_id__in=course_ids)
+        
+        failed = False
+        for r in results:
+             if r.grade == 'F':
+                 failed = True
+                 r.is_backlog = True
+                 r.save()
+        
+        if failed:
+             return Response({"detail": "Semester processed. Student failed some courses. Backlog created."})
+        return Response({"detail": "Semester processed. Student passed all courses."})
 
 
 class FeeViewSet(viewsets.ModelViewSet):
@@ -380,7 +463,7 @@ class RevaluationRequestViewSet(viewsets.ModelViewSet):
     serializer_class = RevaluationRequestSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'my_revaluations']:
+        if self.action in ['create', 'my_revaluations', 'process_revaluation']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
@@ -399,6 +482,50 @@ class RevaluationRequestViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def process_revaluation(self, request, pk=None):
+        reval = self.get_object()
+        new_marks = request.data.get('new_marks')
+        new_grade = request.data.get('new_grade')
+
+        if reval.status == 'COMPLETED':
+            return Response({"detail": "Revaluation already processed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_marks is None or not new_grade:
+            return Response({"detail": "new_marks and new_grade are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        reval.new_marks = new_marks
+        reval.new_grade = new_grade
+        reval.status = 'COMPLETED'
+        reval.save()
+
+        # Update the result
+        result = reval.result
+        result.marks_obtained = new_marks
+        result.grade = new_grade
+        if new_grade != 'F':
+            result.is_backlog = False
+        else:
+            result.is_backlog = True
+        result.save()
+
+        if new_grade == 'F':
+            Notification.objects.create(
+                user=result.enrollment.user,
+                title='Revaluation Outcome: Still Failed',
+                message=f'Your revaluation for {result.course.code} is complete. You still have a backlog. Please enroll in the summer term.',
+                notification_type='WARNING'
+            )
+        else:
+            Notification.objects.create(
+                user=result.enrollment.user,
+                title='Revaluation Outcome: Passed',
+                message=f'Your revaluation for {result.course.code} is complete. You have passed the course!',
+                notification_type='SUCCESS'
+            )
+
+        return Response(self.get_serializer(reval).data)
 
 
 class TransferRequestViewSet(viewsets.ModelViewSet):
@@ -582,6 +709,18 @@ class InternshipViewSet(viewsets.ModelViewSet):
     queryset = Internship.objects.all()
     serializer_class = InternshipSerializer
 
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        try:
+            target_user = get_target_user(self.request.user)
+            enrollment = Enrollment.objects.get(user=target_user)
+            serializer.save(enrollment=enrollment)
+        except Enrollment.DoesNotExist:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({"detail": "Not enrolled yet."})
+
     @action(detail=False, methods=['get'])
     def my_internships(self, request):
         try:
@@ -591,3 +730,38 @@ class InternshipViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({"detail": "Not enrolled."}, status=400)
+
+    @action(detail=False, methods=['post'])
+    def waive_internship(self, request):
+        try:
+            target_user = get_target_user(request.user)
+            enrollment = Enrollment.objects.get(user=target_user)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Not enrolled yet."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Assuming business logic dictates if they can waive it manually or if it's automatic.
+        # Here we allow them to request a waiver which sets it.
+        enrollment.internship_waived = True
+        enrollment.save()
+
+        Internship.objects.create(
+            enrollment=enrollment,
+            company_name="Waived",
+            role="N/A",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date(),
+            status='WAIVED'
+        )
+
+        return Response({"detail": "Internship has been waived and flagged in academic profile."})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def update_status(self, request, pk=None):
+        internship = self.get_object()
+        status_val = request.data.get('status')
+        if status_val not in dict(Internship.STATUS_CHOICES):
+            return Response({"detail": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        internship.status = status_val
+        internship.save()
+        return Response({"detail": f"Internship status updated to {status_val}."})

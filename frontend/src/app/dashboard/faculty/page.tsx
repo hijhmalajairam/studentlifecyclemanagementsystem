@@ -13,6 +13,9 @@ export default function FacultyDashboard() {
   // Timetable state
   const [timetable, setTimetable] = useState<any[]>([]);
 
+  // Internship state
+  const [internships, setInternships] = useState<any[]>([]);
+
   // Grade entry state
   const [gradeEntries, setGradeEntries] = useState<{[key: number]: {marks: string, grade: string}}>({});
   const [loading, setLoading] = useState(true);
@@ -21,11 +24,13 @@ export default function FacultyDashboard() {
     Promise.all([
       fetchAPI('/academics/courses/'),
       fetchAPI('/academics/registrations/'),
-      fetchAPI('/academics/timetable/my_timetable/').catch(() => [])
-    ]).then(([courseData, regData, ttData]) => {
+      fetchAPI('/academics/timetable/my_timetable/').catch(() => []),
+      fetchAPI('/academics/internships/').catch(() => [])
+    ]).then(([courseData, regData, ttData, intData]) => {
       setCourses(courseData);
       setRegistrations(regData);
       setTimetable(ttData);
+      setInternships(intData);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -61,6 +66,29 @@ export default function FacultyDashboard() {
     }));
   };
 
+  const autoFillGrades = () => {
+    if (!selectedCourse) return;
+    const students = getStudentsForCourse(selectedCourse.id);
+    const newEntries: {[key: number]: {marks: string, grade: string}} = {};
+    
+    students.forEach((enrId: number, index: number) => {
+      if (index === 0) {
+        // Force an 'F' for the first student for backlog testing
+        newEntries[enrId] = { marks: '35', grade: 'F' };
+      } else {
+        const marks = Math.floor(Math.random() * 50) + 50; // 50 to 99
+        let grade = 'P';
+        if (marks >= 90) grade = 'O';
+        else if (marks >= 80) grade = 'A+';
+        else if (marks >= 70) grade = 'A';
+        else if (marks >= 60) grade = 'B+';
+        else if (marks >= 50) grade = 'B';
+        newEntries[enrId] = { marks: marks.toString(), grade };
+      }
+    });
+    setGradeEntries(newEntries);
+  };
+
   const submitGrades = async () => {
     if (!selectedCourse) return;
     let count = 0;
@@ -83,6 +111,42 @@ export default function FacultyDashboard() {
     }
     alert(`Grades submitted for ${count} students!`);
     setGradeEntries({});
+  };
+
+  const processSemester = async () => {
+    if(!selectedCourse) return;
+    const semesterStr = prompt("Enter semester to process (e.g. 1):");
+    if(!semesterStr) return;
+    const enrId = prompt("Enter Enrollment ID to process (just the number):");
+    if(!enrId) return;
+    const isSummer = confirm("Is this for a Summer Term?");
+    try {
+      await fetchAPI('/academics/results/process_semester/', {
+        method: 'POST',
+        body: JSON.stringify({ semester: parseInt(semesterStr), enrollment_id: parseInt(enrId), is_summer_term: isSummer })
+      });
+      alert('Semester processed successfully!');
+    } catch(err: any) {
+      alert('Failed to process semester: ' + (err.message || 'Error'));
+    }
+  };
+
+  const processRevaluation = async () => {
+    const revalId = prompt("Enter Revaluation Request ID to process:");
+    if(!revalId) return;
+    const newMarks = prompt("Enter new marks obtained (or leave empty if unchanged):");
+    const newGrade = prompt("Enter new grade (e.g. A, F):");
+    if(!newGrade) return;
+    
+    try {
+      await fetchAPI(`/academics/revaluations/${revalId}/process_revaluation/`, {
+        method: 'POST',
+        body: JSON.stringify({ new_marks: parseFloat(newMarks || '0'), new_grade: newGrade })
+      });
+      alert('Revaluation processed successfully!');
+    } catch(err: any) {
+      alert('Failed to process revaluation: ' + (err.message || 'Error'));
+    }
   };
 
   // Module 7 State
@@ -182,6 +246,10 @@ export default function FacultyDashboard() {
                 className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'discipline' ? 'bg-rose-600/20 text-rose-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
                 Report Malpractice
               </button>
+              <button onClick={() => setActiveTab('internships')}
+                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'internships' ? 'bg-blue-600/20 text-blue-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
+                Internships
+              </button>
             </div>
           </div>
 
@@ -213,6 +281,38 @@ export default function FacultyDashboard() {
                   <p className="text-slate-400">No classes assigned to you.</p>
                 </div>
               )}
+            </div>
+          ) : activeTab === 'internships' ? (
+            <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
+              <h2 className="text-xl font-bold text-white mb-6">Internship Requests</h2>
+              <div className="space-y-4">
+                {internships.map(int => (
+                  <div key={int.id} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-white">{int.role} at {int.company_name}</p>
+                      <p className="text-sm text-slate-400">ENR-{int.enrollment} • {int.start_date} to {int.end_date} • Stipend: ₹{int.stipend}/mo</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                        int.status === 'APPROVED' || int.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                        int.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                        int.status === 'WAIVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                        'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                      }`}>{int.status}</span>
+                      {int.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'APPROVED' }) }).then(() => { alert('Approved!'); window.location.reload(); })} className="bg-green-600/20 hover:bg-green-600/40 text-green-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Approve</button>
+                          <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'REJECTED' }) }).then(() => { alert('Rejected!'); window.location.reload(); })} className="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Reject</button>
+                        </>
+                      )}
+                      {int.status === 'APPROVED' && (
+                         <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'COMPLETED' }) }).then(() => { alert('Marked as Completed!'); window.location.reload(); })} className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Mark Completed</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {internships.length === 0 && <p className="text-slate-400">No internship records found.</p>}
+              </div>
             </div>
           ) : (
             <>
@@ -326,10 +426,21 @@ export default function FacultyDashboard() {
                           </tbody>
                         </table>
                       </div>
-                      <div className="mt-6 flex justify-end">
-                        <button onClick={submitGrades} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
-                          Submit Grades
+                      <div className="mt-6 flex justify-between items-center">
+                        <button onClick={processSemester} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 py-3 rounded-xl font-medium transition-all">
+                          Process Semester Results
                         </button>
+                        <button onClick={processRevaluation} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 py-3 rounded-xl font-medium transition-all mx-4">
+                          Process Revaluation
+                        </button>
+                        <div className="flex gap-4">
+                          <button onClick={autoFillGrades} className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-6 py-3 rounded-xl font-medium transition-all">
+                            Auto-Fill Dummy Data
+                          </button>
+                          <button onClick={submitGrades} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
+                            Submit Grades
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}

@@ -32,6 +32,7 @@ class Enrollment(models.Model):
     fee_paid = models.BooleanField(default=False)
     academic_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     enrolled_date = models.DateTimeField(auto_now_add=True)
+    internship_waived = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.enrollment_number} - {self.user.username}"
@@ -50,11 +51,12 @@ class Course(models.Model):
 class SemesterRegistration(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='registrations')
     semester = models.IntegerField()
+    is_summer_term = models.BooleanField(default=False)
     courses = models.ManyToManyField(Course, related_name='registrations')
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('enrollment', 'semester')
+        unique_together = ('enrollment', 'semester', 'is_summer_term')
 
     def __str__(self):
         return f"{self.enrollment.enrollment_number} - Sem {self.semester}"
@@ -272,6 +274,7 @@ class Internship(models.Model):
         ('APPROVED', 'Approved'),
         ('COMPLETED', 'Completed'),
         ('REJECTED', 'Rejected'),
+        ('WAIVED', 'Waived'),
     )
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='internships')
     company_name = models.CharField(max_length=255)
