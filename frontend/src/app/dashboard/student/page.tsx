@@ -5,7 +5,7 @@ import { fetchAPI } from '@/lib/api';
 export default function StudentDashboard() {
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ entry_type: 'REGULAR', previous_school_name: '' });
+  const [formData, setFormData] = useState({ entry_type: 'ONLINE', previous_school_name: '' });
   const [activeTab, setActiveTab] = useState('status');
 
   // Document & Scholarship state
@@ -283,7 +283,7 @@ export default function StudentDashboard() {
                     className="w-full bg-white border border-slate-300 text-slate-900 p-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition"
                     value={formData.entry_type} onChange={e => setFormData({ ...formData, entry_type: e.target.value })}
                   >
-                    <option value="REGULAR">Regular</option>
+                    <option value="ONLINE">Online Regular</option>
                     <option value="LATERAL">Lateral Entry (Year 2)</option>
                   </select>
                 </div>
