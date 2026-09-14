@@ -284,7 +284,7 @@ class FeeViewSet(viewsets.ModelViewSet):
 
 
 class TimetableViewSet(viewsets.ModelViewSet):
-    queryset = Timetable.objects.select_related('course', 'faculty').all()
+    queryset = Timetable.objects.select_related('course_section__course', 'faculty').all()
     serializer_class = TimetableSerializer
 
     def get_permissions(self):
@@ -301,7 +301,7 @@ class TimetableViewSet(viewsets.ModelViewSet):
             course_ids = set()
             for reg in registrations:
                 course_ids.update(reg.courses.values_list('id', flat=True))
-            slots = Timetable.objects.filter(course_id__in=course_ids).select_related('course', 'faculty')
+            slots = Timetable.objects.filter(course_section__course_id__in=course_ids).select_related('course_section__course', 'faculty')
             serializer = self.get_serializer(slots, many=True)
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
@@ -527,11 +527,11 @@ class FacultyProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-from .models import StudentProfile
-from .serializers import StudentProfileSerializer
+from .models import StudentProfile, StudentMedicalRecord, StudentEducationHistory, StudentBankDetails
+from .serializers import StudentProfileSerializer, StudentMedicalRecordSerializer, StudentEducationHistorySerializer, StudentBankDetailsSerializer
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
-    queryset = StudentProfile.objects.select_related('user', 'enrollment').all()
+    queryset = StudentProfile.objects.select_related('user').all()
     serializer_class = StudentProfileSerializer
 
     def get_permissions(self):
@@ -540,20 +540,51 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         return [permissions.IsAdminUser()]
 
     def perform_create(self, serializer):
-        enrollment = None
-        if hasattr(self.request.user, 'enrollment'):
-            enrollment = self.request.user.enrollment
-        serializer.save(user=self.request.user, enrollment=enrollment)
+        serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['get'])
     def my_profile(self, request):
         try:
             profile, _ = StudentProfile.objects.get_or_create(user=request.user)
-            if not profile.enrollment and hasattr(request.user, 'enrollment'):
-                profile.enrollment = request.user.enrollment
-                profile.save()
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+class StudentMedicalRecordViewSet(viewsets.ModelViewSet):
+    queryset = StudentMedicalRecord.objects.select_related('user').all()
+    serializer_class = StudentMedicalRecordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class StudentEducationHistoryViewSet(viewsets.ModelViewSet):
+    queryset = StudentEducationHistory.objects.select_related('user').all()
+    serializer_class = StudentEducationHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class StudentBankDetailsViewSet(viewsets.ModelViewSet):
+    queryset = StudentBankDetails.objects.select_related('user').all()
+    serializer_class = StudentBankDetailsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+from .models import AcademicTerm, CourseSection
+from .serializers import AcademicTermSerializer, CourseSectionSerializer
+
+class AcademicTermViewSet(viewsets.ModelViewSet):
+    queryset = AcademicTerm.objects.all()
+    serializer_class = AcademicTermSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class CourseSectionViewSet(viewsets.ModelViewSet):
+    queryset = CourseSection.objects.select_related('course', 'academic_term').all()
+    serializer_class = CourseSectionSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Department, Program, Enrollment, Course, SemesterRegistration, Attendance, Leave, Result,
-    Fee, Timetable, Notification, RevaluationRequest, TransferRequest, NoDues
+    Fee, Timetable, Notification, RevaluationRequest, TransferRequest, NoDues, DisciplinaryCase, Internship, FacultyProfile,
+    StudentProfile, StudentMedicalRecord, StudentEducationHistory, StudentBankDetails, AcademicTerm, CourseSection
 )
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -16,6 +17,11 @@ class ProgramSerializer(serializers.ModelSerializer):
         model = Program
         fields = '__all__'
 
+class AcademicTermSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicTerm
+        fields = '__all__'
+
 class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
@@ -25,6 +31,14 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
+        fields = '__all__'
+
+class CourseSectionSerializer(serializers.ModelSerializer):
+    course_code = serializers.CharField(source='course.code', read_only=True)
+    term_name = serializers.CharField(source='academic_term.term_name', read_only=True)
+
+    class Meta:
+        model = CourseSection
         fields = '__all__'
 
 class SemesterRegistrationSerializer(serializers.ModelSerializer):
@@ -51,6 +65,7 @@ class LeaveSerializer(serializers.ModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(source='course.code', read_only=True)
     course_name = serializers.CharField(source='course.name', read_only=True)
+    term_name = serializers.CharField(source='academic_term.term_name', read_only=True)
 
     class Meta:
         model = Result
@@ -67,8 +82,8 @@ class FeeSerializer(serializers.ModelSerializer):
         return obj.net_amount()
 
 class TimetableSerializer(serializers.ModelSerializer):
-    course_code = serializers.CharField(source='course.code', read_only=True)
-    course_name = serializers.CharField(source='course.name', read_only=True)
+    course_code = serializers.CharField(source='course_section.course.code', read_only=True)
+    course_name = serializers.CharField(source='course_section.course.name', read_only=True)
     faculty_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -109,8 +124,6 @@ class NoDuesSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('enrollment', 'created_at')
 
-from .models import DisciplinaryCase, Internship, FacultyProfile
-
 class FacultyProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
@@ -123,16 +136,7 @@ class FacultyProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FacultyProfile
-        fields = [
-            'id', 'faculty_id', 'user', 'first_name', 'last_name', 'email', 'username',
-            'is_active', 'user_role', 'gender', 'date_of_birth', 'department', 'department_name',
-            'department_code', 'designation', 'admin_role', 'highest_qualification', 'alma_mater',
-            'specialization', 'years_of_experience', 'date_of_joining', 'employment_type',
-            'status', 'phone', 'office_room', 'courses_taught', 'research_publications',
-            'sample_publication_venues', 'research_grants_received', 'total_grant_amount',
-            'awards', 'orcid_id', 'linkedin', 'student_rating', 'leaves_taken_this_year',
-            'current_project', 'additional_roles'
-        ]
+        fields = '__all__'
         read_only_fields = ('user', 'faculty_id')
 
 class DisciplinaryCaseSerializer(serializers.ModelSerializer):
@@ -154,15 +158,30 @@ class InternshipSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('enrollment', 'status', 'created_at')
 
-from .models import StudentProfile
-
 class StudentProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
-    enrollment_number = serializers.CharField(source='enrollment.enrollment_number', read_only=True)
 
     class Meta:
         model = StudentProfile
         fields = '__all__'
-        read_only_fields = ('user', 'enrollment')
+        read_only_fields = ('user',)
+
+class StudentMedicalRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentMedicalRecord
+        fields = '__all__'
+        read_only_fields = ('user',)
+
+class StudentEducationHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentEducationHistory
+        fields = '__all__'
+        read_only_fields = ('user',)
+
+class StudentBankDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentBankDetails
+        fields = '__all__'
+        read_only_fields = ('user',)
