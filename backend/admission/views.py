@@ -4,6 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import AdmissionApplication, Document, Scholarship, ApplicantProfile, SeatAllocation
 from .serializers import AdmissionApplicationSerializer, DocumentSerializer, ScholarshipSerializer, ApplicantProfileSerializer, SeatAllocationSerializer
+from django.db import transaction
+import uuid
+import random
+from django.utils import timezone
+from academics.models import Enrollment, StudentProfile, Notification
 
 
 class ApplicantProfileViewSet(viewsets.ModelViewSet):
@@ -91,6 +96,7 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
             return Response([])
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @transaction.atomic
     def pay_fees(self, request, pk=None):
         try:
             application = self.get_object()
@@ -100,13 +106,59 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
             if application.status != 'FEE_PENDING':
                 return Response({"detail": "Fees are not pending for this application."}, status=status.HTTP_400_BAD_REQUEST)
                 
+            # Verify documents before fee payment
+            if application.documents.count() == 0:
+                return Response({"detail": "Please upload your documents first."}, status=status.HTTP_400_BAD_REQUEST)
+            unverified = application.documents.exclude(status='VERIFIED')
+            if unverified.exists():
+                return Response({"detail": "All your documents must be verified before you can pay the fee."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 1. Update Application Status
             application.status = 'ENROLLED'
             application.save()
             
+            # 2. Update User Role
             user = application.profile.user
             if user.role == 'PROSPECTIVE_STUDENT':
                 user.role = 'STUDENT'
-                user.save()
+                user.save(update_fields=['role'])
+                
+            # 3. Create Enrollment
+            year_suffix = str(timezone.now().year)[-2:]
+            dept_code = "STUCHH"
+            
+            while True:
+                random_digits = "".join([str(random.randint(0, 9)) for _ in range(6)])
+                enrollment_num = f"{year_suffix}{dept_code}{random_digits}"
+                if not Enrollment.objects.filter(enrollment_number=enrollment_num).exists():
+                    break
+
+            enrollment, created = Enrollment.objects.get_or_create(
+                user=user,
+                defaults={
+                    'enrollment_number': enrollment_num,
+                    'fee_paid': True
+                }
+            )
+
+            if not created and not enrollment.fee_paid:
+                enrollment.fee_paid = True
+                enrollment.save()
+
+            # 4. Create StudentProfile
+            profile, p_created = StudentProfile.objects.get_or_create(user=user)
+            profile.enrollment = enrollment
+            inst_email = f"{user.first_name.lower()}.{user.last_name.lower()}{enrollment.enrollment_number[-4:]}@veritasgrove.edu"
+            profile.institutional_email = inst_email
+            profile.save()
+
+            # 5. Create Notification
+            Notification.objects.create(
+                user=user,
+                title='Welcome to the University!',
+                message=f'Your fee is paid and enrollment number is {enrollment.enrollment_number}.',
+                notification_type='SUCCESS'
+            )
 
             return Response(self.get_serializer(application).data, status=status.HTTP_200_OK)
         except AdmissionApplication.DoesNotExist:
@@ -126,6 +178,12 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
+
+    def get_queryset(self):
+        if self.request.user.role in ['ADMIN', 'INTERVIEWER']:
+            return Document.objects.all()
+        # Students/Applicants can only see their own documents
+        return Document.objects.filter(application__profile__user=self.request.user)
 
     def get_permissions(self):
         if self.action in ['create', 'destroy']:

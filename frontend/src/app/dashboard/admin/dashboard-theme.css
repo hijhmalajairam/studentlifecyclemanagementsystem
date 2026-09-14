@@ -1,0 +1,71 @@
+/* ═══════════════════════════════════════════════════════════
+   UNIFIED DASHBOARD THEME SYSTEM
+   Light & Dark mode via CSS custom properties
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── LIGHT MODE (Default) ─── */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --card-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #334155;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --hover-bg: #f1f5f9;
+  --input-bg: #f8fafc;
+  --accent-color: #3b82f6;
+  --accent-subtle: #eff6ff;
+  --accent-text: #1e40af;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+}
+
+/* ─── DARK MODE ─── */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --card-bg: #1e293b;
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #cbd5e1;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --hover-bg: #1e293b;
+  --input-bg: #1e293b;
+  --accent-color: #60a5fa;
+  --accent-subtle: rgba(96,165,250,0.1);
+  --accent-text: #93bbfd;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.4);
+}
+
+/* ─── SCROLLBAR ─── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ─── TRANSITIONS ─── */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}

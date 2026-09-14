@@ -1,11 +1,77 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-primary: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-hover: rgba(255, 255, 255, 0.9);
+    --card-bg: #ffffff;
+    --card-hover: #f1f5f9;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e2e8f0;
+    --sidebar-hover: #f8fafc;
+    --sidebar-active: #ebf8ff;
+    --sidebar-text: #475569;
+    --sidebar-text-active: #0284c7;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --input-text: #0f172a;
+    --primary-gradient-start: #2563eb;
+    --primary-gradient-end: #06b6d4;
+  }
+
+  /* Dark mode overrides applied using a "dark" class on body/html */
+  .dark {
+    --bg-primary: #0b1120;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #475569;
+    --glass-bg: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-hover: rgba(15, 23, 42, 0.8);
+    --card-bg: #111827;
+    --card-hover: #1f2937;
+    --sidebar-bg: #0f172a;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --sidebar-hover: rgba(255, 255, 255, 0.05);
+    --sidebar-active: rgba(56, 189, 248, 0.1);
+    --sidebar-text: #94a3b8;
+    --sidebar-text-active: #38bdf8;
+    --input-bg: #1e293b;
+    --input-border: #334155;
+    --input-text: #f8fafc;
+    --primary-gradient-start: #3b82f6;
+    --primary-gradient-end: #22d3ee;
+  }
+
   body {
     font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+}
+
+/* Custom Scrollbar for premium feel */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--glass-border);
+  border-radius: 20px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 @keyframes blob {

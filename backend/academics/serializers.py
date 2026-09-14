@@ -109,7 +109,31 @@ class NoDuesSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('enrollment', 'created_at')
 
-from .models import DisciplinaryCase, Internship
+from .models import DisciplinaryCase, Internship, FacultyProfile
+
+class FacultyProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    user_role = serializers.CharField(source='user.role', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    department_code = serializers.CharField(source='department.code', read_only=True)
+
+    class Meta:
+        model = FacultyProfile
+        fields = [
+            'id', 'faculty_id', 'user', 'first_name', 'last_name', 'email', 'username',
+            'is_active', 'user_role', 'gender', 'date_of_birth', 'department', 'department_name',
+            'department_code', 'designation', 'admin_role', 'highest_qualification', 'alma_mater',
+            'specialization', 'years_of_experience', 'date_of_joining', 'employment_type',
+            'status', 'phone', 'office_room', 'courses_taught', 'research_publications',
+            'sample_publication_venues', 'research_grants_received', 'total_grant_amount',
+            'awards', 'orcid_id', 'linkedin', 'student_rating', 'leaves_taken_this_year',
+            'current_project', 'additional_roles'
+        ]
+        read_only_fields = ('user', 'faculty_id')
 
 class DisciplinaryCaseSerializer(serializers.ModelSerializer):
     reported_by_name = serializers.SerializerMethodField()
@@ -129,3 +153,16 @@ class InternshipSerializer(serializers.ModelSerializer):
         model = Internship
         fields = '__all__'
         read_only_fields = ('enrollment', 'status', 'created_at')
+
+from .models import StudentProfile
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    enrollment_number = serializers.CharField(source='enrollment.enrollment_number', read_only=True)
+
+    class Meta:
+        model = StudentProfile
+        fields = '__all__'
+        read_only_fields = ('user', 'enrollment')
