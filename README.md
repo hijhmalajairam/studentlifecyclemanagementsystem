@@ -83,9 +83,6 @@ npm install
 npm run dev
 ```
 
-### 3. Access the Application
-- The frontend will be running at [http://localhost:3000](http://localhost:3000)
-- The backend API will be running at [http://localhost:8000](http://localhost:8000)
 
 ## 🏗️ Architecture Notes
 - The project implements a robust API wrapper (`fetchAPI`) to handle global error intercepting and request formatting.
