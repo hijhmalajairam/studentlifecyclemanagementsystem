@@ -262,6 +262,25 @@ end
 ResultPublished --> MeritReview
 MoreSemesters -->|Yes| SemesterReg
 
+%% ===================== MODULE 10: Unified Identity & Profile Settings =====================
+subgraph MOD10["Module 10: Unified Identity & Profile Settings (Ambient System)"]
+    direction TB
+    UnifiedProfile[Unified Role-Based Profile Dashboard]
+    PersonalDetails[Personal Details & Contact Management]
+    AcademicInstDetails[Academic/Institutional Records]
+    SecuritySettings[Security & Login Settings - 2FA / Password]
+    AvatarManagement[Avatar & Visual Identity Management]
+
+    UnifiedProfile --> PersonalDetails
+    UnifiedProfile --> AcademicInstDetails
+    UnifiedProfile --> SecuritySettings
+    UnifiedProfile --> AvatarManagement
+end
+
+PortalAccounts -.->|Powers Access To| UnifiedProfile
+UnifiedProfile -.->|Provides Data To| SemesterReg
+UnifiedProfile -.->|Updates Applied To| AlumniPortal
+
 %% ===================== STYLING =====================
 classDef startEnd fill:#e8f0fe,stroke:#3b6fc9,stroke-width:1px;
 classDef process fill:#eef4fd,stroke:#3b6fc9,stroke-width:1px;
