@@ -24,7 +24,7 @@ export default function ProgramCatalog() {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        
         setLoading(false);
       });
   }, []);
