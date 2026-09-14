@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from erp_core.base_models import TimeStampedModel
 
-class User(AbstractUser):
+class User(AbstractUser, TimeStampedModel):
     ROLE_CHOICES = (
         ('PROSPECTIVE_STUDENT', 'Prospective Student'),
         ('STUDENT', 'Student'),

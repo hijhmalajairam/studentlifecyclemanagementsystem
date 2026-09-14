@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from erp_core.base_models import SoftDeleteModel
 
-class ApplicantProfile(models.Model):
+class ApplicantProfile(SoftDeleteModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applicant_profile')
     registration_number = models.CharField(max_length=50, unique=True, blank=True)
     father_name = models.CharField(max_length=255, blank=True)
@@ -41,7 +42,7 @@ class ApplicantProfile(models.Model):
         return f"{self.registration_number} - {self.user.username}"
 
 
-class AdmissionApplication(models.Model):
+class AdmissionApplication(SoftDeleteModel):
     ENTRY_CHOICES = (
         ('ONLINE', 'Online Regular'),
         ('OFFLINE', 'Offline/Paper Application'),
@@ -112,7 +113,7 @@ class AdmissionApplication(models.Model):
         return f"{self.application_number or 'DRAFT'} - {self.profile.user.username}"
 
 
-class Document(models.Model):
+class Document(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PENDING', 'Pending Verification'),
         ('VERIFIED', 'Verified'),
@@ -128,7 +129,7 @@ class Document(models.Model):
         return f"{self.document_name} for {self.application.application_number}"
 
 
-class Scholarship(models.Model):
+class Scholarship(SoftDeleteModel):
     STATUS_CHOICES = (
         ('APPLIED', 'Applied'),
         ('APPROVED', 'Approved'),
@@ -142,7 +143,7 @@ class Scholarship(models.Model):
     def __str__(self):
         return f"Scholarship for {self.application.application_number}"
 
-class SeatAllocation(models.Model):
+class SeatAllocation(SoftDeleteModel):
     application = models.OneToOneField(AdmissionApplication, on_delete=models.CASCADE, related_name='seat_allocation')
     allocated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     

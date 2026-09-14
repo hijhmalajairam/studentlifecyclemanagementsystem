@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
+from erp_core.base_models import SoftDeleteModel, TimeStampedModel
 
-class Department(models.Model):
+class Department(SoftDeleteModel):
     name = models.CharField(max_length=255, unique=True)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
@@ -9,7 +10,7 @@ class Department(models.Model):
     def __str__(self):
         return self.name
 
-class Program(models.Model):
+class Program(SoftDeleteModel):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='programs')
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True)
@@ -19,7 +20,16 @@ class Program(models.Model):
     def __str__(self):
         return f"{self.name} ({self.department.code})"
 
-class Enrollment(models.Model):
+class AcademicTerm(SoftDeleteModel):
+    term_name = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    term_type = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return self.term_name
+
+class Enrollment(SoftDeleteModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='enrollment')
     enrollment_number = models.CharField(max_length=50, unique=True)
     fee_paid = models.BooleanField(default=False)
@@ -28,8 +38,7 @@ class Enrollment(models.Model):
     def __str__(self):
         return f"{self.enrollment_number} - {self.user.username}"
 
-
-class Course(models.Model):
+class Course(SoftDeleteModel):
     code = models.CharField(max_length=15, unique=True)
     name = models.CharField(max_length=255)
     credits = models.IntegerField(default=3)
@@ -38,8 +47,15 @@ class Course(models.Model):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+class CourseSection(SoftDeleteModel):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='sections')
+    academic_term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE, related_name='sections')
+    capacity = models.IntegerField(default=60)
 
-class SemesterRegistration(models.Model):
+    def __str__(self):
+        return f"{self.course.code} - {self.academic_term.term_name}"
+
+class SemesterRegistration(SoftDeleteModel):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='registrations')
     semester = models.IntegerField()
     courses = models.ManyToManyField(Course, related_name='registrations')
@@ -51,8 +67,7 @@ class SemesterRegistration(models.Model):
     def __str__(self):
         return f"{self.enrollment.enrollment_number} - Sem {self.semester}"
 
-
-class Attendance(models.Model):
+class Attendance(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PRESENT', 'Present'),
         ('ABSENT', 'Absent'),
@@ -68,8 +83,7 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.enrollment.enrollment_number} - {self.course.code} on {self.date}"
 
-
-class Leave(models.Model):
+class Leave(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
@@ -85,9 +99,10 @@ class Leave(models.Model):
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.start_date} to {self.end_date}'
 
-class Result(models.Model):
+class Result(SoftDeleteModel):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='results')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='results')
+    academic_term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE, related_name='results', null=True, blank=True)
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2)
     max_marks = models.DecimalField(max_digits=5, decimal_places=2, default=100.00)
     grade = models.CharField(max_length=2)
@@ -95,13 +110,12 @@ class Result(models.Model):
     is_revaluation = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('enrollment', 'course', 'is_backlog', 'is_revaluation')
+        unique_together = ('enrollment', 'course', 'academic_term', 'is_backlog', 'is_revaluation')
 
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.course.code} - {self.grade}'
 
-
-class Fee(models.Model):
+class Fee(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
         ('PAID', 'Paid'),
@@ -124,13 +138,12 @@ class Fee(models.Model):
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - Sem {self.semester} - {self.status}'
 
-
-class Timetable(models.Model):
+class Timetable(SoftDeleteModel):
     DAY_CHOICES = (
         ('MON', 'Monday'), ('TUE', 'Tuesday'), ('WED', 'Wednesday'),
         ('THU', 'Thursday'), ('FRI', 'Friday'), ('SAT', 'Saturday'),
     )
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='timetable_slots')
+    course_section = models.ForeignKey(CourseSection, on_delete=models.CASCADE, related_name='timetable_slots', null=True, blank=True)
     faculty = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='timetable_slots')
     day = models.CharField(max_length=3, choices=DAY_CHOICES)
     start_time = models.TimeField()
@@ -141,10 +154,9 @@ class Timetable(models.Model):
         ordering = ['day', 'start_time']
 
     def __str__(self):
-        return f'{self.course.code} - {self.day} {self.start_time}-{self.end_time}'
+        return f'{self.course_section} - {self.day} {self.start_time}-{self.end_time}'
 
-
-class Notification(models.Model):
+class Notification(TimeStampedModel):
     TYPE_CHOICES = (
         ('INFO', 'Information'),
         ('WARNING', 'Warning'),
@@ -156,7 +168,6 @@ class Notification(models.Model):
     message = models.TextField()
     notification_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='INFO')
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -164,8 +175,7 @@ class Notification(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.title}'
 
-
-class RevaluationRequest(models.Model):
+class RevaluationRequest(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
@@ -182,8 +192,7 @@ class RevaluationRequest(models.Model):
     def __str__(self):
         return f'Reval: {self.result} - {self.status}'
 
-
-class TransferRequest(models.Model):
+class TransferRequest(SoftDeleteModel):
     TYPE_CHOICES = (
         ('TRANSFER_OUT', 'Transfer Out'),
         ('DROPOUT', 'Dropout'),
@@ -202,8 +211,7 @@ class TransferRequest(models.Model):
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.request_type} - {self.status}'
 
-
-class NoDues(models.Model):
+class NoDues(SoftDeleteModel):
     enrollment = models.OneToOneField(Enrollment, on_delete=models.CASCADE, related_name='no_dues')
     library_cleared = models.BooleanField(default=False)
     hostel_cleared = models.BooleanField(default=False)
@@ -211,13 +219,11 @@ class NoDues(models.Model):
     department_cleared = models.BooleanField(default=False)
     all_cleared = models.BooleanField(default=False)
     certificate_issued = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'NoDues: {self.enrollment.enrollment_number} - {"Cleared" if self.all_cleared else "Pending"}'
 
-
-class DisciplinaryCase(models.Model):
+class DisciplinaryCase(SoftDeleteModel):
     STATUS_CHOICES = (
         ('OPEN', 'Open'),
         ('UNDER_REVIEW', 'Under Review'),
@@ -230,13 +236,11 @@ class DisciplinaryCase(models.Model):
     date_of_incident = models.DateField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='OPEN')
     action_taken = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.title} ({self.status})'
 
-
-class Internship(models.Model):
+class Internship(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PENDING', 'Pending Approval'),
         ('APPROVED', 'Approved'),
@@ -253,13 +257,11 @@ class Internship(models.Model):
     supervisor_email = models.EmailField(blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
     report_file = models.FileField(upload_to='internships/', blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.company_name} ({self.status})'
 
-
-class FacultyProfile(models.Model):
+class FacultyProfile(SoftDeleteModel):
     GENDER_CHOICES = (
         ('Male', 'Male'),
         ('Female', 'Female'),
@@ -330,8 +332,6 @@ class FacultyProfile(models.Model):
     student_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
     leaves_taken_this_year = models.IntegerField(default=0)
     current_project = models.CharField(max_length=255, blank=True)
-    
-    # About / Bio
     about = models.TextField(blank=True, help_text='Short bio or about text')
 
     class Meta:
@@ -341,14 +341,13 @@ class FacultyProfile(models.Model):
         return f"Faculty: {self.faculty_id} - {self.user.get_full_name()} ({self.designation})"
 
 
-class StudentProfile(models.Model):
+class StudentProfile(SoftDeleteModel):
     GENDER_CHOICES = (
         ('MALE', 'Male'),
         ('FEMALE', 'Female'),
         ('OTHER', 'Other'),
     )
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
-    enrollment = models.OneToOneField(Enrollment, on_delete=models.SET_NULL, null=True, blank=True, related_name='student_profile')
     
     # Personal Details
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
@@ -376,21 +375,6 @@ class StudentProfile(models.Model):
     name_as_per_ssc = models.CharField(max_length=255, blank=True, null=True)
     name_as_per_aadhaar = models.CharField(max_length=255, blank=True, null=True)
     aadhaar_number = models.CharField(max_length=20, blank=True, null=True)
-
-    # Academic Record
-    class_10_school = models.CharField(max_length=255, blank=True, null=True)
-    class_10_city = models.CharField(max_length=100, blank=True, null=True)
-    class_10_board = models.CharField(max_length=100, blank=True, null=True)
-    class_10_medium = models.CharField(max_length=50, blank=True, null=True)
-    class_10_year = models.CharField(max_length=4, blank=True, null=True)
-    class_10_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-
-    class_12_school = models.CharField(max_length=255, blank=True, null=True)
-    class_12_city = models.CharField(max_length=100, blank=True, null=True)
-    class_12_board = models.CharField(max_length=100, blank=True, null=True)
-    class_12_medium = models.CharField(max_length=50, blank=True, null=True)
-    class_12_year = models.CharField(max_length=4, blank=True, null=True)
-    class_12_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     # Permanent Address
     permanent_address = models.TextField(blank=True, null=True)
@@ -434,7 +418,14 @@ class StudentProfile(models.Model):
     specialisation_ii = models.CharField(max_length=255, blank=True, null=True)
     minor = models.CharField(max_length=255, blank=True, null=True)
 
-    # Medical Record & Family Doctor
+    photo = models.ImageField(upload_to='student_photos/', blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile: {self.user.username}"
+
+
+class StudentMedicalRecord(SoftDeleteModel):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_medical')
     blood_group = models.CharField(max_length=20, blank=True, null=True)
     medical_conditions = models.TextField(blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
@@ -442,14 +433,36 @@ class StudentProfile(models.Model):
     family_doctor_phone = models.CharField(max_length=20, blank=True, null=True)
     family_doctor_hospital = models.CharField(max_length=100, blank=True, null=True)
 
-    # Bank A/C Details
+    def __str__(self):
+        return f"Medical Record: {self.user.username}"
+
+
+class StudentEducationHistory(SoftDeleteModel):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_education')
+    class_10_school = models.CharField(max_length=255, blank=True, null=True)
+    class_10_city = models.CharField(max_length=100, blank=True, null=True)
+    class_10_board = models.CharField(max_length=100, blank=True, null=True)
+    class_10_medium = models.CharField(max_length=50, blank=True, null=True)
+    class_10_year = models.CharField(max_length=4, blank=True, null=True)
+    class_10_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    class_12_school = models.CharField(max_length=255, blank=True, null=True)
+    class_12_city = models.CharField(max_length=100, blank=True, null=True)
+    class_12_board = models.CharField(max_length=100, blank=True, null=True)
+    class_12_medium = models.CharField(max_length=50, blank=True, null=True)
+    class_12_year = models.CharField(max_length=4, blank=True, null=True)
+    class_12_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"Education History: {self.user.username}"
+
+
+class StudentBankDetails(SoftDeleteModel):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_bank')
     bank_name = models.CharField(max_length=100, blank=True, null=True)
     branch = models.CharField(max_length=100, blank=True, null=True)
     account_number = models.CharField(max_length=50, blank=True, null=True)
     ifsc_code = models.CharField(max_length=20, blank=True, null=True)
 
-    # Photo (Optional)
-    photo = models.ImageField(upload_to='student_photos/', blank=True, null=True)
-
     def __str__(self):
-        return f"Profile: {self.user.username}"
+        return f"Bank Details: {self.user.username}"

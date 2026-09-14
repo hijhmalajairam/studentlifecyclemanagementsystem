@@ -33,7 +33,7 @@ class FeeAdmin(admin.ModelAdmin):
 
 @admin.register(Timetable)
 class TimetableAdmin(admin.ModelAdmin):
-    list_display = ('course', 'faculty', 'day', 'start_time', 'end_time', 'room')
+    list_display = ('course_section', 'faculty', 'day', 'start_time', 'end_time', 'room')
     list_filter = ('day',)
 
 
