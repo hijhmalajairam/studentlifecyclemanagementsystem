@@ -1,3 +1,4 @@
+from django.db import models as db_models
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -44,14 +45,21 @@ GRADE_POINTS = {
 
 
 def calculate_gpa(results_qs):
-    """Calculate GPA from a queryset of Result objects."""
+    """Calculate GPA from an iterable of Result objects, taking highest grade per course."""
+    best_results = {}
+    for r in results_qs:
+        gp = GRADE_POINTS.get(r.grade, 0)
+        course_id = r.course_id if hasattr(r, 'course_id') else r.course.id
+        credits = r.course.credits
+        if course_id not in best_results or gp > best_results[course_id]['gp']:
+            best_results[course_id] = {'credits': credits, 'gp': gp}
+            
     total_credits = 0
     total_points = 0
-    for r in results_qs.select_related('course'):
-        credits = r.course.credits
-        gp = GRADE_POINTS.get(r.grade, 0)
-        total_credits += credits
-        total_points += credits * gp
+    for data in best_results.values():
+        total_credits += data['credits']
+        total_points += data['credits'] * data['gp']
+        
     if total_credits == 0:
         return 0.0
     return round(total_points / total_credits, 2)
@@ -62,54 +70,10 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     serializer_class = EnrollmentSerializer
 
     def get_permissions(self):
-        if self.action in ['pay_fee', 'my_enrollment']:
+        if self.action in ['my_enrollment']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
-    @action(detail=False, methods=['post'])
-    def pay_fee(self, request):
-        try:
-            app = AdmissionApplication.objects.get(profile__user=request.user)
-        except AdmissionApplication.DoesNotExist:
-            return Response({"detail": "No application found."}, status=status.HTTP_404_NOT_FOUND)
-
-        if app.status not in ['SELECTED', 'FEE_PENDING']:
-            return Response({"detail": "Your application is not pending fee payment."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Generate Enrollment
-        enrollment_num = f"ENR-{uuid.uuid4().hex[:8].upper()}"
-        if app.documents.count() == 0:
-            return Response({"detail": "Please upload your documents first."}, status=status.HTTP_400_BAD_REQUEST)
-        unverified = app.documents.exclude(status='VERIFIED')
-        if unverified.exists():
-            return Response({"detail": "All your documents must be verified before you can pay the fee."}, status=status.HTTP_400_BAD_REQUEST)
-
-        enrollment, created = Enrollment.objects.get_or_create(
-            user=request.user,
-            defaults={
-                'enrollment_number': f"ENR-{uuid.uuid4().hex[:8].upper()}",
-                'fee_paid': True
-            }
-        )
-
-        if not created and not enrollment.fee_paid:
-            enrollment.fee_paid = True
-            enrollment.save()
-
-        if request.user.role == 'PROSPECTIVE_STUDENT':
-            request.user.role = 'STUDENT'
-            request.user.save(update_fields=['role'])
-
-        # Create a welcome notification
-        Notification.objects.create(
-            user=request.user,
-            title='Welcome to the University!',
-            message=f'Your enrollment number is {enrollment.enrollment_number}. You can now register for courses.',
-            notification_type='SUCCESS'
-        )
-
-        serializer = self.get_serializer(enrollment)
-        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def my_enrollment(self, request):
@@ -272,10 +236,10 @@ class ResultViewSet(viewsets.ModelViewSet):
             sgpa_data = {}
             for reg in registrations:
                 course_ids = reg.courses.values_list('id', flat=True)
-                sem_results = results.filter(course_id__in=course_ids, is_backlog=False)
+                sem_results = [r for r in results if r.course_id in course_ids]
                 sgpa_data[reg.semester] = calculate_gpa(sem_results)
 
-            cgpa = calculate_gpa(results.filter(is_backlog=False))
+            cgpa = calculate_gpa(results)
 
             return Response({
                 'results': serializer.data,
@@ -387,6 +351,16 @@ class RevaluationRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save()
 
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        # If admin marks it as completed and provides new grades, update the actual result
+        if instance.status == 'COMPLETED' and instance.new_marks is not None and instance.new_grade:
+            result = instance.result
+            result.marks_obtained = instance.new_marks
+            result.grade = instance.new_grade
+            result.is_revaluation = True
+            result.save(update_fields=['marks_obtained', 'grade', 'is_revaluation'])
+
     @action(detail=False, methods=['get'])
     def my_revaluations(self, request):
         try:
@@ -446,8 +420,8 @@ class NoDuesViewSet(viewsets.ModelViewSet):
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
 
-from .models import DisciplinaryCase, Internship
-from .serializers import DisciplinaryCaseSerializer, InternshipSerializer
+from .models import DisciplinaryCase, Internship, FacultyProfile
+from .serializers import DisciplinaryCaseSerializer, InternshipSerializer, FacultyProfileSerializer
 
 class DisciplinaryCaseViewSet(viewsets.ModelViewSet):
     queryset = DisciplinaryCase.objects.all()
@@ -479,3 +453,111 @@ class InternshipViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({"detail": "Not enrolled."}, status=400)
+
+
+class FacultyProfileViewSet(viewsets.ModelViewSet):
+    queryset = FacultyProfile.objects.select_related('user', 'department').all()
+    serializer_class = FacultyProfileSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Search by name
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                db_models.Q(user__first_name__icontains=search) |
+                db_models.Q(user__last_name__icontains=search) |
+                db_models.Q(faculty_id__icontains=search) |
+                db_models.Q(specialization__icontains=search)
+            )
+        # Filter by department
+        dept = self.request.query_params.get('department', '')
+        if dept:
+            qs = qs.filter(department_id=dept)
+        # Filter by designation
+        designation = self.request.query_params.get('designation', '')
+        if designation:
+            qs = qs.filter(designation=designation)
+        # Filter by admin_role
+        admin_role = self.request.query_params.get('admin_role', '')
+        if admin_role:
+            qs = qs.filter(admin_role=admin_role)
+        # Filter by status
+        stat = self.request.query_params.get('status', '')
+        if stat:
+            qs = qs.filter(status=stat)
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def toggle_access(self, request, pk=None):
+        profile = self.get_object()
+        user = profile.user
+        user.is_active = not user.is_active
+        user.save(update_fields=['is_active'])
+        return Response({'status': 'success', 'is_active': user.is_active})
+
+    @action(detail=True, methods=['post'])
+    def assign_role(self, request, pk=None):
+        profile = self.get_object()
+        new_role = request.data.get('admin_role', 'None')
+        additional_roles = request.data.get('additional_roles', [])
+
+        valid_roles = [c[0] for c in FacultyProfile.ADMIN_ROLE_CHOICES]
+        if new_role not in valid_roles:
+            return Response({'detail': f'Invalid role. Must be one of: {valid_roles}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        profile.admin_role = new_role
+        profile.additional_roles = additional_roles if isinstance(additional_roles, list) else []
+        profile.save(update_fields=['admin_role', 'additional_roles'])
+
+        # Sync to user role
+        user = profile.user
+        if new_role == 'Head of Department':
+            user.role = 'HOD'
+        elif new_role == 'None':
+            user.role = 'FACULTY'
+        else:
+            user.role = 'FACULTY'
+            
+        user.additional_roles = profile.additional_roles
+        user.save(update_fields=['role', 'additional_roles'])
+
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+
+from .models import StudentProfile
+from .serializers import StudentProfileSerializer
+
+class StudentProfileViewSet(viewsets.ModelViewSet):
+    queryset = StudentProfile.objects.select_related('user', 'enrollment').all()
+    serializer_class = StudentProfileSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'my_profile', 'update', 'partial_update']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]
+
+    def perform_create(self, serializer):
+        enrollment = None
+        if hasattr(self.request.user, 'enrollment'):
+            enrollment = self.request.user.enrollment
+        serializer.save(user=self.request.user, enrollment=enrollment)
+
+    @action(detail=False, methods=['get'])
+    def my_profile(self, request):
+        try:
+            profile, _ = StudentProfile.objects.get_or_create(user=request.user)
+            if not profile.enrollment and hasattr(request.user, 'enrollment'):
+                profile.enrollment = request.user.enrollment
+                profile.save()
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
