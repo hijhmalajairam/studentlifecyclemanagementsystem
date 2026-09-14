@@ -166,7 +166,7 @@ export default function SystemMappingPage() {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       } catch (err) {
-        console.error('Failed to fetch mapping', err);
+        
       } finally {
         setLoading(false);
       }

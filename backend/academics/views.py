@@ -14,8 +14,6 @@ from .serializers import (
 )
 from admission.models import AdmissionApplication
 from .models import Department, Program
-import uuid
-from decimal import Decimal
 from django.utils import timezone
 
 class DepartmentViewSet(viewsets.ModelViewSet):
@@ -28,8 +26,6 @@ class ProgramViewSet(viewsets.ModelViewSet):
     serializer_class = ProgramSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-import uuid
-from decimal import Decimal
 from django.utils import timezone
 
 

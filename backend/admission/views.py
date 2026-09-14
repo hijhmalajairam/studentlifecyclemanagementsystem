@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from .models import AdmissionApplication, Document, Scholarship, ApplicantProfile, SeatAllocation
 from .serializers import AdmissionApplicationSerializer, DocumentSerializer, ScholarshipSerializer, ApplicantProfileSerializer, SeatAllocationSerializer
 from django.db import transaction
-import uuid
 import random
 from django.utils import timezone
 from academics.models import Enrollment, StudentProfile, Notification

@@ -39,7 +39,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await fetchAPI('/users/logout/', { method: 'POST' });
-    } catch (e) { console.error(e); }
+    } catch (e) {  }
     localStorage.removeItem('user');
     router.push('/login');
   };
