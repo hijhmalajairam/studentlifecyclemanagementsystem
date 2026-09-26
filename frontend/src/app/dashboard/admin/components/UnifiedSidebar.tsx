@@ -29,6 +29,7 @@ const sidebarSections = [
   {
     group: 'Management',
     items: [
+      { id: 'staffing', label: 'Staffing & Roles', icon: '👥' },
       { id: 'leaves', label: 'Leave Requests', icon: '🗓' },
       { id: 'fees', label: 'Fee Management', icon: '💳' },
       { id: 'transfers', label: 'Transfers / Exit', icon: '🚪' },

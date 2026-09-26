@@ -1,11 +1,11 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer, FacultyDetailSerializer
 from admission.models import ApplicantProfile, AdmissionApplication, SeatAllocation
 from academics.models import Enrollment, StudentProfile, FacultyProfile, Department
 
@@ -231,3 +231,27 @@ class SystemMappingView(APIView):
             "nodes": nodes,
             "edges": edges
         })
+
+
+class FacultyListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='FACULTY')
+    serializer_class = FacultyDetailSerializer
+    permission_classes = (permissions.IsAdminUser,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['first_name', 'last_name', 'email']
+
+
+class UpdateUserRolesView(APIView):
+    permission_classes = (permissions.IsAdminUser,)
+
+    def patch(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'additional_roles' in request.data:
+            user.additional_roles = request.data['additional_roles']
+            user.save()
+
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)

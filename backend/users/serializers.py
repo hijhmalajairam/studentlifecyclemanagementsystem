@@ -24,3 +24,18 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data.get('password'))
         return super().create(validated_data)
+
+from academics.models import FacultyProfile
+
+class FacultyProfileSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source='department.name', read_only=True)
+
+    class Meta:
+        model = FacultyProfile
+        fields = ('department_name', 'designation', 'faculty_id', 'specialization')
+
+class FacultyDetailSerializer(UserSerializer):
+    faculty_profile = FacultyProfileSerializer(read_only=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('faculty_profile',)
