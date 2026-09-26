@@ -47,6 +47,7 @@ export default function Login() {
   return (
     <div 
       className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
+      suppressHydrationWarning
       style={{
         background: 'radial-gradient(circle at 30% 40%, #eff6ff 0%, #f8fafc 40%, #f1f5f9 100%)',
       }}
@@ -69,7 +70,7 @@ export default function Login() {
         </h2>
         <p className="text-slate-500 text-xs mb-6">Sign in to continue</p>
 
-        <form className="w-full space-y-3" onSubmit={handleSubmit}>
+        <form className="w-full space-y-3" onSubmit={handleSubmit} suppressHydrationWarning>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2.5 rounded-lg text-sm text-center">
               {error}
