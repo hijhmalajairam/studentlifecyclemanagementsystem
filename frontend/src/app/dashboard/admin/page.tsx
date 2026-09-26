@@ -9,6 +9,7 @@ import DashboardOverview from './components/DashboardOverview';
 import FacultyTab from './components/FacultyTab';
 import AdmissionsTab from './components/AdmissionsTab';
 import StudentsTab from './components/StudentsTab';
+import StaffingTab from './components/StaffingTab';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -706,6 +707,11 @@ export default function AdminDashboard() {
                   </div>
                 ) : <p className="text-slate-400 italic text-center py-12">No revaluation requests.</p>}
               </div>
+            )}
+
+            {/* ─── STAFFING TAB ─── */}
+            {activeTab === 'staffing' && (
+              <StaffingTab />
             )}
 
           </div>
