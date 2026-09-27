@@ -82,8 +82,8 @@ class FacultyProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-from .models import StudentProfile, StudentMedicalRecord, StudentEducationHistory, StudentBankDetails
-from .serializers import StudentProfileSerializer, StudentMedicalRecordSerializer, StudentEducationHistorySerializer, StudentBankDetailsSerializer
+from ..models import StudentProfile, StudentMedicalRecord, StudentEducationHistory, StudentBankDetails
+from ..serializers import StudentProfileSerializer, StudentMedicalRecordSerializer, StudentEducationHistorySerializer, StudentBankDetailsSerializer
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
     queryset = StudentProfile.objects.select_related('user').all()
@@ -131,5 +131,5 @@ class StudentBankDetailsViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-from .models import AcademicTerm, CourseSection
-from .serializers import AcademicTermSerializer, CourseSectionSerializer
+from ..models import AcademicTerm, CourseSection
+from ..serializers import AcademicTermSerializer, CourseSectionSerializer

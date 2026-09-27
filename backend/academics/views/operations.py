@@ -137,8 +137,8 @@ class NoDuesViewSet(viewsets.ModelViewSet):
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
 
-from .models import DisciplinaryCase, Internship, FacultyProfile
-from .serializers import DisciplinaryCaseSerializer, InternshipSerializer, FacultyProfileSerializer
+from ..models import DisciplinaryCase, Internship, FacultyProfile
+from ..serializers import DisciplinaryCaseSerializer, InternshipSerializer, FacultyProfileSerializer
 
 class DisciplinaryCaseViewSet(viewsets.ModelViewSet):
     queryset = DisciplinaryCase.objects.all()

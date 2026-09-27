@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db import models as db_models
 from admission.models import AdmissionApplication
 from .utils import get_target_user, calculate_gpa
-from ..models import AdmissionApplication, Enrollment, SemesterRegistration
+from ..models import Enrollment, SemesterRegistration
 from ..serializers import SemesterRegistrationSerializer, EnrollmentSerializer
 
 class EnrollmentViewSet(viewsets.ModelViewSet):
