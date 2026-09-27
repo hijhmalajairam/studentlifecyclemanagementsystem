@@ -81,6 +81,7 @@ export default function Login() {
             type="text"
             placeholder="Username or Email"
             required
+            suppressHydrationWarning
             className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -91,6 +92,7 @@ export default function Login() {
               type="password"
               placeholder="Password"
               required
+              suppressHydrationWarning
               className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm pr-12"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

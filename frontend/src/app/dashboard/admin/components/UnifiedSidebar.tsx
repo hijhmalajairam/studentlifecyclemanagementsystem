@@ -20,6 +20,7 @@ const sidebarSections = [
   {
     group: 'Academics',
     items: [
+      { id: 'university_mgmt', label: 'University Setup', icon: '🏛️' },
       { id: 'academics', label: 'Attendance', icon: '📊' },
       { id: 'timetable', label: 'Timetable', icon: '📅' },
       { id: 'students', label: 'Students', icon: '🎓' },

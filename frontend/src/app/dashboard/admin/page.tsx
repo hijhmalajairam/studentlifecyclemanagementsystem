@@ -9,6 +9,7 @@ import DashboardOverview from './components/DashboardOverview';
 import FacultyTab from './components/FacultyTab';
 import AdmissionsTab from './components/AdmissionsTab';
 import StudentsTab from './components/StudentsTab';
+import UniversityManagementTab from './components/UniversityManagementTab';
 import StaffingTab from './components/StaffingTab';
 
 export default function AdminDashboard() {
@@ -320,6 +321,11 @@ export default function AdminDashboard() {
                 isAdmin={isAdmin}
                 facultyProfile={facultyProfile}
               />
+            )}
+
+            {/* ─── UNIVERSITY MANAGEMENT TAB ─── */}
+            {activeTab === 'university_mgmt' && (
+              <UniversityManagementTab />
             )}
 
             {/* ─── FACULTY TAB ─── */}
