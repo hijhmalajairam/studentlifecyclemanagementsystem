@@ -11,6 +11,9 @@ export default function FacultyTab({ isAdmin, departments }: { isAdmin: boolean,
   const [selectedFaculty, setSelectedFaculty] = useState<any>(null);
   const [editingFaculty, setEditingFaculty] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+  
+  const [isAdding, setIsAdding] = useState(false);
+  const [newFacultyForm, setNewFacultyForm] = useState({ username: '', email: '', first_name: '', last_name: '', phone: '', password: 'faculty123' });
 
   const designations = ['Assistant Professor', 'Associate Professor', 'Professor', 'Lecturer', 'Guest Faculty', 'Dean'];
   const employmentTypes = ['Permanent', 'Contract', 'Guest', 'Adjunct'];
@@ -50,6 +53,17 @@ export default function FacultyTab({ isAdmin, departments }: { isAdmin: boolean,
     } catch { alert('Failed to save changes'); }
   };
 
+  const handleAddFaculty = async () => {
+    try {
+      await fetchAPI('/users/register/', { method: 'POST', body: JSON.stringify({ ...newFacultyForm, role: 'FACULTY' }) });
+      alert('Faculty Account Created Successfully!');
+      setIsAdding(false);
+      window.location.reload();
+    } catch {
+      alert('Failed to create faculty.');
+    }
+  };
+
   const openFacultyProfile = (faculty: any) => {
     setSelectedFaculty(faculty);
     setEditingFaculty(false);
@@ -87,12 +101,35 @@ export default function FacultyTab({ isAdmin, departments }: { isAdmin: boolean,
   return (
     <div className="space-y-6">
       {/* Faculty Header & Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Total Faculty" value={facultyProfiles.length} icon={<Users className="w-5 h-5" />} color="blue" />
-        <StatCard title="HODs" value={facultyProfiles.filter(f => f.admin_role === 'Head of Department').length} icon={<Award className="w-5 h-5" />} color="indigo" />
-        <StatCard title="Active" value={facultyProfiles.filter(f => f.is_active && f.status === 'Active').length} icon={<CheckCircle2 className="w-5 h-5" />} color="emerald" />
-        <StatCard title="With Roles" value={facultyProfiles.filter(f => f.admin_role !== 'None').length} icon={<ShieldCheck className="w-5 h-5" />} color="purple" />
+      <div className="flex justify-between items-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1 mr-4">
+          <StatCard title="Total Faculty" value={facultyProfiles.length} icon={<Users className="w-5 h-5" />} color="blue" />
+          <StatCard title="HODs" value={facultyProfiles.filter(f => f.admin_role === 'Head of Department').length} icon={<Award className="w-5 h-5" />} color="indigo" />
+          <StatCard title="Active" value={facultyProfiles.filter(f => f.is_active && f.status === 'Active').length} icon={<CheckCircle2 className="w-5 h-5" />} color="emerald" />
+          <StatCard title="With Roles" value={facultyProfiles.filter(f => f.admin_role !== 'None').length} icon={<ShieldCheck className="w-5 h-5" />} color="purple" />
+        </div>
+        <button onClick={() => setIsAdding(true)} className="bg-indigo-600 text-white px-5 py-3 h-full rounded-2xl font-bold shadow-md hover:bg-indigo-700 transition-all flex items-center shrink-0">
+          + Add New Faculty
+        </button>
       </div>
+
+      {isAdding && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl mb-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Create Faculty Account</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input type="text" placeholder="Username" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.username} onChange={e => setNewFacultyForm({...newFacultyForm, username: e.target.value})} />
+            <input type="email" placeholder="Email" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.email} onChange={e => setNewFacultyForm({...newFacultyForm, email: e.target.value})} />
+            <input type="text" placeholder="First Name" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.first_name} onChange={e => setNewFacultyForm({...newFacultyForm, first_name: e.target.value})} />
+            <input type="text" placeholder="Last Name" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.last_name} onChange={e => setNewFacultyForm({...newFacultyForm, last_name: e.target.value})} />
+            <input type="text" placeholder="Phone" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.phone} onChange={e => setNewFacultyForm({...newFacultyForm, phone: e.target.value})} />
+            <input type="text" placeholder="Default Password" disabled className="p-3 border border-slate-200 bg-slate-50 text-slate-500 rounded-xl" value={newFacultyForm.password} />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
+            <button onClick={handleAddFaculty} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md">Create Account</button>
+          </div>
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--sidebar-border)] shadow-sm p-6">

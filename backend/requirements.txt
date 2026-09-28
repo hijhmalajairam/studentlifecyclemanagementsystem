@@ -15,6 +15,7 @@ Django==5.2.17
 django-cors-headers==4.9.0
 django-extensions==4.1
 djangorestframework==3.18.0
+faker==26.0.0
 djangorestframework_simplejwt==5.5.1
 flake8==6.1.0
 flake8-django==1.4
