@@ -42,7 +42,14 @@ const sidebarSections = [
     items: [
       { id: 'hostel', label: 'Hostel Management', icon: '🏠' },
       { id: 'library', label: 'Library System', icon: '📚' },
+      { id: 'transport', label: 'Transport', icon: '🚌' },
       { id: 'alumni', label: 'Alumni Network', icon: '🎓' },
+    ]
+  },
+  {
+    group: 'Career',
+    items: [
+      { id: 'placement', label: 'Placement Cell', icon: '💼' },
     ]
   },
   {
