@@ -35,6 +35,7 @@ const sidebarSections = [
       { id: 'fees', label: 'Fee Management', icon: '💳' },
       { id: 'transfers', label: 'Transfers / Exit', icon: '🚪' },
       { id: 'revaluations', label: 'Revaluations', icon: '📝' },
+      { id: 'hostel', label: 'Hostel Management', icon: '🏠' },
     ]
   },
   {

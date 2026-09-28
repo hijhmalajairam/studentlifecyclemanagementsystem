@@ -11,6 +11,7 @@ import AdmissionsTab from './components/AdmissionsTab';
 import StudentsTab from './components/StudentsTab';
 import UniversityManagementTab from './components/UniversityManagementTab';
 import StaffingTab from './components/StaffingTab';
+import HostelTab from './components/HostelTab';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -720,6 +721,10 @@ export default function AdminDashboard() {
               <StaffingTab />
             )}
 
+            {/* ─── HOSTEL TAB ─── */}
+            {activeTab === 'hostel' && (
+              <HostelTab />
+            )}
           </div>
         </main>
       </div>
