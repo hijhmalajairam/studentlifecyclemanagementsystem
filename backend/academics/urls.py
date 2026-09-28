@@ -6,8 +6,8 @@ from .views import (
     FeeViewSet, TimetableViewSet, NotificationViewSet,
     RevaluationRequestViewSet, TransferRequestViewSet, NoDuesViewSet,
     DisciplinaryCaseViewSet, InternshipViewSet, FacultyProfileViewSet, StudentProfileViewSet
-from .views.placements import AIPlacementViewSet
 )
+from .views.placements import AIPlacementViewSet
 
 router = DefaultRouter()
 router.register(r'departments', DepartmentViewSet)
