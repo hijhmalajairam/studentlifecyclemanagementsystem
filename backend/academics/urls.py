@@ -6,6 +6,7 @@ from .views import (
     FeeViewSet, TimetableViewSet, NotificationViewSet,
     RevaluationRequestViewSet, TransferRequestViewSet, NoDuesViewSet,
     DisciplinaryCaseViewSet, InternshipViewSet, FacultyProfileViewSet, StudentProfileViewSet
+from .views.placements import AIPlacementViewSet
 )
 
 router = DefaultRouter()
@@ -27,6 +28,7 @@ router.register(r'disciplinary-cases', DisciplinaryCaseViewSet)
 router.register(r'internships', InternshipViewSet)
 router.register(r'faculty', FacultyProfileViewSet)
 router.register(r'student-profiles', StudentProfileViewSet, basename='student-profiles')
+router.register(r'placements', AIPlacementViewSet, basename='placements')
 
 urlpatterns = [
     path('', include(router.urls)),
