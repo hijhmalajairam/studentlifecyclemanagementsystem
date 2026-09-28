@@ -14,6 +14,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['my_attendance']:
             return [permissions.IsAuthenticated()]
+        if self.action in ['bulk_mark']:
+            class IsAdminOrFaculty(permissions.BasePermission):
+                def has_permission(self, request, view):
+                    return request.user.is_authenticated and (request.user.is_staff or request.user.role in ['ADMIN', 'FACULTY'] or getattr(request.user, 'is_faculty_user', False))
+            return [IsAdminOrFaculty()]
         return [permissions.IsAdminUser()]
 
     @action(detail=False, methods=['get'])
