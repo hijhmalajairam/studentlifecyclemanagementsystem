@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
 import '../admin/dashboard-theme.css'; // Reuse theme
+import MyTimetable from './components/MyTimetable';
+import MyClasses from './components/MyClasses';
 
 export default function FacultyDashboard() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -182,19 +184,31 @@ export default function FacultyDashboard() {
               </div>
             </div>
 
-            {/* Content Section Placeholder */}
-            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4 opacity-50">
-                  {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}
+            {/* Content Section */}
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px]">
+              {activeSection === 'my_timetable' && <MyTimetable />}
+              {activeSection === 'my_classes' && <MyClasses />}
+              {activeSection === 'my_dashboard' && (
+                <div className="text-center py-20">
+                  <div className="text-6xl mb-4 opacity-50">⊞</div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-2">Dashboard Overview</h3>
+                  <p className="text-slate-400">Select an item from the sidebar to view your teaching materials.</p>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                  {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label}
-                </h3>
-                <p className="text-slate-400">
-                  This section is under construction. It will be built out soon!
-                </p>
-              </div>
+              )}
+              {/* Fallback for HOD/Placement tabs for now */}
+              {!['my_timetable', 'my_classes', 'my_dashboard'].includes(activeSection) && (
+                <div className="text-center py-20">
+                  <div className="text-6xl mb-4 opacity-50">
+                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label}
+                  </h3>
+                  <p className="text-slate-400">
+                    This advanced module is being built out now.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>

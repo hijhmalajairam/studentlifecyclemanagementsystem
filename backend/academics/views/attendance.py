@@ -80,6 +80,11 @@ class TimetableViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def my_timetable(self, request):
+        if request.user.role == 'FACULTY' or getattr(request.user, 'is_faculty_user', False):
+            slots = Timetable.objects.filter(faculty=request.user).select_related('course_section__course', 'faculty')
+            serializer = self.get_serializer(slots, many=True)
+            return Response(serializer.data)
+            
         try:
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
