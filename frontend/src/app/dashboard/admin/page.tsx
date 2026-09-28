@@ -12,6 +12,8 @@ import StudentsTab from './components/StudentsTab';
 import UniversityManagementTab from './components/UniversityManagementTab';
 import StaffingTab from './components/StaffingTab';
 import HostelTab from './components/HostelTab';
+import LibraryTab from './components/LibraryTab';
+import AlumniTab from './components/AlumniTab';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -724,6 +726,16 @@ export default function AdminDashboard() {
             {/* ─── HOSTEL TAB ─── */}
             {activeTab === 'hostel' && (
               <HostelTab />
+            )}
+
+            {/* ─── LIBRARY TAB ─── */}
+            {activeTab === 'library' && (
+              <LibraryTab />
+            )}
+
+            {/* ─── ALUMNI TAB ─── */}
+            {activeTab === 'alumni' && (
+              <AlumniTab />
             )}
           </div>
         </main>

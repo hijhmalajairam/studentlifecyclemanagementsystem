@@ -35,7 +35,14 @@ const sidebarSections = [
       { id: 'fees', label: 'Fee Management', icon: '💳' },
       { id: 'transfers', label: 'Transfers / Exit', icon: '🚪' },
       { id: 'revaluations', label: 'Revaluations', icon: '📝' },
+    ]
+  },
+  {
+    group: 'Campus Life',
+    items: [
       { id: 'hostel', label: 'Hostel Management', icon: '🏠' },
+      { id: 'library', label: 'Library System', icon: '📚' },
+      { id: 'alumni', label: 'Alumni Network', icon: '🎓' },
     ]
   },
   {
