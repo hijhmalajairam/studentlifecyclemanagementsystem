@@ -92,11 +92,23 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
           {!collapsed && <span>My Registration</span>}
         </div>
 
-        {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Insight</div>}
+        {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Services</div>}
 
-        <div className={navItemClass('my_dashboard')} onClick={() => setActiveSection('my_dashboard')}>
-          <LayoutDashboard size={18} className={collapsed ? 'mx-auto' : ''} />
-          {!collapsed && <span>My Dashboard</span>}
+        <div className={navItemClass('financial_aid')} onClick={() => setActiveSection('financial_aid')}>
+          <FileText size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Financial Aid</span>}
+        </div>
+
+        <div className={navItemClass('grievance')} onClick={() => setActiveSection('grievance')}>
+          <ClipboardList size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Helpdesk & Grievance</span>}
+        </div>
+
+        {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Career</div>}
+
+        <div className={navItemClass('placement_prep')} onClick={() => setActiveSection('placement_prep')}>
+          <BookOpen size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>AI Placement Prep</span>}
         </div>
 
         <div className={navItemClass('mobile_portal')} onClick={() => setActiveSection('mobile_portal')}>

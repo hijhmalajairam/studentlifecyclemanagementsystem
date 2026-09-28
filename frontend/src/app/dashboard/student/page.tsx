@@ -15,6 +15,10 @@ import GradeList from './components/GradeList';
 import TimetableView from './components/TimetableView';
 import AcademicDashboard from './components/AcademicDashboard';
 import RegistrationView from './components/RegistrationView';
+import StudentOverviewTab from './components/StudentOverviewTab';
+import PlacementPrepTab from './components/PlacementPrepTab';
+import FinancialAidTab from './components/FinancialAidTab';
+import GrievanceTab from './components/GrievanceTab';
 import '../admin/dashboard-theme.css';
 import TopBar from '../admin/components/TopBar';
 
@@ -130,70 +134,7 @@ export default function StudentDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return (
-          <div className="space-y-6 bg-[#f4f7fa] min-h-full">
-            <div>
-              <p className="text-[#a41034] text-xs font-bold uppercase tracking-wider mb-2">Faculty of Science and Technology</p>
-              <h1 className="text-3xl font-semibold text-slate-800 tracking-tight">Good evening, {user?.first_name} {user?.last_name}</h1>
-              <p className="text-sm text-slate-500 mt-1">Student · Academic Year 2025-26</p>
-            </div>
-
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-8 mb-4">My Academics</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div onClick={() => setActiveSection('my_courses')} className="bg-white p-6 rounded-xl border-b-2 border-transparent hover:border-[#a41034] shadow-sm cursor-pointer hover:shadow-md transition group">
-                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                </div>
-                <h4 className="font-bold text-slate-800">My Courses</h4>
-                <p className="text-xs text-slate-500 mt-1">Enrolled courses with faculty, weights and materials</p>
-              </div>
-
-              <div onClick={() => setActiveSection('my_registration')} className="bg-white p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition group">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                </div>
-                <h4 className="font-bold text-slate-800">My Registration</h4>
-                <p className="text-xs text-slate-500 mt-1">Courses registered in each semester</p>
-              </div>
-
-              <div onClick={() => setActiveSection('attendance')} className="bg-white p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition group">
-                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h4 className="font-bold text-slate-800">My Attendance</h4>
-                <p className="text-xs text-slate-500 mt-1">Course-wise attendance and eligibility status</p>
-              </div>
-
-              <div onClick={() => setActiveSection('my_results')} className="bg-white p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition group">
-                <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                </div>
-                <h4 className="font-bold text-slate-800">My Results</h4>
-                <p className="text-xs text-slate-500 mt-1">Course marks, SGPA and CGPA</p>
-              </div>
-
-              <div onClick={() => setActiveSection('my_dashboard')} className="bg-white p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition group">
-                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                </div>
-                <h4 className="font-bold text-slate-800">My Dashboard</h4>
-                <p className="text-xs text-slate-500 mt-1">Personalised academic overview & analytics</p>
-              </div>
-            </div>
-            
-            {/* Direct registration summary preview here */}
-            <div className="mt-8">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Registration Preview</h3>
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" onClick={() => setActiveSection('my_registration')}>
-                <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition">
-                  <span className="font-bold text-slate-700">1st Semester (Current)</span>
-                  <span className="text-blue-600 font-bold text-sm">View Full Details →</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <StudentOverviewTab />;
 
       case 'timetable':
         return <TimetableView timetable={timetable} />;
@@ -203,6 +144,15 @@ export default function StudentDashboard() {
 
       case 'my_registration':
         return <RegistrationView courses={courses} />;
+        
+      case 'financial_aid':
+        return <FinancialAidTab />;
+        
+      case 'grievance':
+        return <GrievanceTab />;
+        
+      case 'placement_prep':
+        return <PlacementPrepTab />;
         
       case 'contact_details':
         return <ContactDetails profile={studentProfile} onUpdate={() => refetchProfile()} />;
