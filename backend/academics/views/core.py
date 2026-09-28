@@ -69,3 +69,13 @@ class CourseSectionViewSet(viewsets.ModelViewSet):
     queryset = CourseSection.objects.select_related('course', 'academic_term').all()
     serializer_class = CourseSectionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=False, methods=['get'])
+    def my_classes(self, request):
+        if request.user.role == 'FACULTY' or getattr(request.user, 'is_faculty_user', False):
+            # Find all distinct sections this faculty is teaching based on Timetable
+            from .attendance import Timetable
+            section_ids = Timetable.objects.filter(faculty=request.user).values_list('course_section_id', flat=True).distinct()
+            sections = self.queryset.filter(id__in=section_ids)
+            return Response(self.get_serializer(sections, many=True).data)
+        return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
