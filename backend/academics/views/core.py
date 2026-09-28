@@ -79,3 +79,18 @@ class CourseSectionViewSet(viewsets.ModelViewSet):
             sections = self.queryset.filter(id__in=section_ids)
             return Response(self.get_serializer(sections, many=True).data)
         return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(detail=True, methods=['get'])
+    def students(self, request, pk=None):
+        section = self.get_object()
+        from .enrollment import SemesterRegistration
+        registrations = SemesterRegistration.objects.filter(courses=section.course).select_related('enrollment__user')
+        
+        student_data = []
+        for reg in registrations:
+            student_data.append({
+                'enrollment_id': reg.enrollment.id,
+                'student_name': reg.enrollment.user.get_full_name() if reg.enrollment.user else 'Unknown',
+            })
+            
+        return Response(student_data)
