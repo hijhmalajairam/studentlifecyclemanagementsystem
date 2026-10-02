@@ -102,7 +102,7 @@ export default function Register() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="john@example.com" />
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} suppressHydrationWarning className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>

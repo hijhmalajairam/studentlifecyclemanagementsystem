@@ -155,14 +155,19 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+    ]
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
 ]
 
 # Celery Settings

@@ -9,8 +9,8 @@ const fetchProfile = async () => {
   return await fetchAPI('/admission/profiles/my_profile/');
 };
 
-const fetchApplications = async () => {
-  return await fetchAPI('/admission/applications/my_applications/');
+const fetchApplication = async () => {
+  return await fetchAPI('/admission/applications/my_application/');
 };
 
 export default function ProspectiveDashboard() {
@@ -27,14 +27,12 @@ export default function ProspectiveDashboard() {
     retry: false,
   });
 
-  const { data: apps, isLoading: appsLoading } = useQuery({
-    queryKey: ['applications'],
-    queryFn: fetchApplications,
+  const { data: application, isLoading: appLoading } = useQuery({
+    queryKey: ['application'],
+    queryFn: fetchApplication,
     enabled: !!profile,
     retry: false,
   });
-
-  const application = apps && apps.length > 0 ? apps[0] : null;
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -46,7 +44,7 @@ export default function ProspectiveDashboard() {
     onSuccess: () => {
       setDocName('');
       setDocFile(null);
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application'] });
     },
     onError: () => {
       alert('Upload failed');
@@ -60,7 +58,7 @@ export default function ProspectiveDashboard() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application'] });
     },
     onError: () => {
       alert('Failed to process fee payment.');
@@ -79,7 +77,7 @@ export default function ProspectiveDashboard() {
 
 
 
-  if (profileLoading || (profile && appsLoading)) {
+  if (profileLoading || (profile && appLoading)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

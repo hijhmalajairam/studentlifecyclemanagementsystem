@@ -129,7 +129,8 @@ function ApplicationFormContent() {
         throw new Error(JSON.stringify(errorData) || 'Failed to submit application');
       }
 
-      router.push('/dashboard/prospective');
+      // Force a full reload to ensure the dashboard fetches the fresh application data
+      window.location.href = '/dashboard/prospective';
     } catch (err: any) {
       setError(err.message);
       setSubmitting(false);
