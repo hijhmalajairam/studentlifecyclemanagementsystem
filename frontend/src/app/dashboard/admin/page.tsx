@@ -52,6 +52,8 @@ export default function AdminDashboard() {
   const [revaluations, setRevaluations] = useState<any[]>([]);
   const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
   const [courseGradingSchemes, setCourseGradingSchemes] = useState<any[]>([]);
+  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
+
 
   const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '' });
   const [ttForm, setTtForm] = useState({ course: '', day: 'MON', start_time: '09:00', end_time: '10:00', room: '' });
