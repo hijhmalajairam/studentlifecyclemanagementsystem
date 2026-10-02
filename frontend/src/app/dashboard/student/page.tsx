@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
+import StudentInternshipPortal from './components/StudentInternshipPortal';
 
 export default function StudentDashboard() {
   const [application, setApplication] = useState<any>(null);
@@ -57,6 +58,7 @@ export default function StudentDashboard() {
   const [disciplinary, setDisciplinary] = useState<any>(null);
   const [internshipWindow, setInternshipWindow] = useState<any>(null);
   const [module8Ready, setModule8Ready] = useState(false);
+  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -853,7 +855,6 @@ export default function StudentDashboard() {
                 {/* ─── INTERNSHIPS ─── */}
                 {activeTab === 'internship' && (
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Internship Requests</h2>
                     {!module8Ready ? (
                       <div className="bg-red-50 border border-red-200 p-6 rounded-2xl text-center">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -868,60 +869,8 @@ export default function StudentDashboard() {
                         </button>
                       </div>
                     ) : (
-                      <form onSubmit={submitInternship} className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200 mb-8 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Company Name</label>
-                            <input type="text" required placeholder="e.g. Google"
-                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={internshipForm.company_name} onChange={e => setInternshipForm({ ...internshipForm, company_name: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Role / Position</label>
-                            <input type="text" required placeholder="e.g. Software Engineer Intern"
-                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={internshipForm.role} onChange={e => setInternshipForm({ ...internshipForm, role: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
-                            <input type="date" required style={{ colorScheme: 'light' }}
-                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={internshipForm.start_date} onChange={e => setInternshipForm({ ...internshipForm, start_date: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Date</label>
-                            <input type="date" required style={{ colorScheme: 'light' }}
-                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={internshipForm.end_date} onChange={e => setInternshipForm({ ...internshipForm, end_date: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Stipend (Monthly ₹)</label>
-                            <input type="number" required placeholder="0"
-                              className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                              value={Number.isNaN(internshipForm.stipend) || internshipForm.stipend === 0 ? '' : internshipForm.stipend} onChange={e => setInternshipForm({ ...internshipForm, stipend: parseFloat(e.target.value) })} />
-                          </div>
-                        </div>
-                        <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-slate-900 px-6 py-2.5 rounded-xl font-semibold transition mt-4">Submit Internship details</button>
-                      </form>
+                      <StudentInternshipPortal enrollment={enrollment} />
                     )}
-                    <h3 className="text-lg font-semibold text-slate-700 mb-4 mt-8">My Internships</h3>
-                    {internships.length > 0 ? (
-                      <div className="space-y-3">
-                        {internships.map((int: any) => (
-                          <div key={int.id} className="bg-slate-50/50 p-4 border border-slate-200 rounded-xl flex items-center justify-between">
-                            <div>
-                              <p className="font-bold text-slate-900">{int.role} at {int.company_name}</p>
-                              <p className="text-xs text-slate-400">{int.start_date} to {int.end_date} · ₹{int.stipend}/mo</p>
-                            </div>
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                              int.status === 'APPROVED' || int.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                              int.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                              'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                            }`}>{int.status}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : <p className="text-slate-400 italic">No internships registered.</p>}
                     
                     {module8Ready && (
                        <div className="mt-8 bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center">
@@ -1037,6 +986,9 @@ export default function StudentDashboard() {
                                   <div key={c.id} className="bg-white/60 p-3 rounded-lg border border-yellow-200/50 mb-2">
                                     <p className="font-bold text-yellow-900 text-sm">{c.title}</p>
                                     <p className="text-xs text-yellow-800 mt-1">Reported on {c.date_of_incident} • {c.assessment_type.replace('_', ' ')}</p>
+                                    {c.evidence_file && (
+                                      <button onClick={() => setPreviewEvidence(c.evidence_file)} className="inline-block mt-2 text-xs font-bold bg-yellow-200/50 text-yellow-900 px-3 py-1 rounded-lg border border-yellow-300 hover:bg-yellow-200 transition">View Evidence</button>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -1057,6 +1009,9 @@ export default function StudentDashboard() {
                                 <p className="text-xs text-slate-600 mb-3">Case: {c.title}</p>
                                 {c.committee_remarks && (
                                   <p className="text-xs bg-white/50 p-2 rounded italic text-slate-700 border border-black/5">"{c.committee_remarks}"</p>
+                                )}
+                                {c.evidence_file && (
+                                  <button onClick={() => setPreviewEvidence(c.evidence_file)} className="inline-block mt-2 text-xs font-bold bg-black/5 text-slate-700 px-3 py-1 rounded-lg border border-black/10 hover:bg-black/10 transition">View Evidence</button>
                                 )}
                               </div>
                             ))}
@@ -1148,6 +1103,23 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+
+      {/* Evidence Preview Modal */}
+      {previewEvidence && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-700">Evidence Document</h3>
+              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-slate-600 p-1 bg-white rounded-full border border-slate-200 shadow-sm transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 p-4">
+              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-300 bg-white shadow-inner" title="Evidence Preview" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
