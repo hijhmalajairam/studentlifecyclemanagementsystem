@@ -417,6 +417,11 @@ class TimetableViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def my_timetable(self, request):
+        if request.user.role == 'FACULTY':
+            slots = Timetable.objects.filter(faculty=request.user).select_related('course', 'faculty')
+            serializer = self.get_serializer(slots, many=True)
+            return Response(serializer.data)
+            
         try:
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
@@ -573,9 +578,11 @@ class NoDuesViewSet(viewsets.ModelViewSet):
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
 
-from .models import DisciplinaryCase, Internship, InternalAssessment, InternshipWindow
-from .serializers import DisciplinaryCaseSerializer, InternshipSerializer, InternalAssessmentSerializer, InternshipWindowSerializer
-from users.permissions import IsAdminOrCommittee
+from .models import DisciplinaryCase, Internship, Company, InternshipAuditLog, InternalAssessment, InternshipWindow, FacultyInternshipOpportunity, InternshipDocument
+from .serializers import DisciplinaryCaseSerializer, InternshipSerializer, CompanySerializer, InternshipAuditLogSerializer, InternalAssessmentSerializer, InternshipWindowSerializer, FacultyInternshipOpportunitySerializer, InternshipDocumentSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from users.permissions import IsAdminOrCommittee, IsFacultyRole
 
 class DisciplinaryCaseViewSet(viewsets.ModelViewSet):
     queryset = DisciplinaryCase.objects.all()
@@ -705,9 +712,36 @@ class InternshipWindowViewSet(viewsets.ModelViewSet):
     serializer_class = InternshipWindowSerializer
 
 
+class CompanyViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class FacultyInternshipOpportunityViewSet(viewsets.ModelViewSet):
+    queryset = FacultyInternshipOpportunity.objects.all()
+    serializer_class = FacultyInternshipOpportunitySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['company', 'faculty_creator', 'is_active']
+    search_fields = ['role', 'company__name', 'location']
+
+    def perform_create(self, serializer):
+        serializer.save(faculty_creator=self.request.user)
+
+class InternshipDocumentViewSet(viewsets.ModelViewSet):
+    queryset = InternshipDocument.objects.all()
+    serializer_class = InternshipDocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['internship', 'document_type']
+
 class InternshipViewSet(viewsets.ModelViewSet):
     queryset = Internship.objects.all()
     serializer_class = InternshipSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'company', 'enrollment', 'internship_type']
+    search_fields = ['company_name', 'role', 'enrollment__enrollment_number', 'enrollment__user__first_name', 'enrollment__user__last_name']
+    ordering_fields = ['start_date', 'end_date', 'applied_date', 'created_at']
 
     def get_permissions(self):
         return [permissions.IsAuthenticated()]
@@ -716,10 +750,94 @@ class InternshipViewSet(viewsets.ModelViewSet):
         try:
             target_user = get_target_user(self.request.user)
             enrollment = Enrollment.objects.get(user=target_user)
-            serializer.save(enrollment=enrollment)
+
+            # Mutual Exclusion Check
+            active_states = ['DRAFT', 'SUBMITTED', 'PENDING', 'CHANGES_REQUIRED', 'RESUBMITTED', 'APPROVED', 'ASSIGNED', 'ACTIVE']
+            if Internship.objects.filter(enrollment=enrollment, status__in=active_states).exists():
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"detail": "You already have an active or pending internship. You cannot apply for or submit another."})
+
+            internship = serializer.save(enrollment=enrollment, status='DRAFT')
+            InternshipAuditLog.objects.create(
+                internship=internship,
+                user=self.request.user,
+                action='DRAFT_CREATED',
+                remarks='Internship application draft created.'
+            )
         except Enrollment.DoesNotExist:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"detail": "Not enrolled yet."})
+
+    @action(detail=False, methods=['post'])
+    def assign_to_student(self, request):
+        if request.user.role != 'FACULTY':
+            return Response({"detail": "Only faculty can assign internships."}, status=status.HTTP_403_FORBIDDEN)
+        
+        enrollment_number = request.data.get('enrollment_number')
+        if not enrollment_number:
+            return Response({"detail": "Enrollment number is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            enrollment = Enrollment.objects.get(enrollment_number=enrollment_number)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Mutual Exclusion Check
+        active_states = ['DRAFT', 'SUBMITTED', 'PENDING', 'CHANGES_REQUIRED', 'RESUBMITTED', 'APPROVED', 'ASSIGNED', 'ACTIVE']
+        if Internship.objects.filter(enrollment=enrollment, status__in=active_states).exists():
+            return Response({"detail": "This student already has an internship and cannot be assigned another internship."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        company_id = request.data.get('company_id')
+        try:
+            company = Company.objects.get(id=company_id)
+        except Company.DoesNotExist:
+            return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        internship = Internship.objects.create(
+            enrollment=enrollment,
+            company=company,
+            company_name=company.name,
+            role=request.data.get('role', ''),
+            start_date=request.data.get('start_date'),
+            end_date=request.data.get('end_date'),
+            stipend=request.data.get('stipend', 0),
+            location=request.data.get('location', ''),
+            work_mode=request.data.get('work_mode', 'ONSITE'),
+            description=request.data.get('description', ''),
+            status='ASSIGNED'
+        )
+        
+        InternshipAuditLog.objects.create(
+            internship=internship,
+            user=request.user,
+            action='ASSIGNED_BY_FACULTY',
+            remarks=f"Internship assigned by faculty {request.user.first_name} {request.user.last_name}"
+        )
+        
+        serializer = self.get_serializer(internship)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    @action(detail=True, methods=['post'])
+    def accept_assignment(self, request, pk=None):
+        internship = self.get_object()
+        
+        if internship.status != 'ASSIGNED':
+            return Response({"detail": "Only ASSIGNED internships can be accepted."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if internship.enrollment.user != request.user:
+            return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+            
+        internship.status = 'SUBMITTED' # Submitted for faculty to review documents if they want
+        internship.save()
+        
+        InternshipAuditLog.objects.create(
+            internship=internship,
+            user=request.user,
+            action='ASSIGNMENT_ACCEPTED',
+            remarks="Student accepted the faculty-assigned internship."
+        )
+        
+        return Response({"detail": "Internship accepted."})
 
     @action(detail=False, methods=['get'])
     def my_internships(self, request):
@@ -744,13 +862,19 @@ class InternshipViewSet(viewsets.ModelViewSet):
         enrollment.internship_waived = True
         enrollment.save()
 
-        Internship.objects.create(
+        internship = Internship.objects.create(
             enrollment=enrollment,
             company_name="Waived",
             role="N/A",
             start_date=timezone.now().date(),
             end_date=timezone.now().date(),
             status='WAIVED'
+        )
+        InternshipAuditLog.objects.create(
+            internship=internship,
+            user=request.user,
+            action='WAIVED',
+            remarks='Internship requirement waived.'
         )
 
         return Response({"detail": "Internship has been waived and flagged in academic profile."})
@@ -759,9 +883,129 @@ class InternshipViewSet(viewsets.ModelViewSet):
     def update_status(self, request, pk=None):
         internship = self.get_object()
         status_val = request.data.get('status')
+        remarks = request.data.get('remarks', '')
+        
+        # Enforce faculty role for approvals and changes
+        if status_val in ['APPROVED', 'REJECTED', 'CHANGES_REQUIRED', 'COMPLETED']:
+            if not request.user.is_staff and request.user.role not in ['ADMIN', 'FACULTY']:
+                return Response({"detail": "Permission denied. Only Faculty or Admin can perform this action."}, status=status.HTTP_403_FORBIDDEN)
+        
         if status_val not in dict(Internship.STATUS_CHOICES):
             return Response({"detail": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
         
+        old_status = internship.status
         internship.status = status_val
+        
+        if status_val == 'SUBMITTED':
+            Notification.objects.create(
+                user=internship.enrollment.user,
+                title="Internship Application Submitted",
+                message=f"Your internship application for {internship.company_name or 'a company'} has been submitted."
+            )
+            # Notify faculty (placeholder - assuming all faculty get it or assigned faculty)
+            # We'll just notify the student for now
+            
+        elif status_val == 'APPROVED':
+            internship.approved_date = timezone.now()
+            if 'faculty_mentor' in request.data:
+                internship.faculty_mentor_id = request.data['faculty_mentor']
+            Notification.objects.create(
+                user=internship.enrollment.user,
+                title="Internship Approved",
+                message=f"Your internship at {internship.company_name or 'the company'} has been APPROVED."
+            )
+        elif status_val == 'REJECTED':
+            internship.rejection_reason = remarks
+            Notification.objects.create(
+                user=internship.enrollment.user,
+                title="Internship Rejected",
+                message=f"Your internship at {internship.company_name or 'the company'} was rejected. Reason: {remarks}"
+            )
+        elif status_val == 'CHANGES_REQUIRED':
+            Notification.objects.create(
+                user=internship.enrollment.user,
+                title="Changes Required for Internship",
+                message=f"Faculty requested changes on your application. Comments: {remarks}"
+            )
+        elif status_val == 'RESUBMITTED':
+            Notification.objects.create(
+                user=internship.enrollment.user,
+                title="Internship Resubmitted",
+                message="Your application has been resubmitted for review."
+            )
+        elif status_val == 'COMPLETED':
+            internship.completion_date = timezone.now().date()
+            if 'technical_skills_rating' in request.data:
+                internship.technical_skills_rating = request.data['technical_skills_rating']
+                internship.communication_rating = request.data.get('communication_rating')
+                internship.teamwork_rating = request.data.get('teamwork_rating')
+                internship.problem_solving_rating = request.data.get('problem_solving_rating')
+                internship.professionalism_rating = request.data.get('professionalism_rating')
+                internship.attendance_rating = request.data.get('attendance_rating')
+                internship.faculty_remarks = request.data.get('faculty_remarks', '')
+
         internship.save()
-        return Response({"detail": f"Internship status updated to {status_val}."})
+        
+        InternshipAuditLog.objects.create(
+            internship=internship,
+            user=request.user,
+            action=status_val,
+            remarks=remarks
+        )
+        
+        return Response({"detail": f"Internship status updated from {old_status} to {status_val}."})
+
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        from django.db.models import Avg, Count
+        total = Internship.objects.count()
+        pending = Internship.objects.filter(status='PENDING').count()
+        active = Internship.objects.filter(status='ACTIVE').count()
+        completed = Internship.objects.filter(status='COMPLETED').count()
+        avg_stipend = Internship.objects.aggregate(Avg('stipend'))['stipend__avg'] or 0
+        return Response({
+            'total': total,
+            'pending': pending,
+            'active': active,
+            'completed': completed,
+            'avg_stipend': float(avg_stipend)
+        })
+
+from .models import CourseGradingScheme
+from .serializers import CourseGradingSchemeSerializer
+
+class CourseGradingSchemeViewSet(viewsets.ModelViewSet):
+    queryset = CourseGradingScheme.objects.all()
+    serializer_class = CourseGradingSchemeSerializer
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+    @action(detail=True, methods=['post'])
+    def finalize(self, request, pk=None):
+        scheme = self.get_object()
+        scheme.status = 'FINALIZED'
+        scheme.finalized_by = request.user
+        scheme.mean = request.data.get('mean', scheme.mean)
+        scheme.std_dev = request.data.get('std_dev', scheme.std_dev)
+        scheme.save()
+        return Response({'status': 'Grading scheme finalized and sent for approval.'})
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        if request.user.role not in ['ADMIN', 'DIRECTOR']:
+            return Response({'detail': 'Permission denied.'}, status=403)
+        scheme = self.get_object()
+        scheme.status = 'APPROVED'
+        scheme.approved_by = request.user
+        scheme.save()
+        return Response({'status': 'Grading scheme approved.'})
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if request.user.role not in ['ADMIN', 'DIRECTOR']:
+            return Response({'detail': 'Permission denied.'}, status=403)
+        scheme = self.get_object()
+        scheme.status = 'REJECTED'
+        scheme.save()
+        return Response({'status': 'Grading scheme rejected.'})

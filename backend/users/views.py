@@ -104,3 +104,8 @@ class InterviewersListView(generics.ListAPIView):
     queryset = User.objects.filter(role='INTERVIEWER')
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAdminUser,)
+
+class FacultyListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='FACULTY')
+    serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticated,)

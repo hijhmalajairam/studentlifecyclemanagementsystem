@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
-import InternshipManager from './components/InternshipManager';
+
 export default function FacultyDashboard() {
   const [courses, setCourses] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
@@ -167,7 +167,6 @@ export default function FacultyDashboard() {
   const [assessmentForm, setAssessmentForm] = useState<any>({ title: 'MID_1', enrollment_id: '', max_marks: 100, marks_obtained: 0, weightage: 10, status: 'EVALUATED' });
   const [disciplineForm, setDisciplineForm] = useState({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
   const [disciplineFile, setDisciplineFile] = useState<File | null>(null);
-  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
 
   const submitAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,53 +188,35 @@ export default function FacultyDashboard() {
       setAssessmentForm((prev: any) => ({ ...prev, title: 'MID_1', enrollment_id: '', marks_obtained: 0 }));
       fetchAPI('/academics/internal-assessments/').then(setInternalAssessments).catch(()=>{});
     } catch { alert('Failed to record internal assessment'); }
-  };
-
   const fillDummyAssessments = async () => {
     if (!selectedCourse) return;
     const students = getStudentsForCourse(selectedCourse.id);
     if (students.length === 0) return alert('No students to fill');
     
-    if (!confirm('This will create dummy scores for all assessments (Mid 1, Mid 2, Lab 1, Lab 2, Compre) for all students. Existing assessments for this course will be cleared first! Continue?')) return;
-
-    // Clear existing to prevent duplicates > 100
-    const existing = internalAssessments.filter(ia => ia.course === selectedCourse.id);
-    for (const ia of existing) {
-      try { await fetchAPI(`/academics/internal-assessments/${ia.id}/`, { method: 'DELETE' }); } catch(e){}
-    }
-
-    const assessmentsToFill = [
-      { title: 'MID_1', max: 20, weight: 20 },
-      { title: 'MID_2', max: 20, weight: 20 },
-      { title: 'LAB_1', max: 5, weight: 5 },
-      { title: 'LAB_2', max: 5, weight: 5 },
-      { title: 'COMPRE', max: 50, weight: 50 }
-    ];
+    if (!confirm('This will create dummy Mid 1 scores for all students in this course. Continue?')) return;
 
     let successCount = 0;
     for (const enrId of students) {
-      for (const ass of assessmentsToFill) {
-        try {
-          await fetchAPI('/academics/internal-assessments/', {
-            method: 'POST',
-            body: JSON.stringify({
-              course: selectedCourse.id,
-              enrollment: enrId,
-              title: ass.title,
-              max_marks: ass.max,
-              marks_obtained: Math.floor(Math.random() * (ass.max - (ass.max * 0.3) + 1)) + (ass.max * 0.3),
-              weightage: ass.weight,
-              status: 'EVALUATED'
-            })
-          });
-          successCount++;
-        } catch (e) {
-          console.error(`Failed to create dummy ${ass.title} for enr`, enrId);
-        }
+      try {
+        await fetchAPI('/academics/internal-assessments/', {
+          method: 'POST',
+          body: JSON.stringify({
+            course: selectedCourse.id,
+            enrollment: enrId,
+            title: 'MID_1',
+            max_marks: 100,
+            marks_obtained: Math.floor(Math.random() * (100 - 30 + 1)) + 30,
+            weightage: 20,
+            status: 'EVALUATED'
+          })
+        });
+        successCount++;
+      } catch (e) {
+        console.error('Failed to create dummy data for enr', enrId);
       }
     }
     
-    alert(`Filled ${successCount} dummy assessments across ${students.length} students.`);
+    alert(`Filled dummy Mid 1 assessments for ${successCount} students.`);
     fetchAPI('/academics/internal-assessments/').then(setInternalAssessments).catch(()=>{});
   };
 
@@ -247,13 +228,7 @@ export default function FacultyDashboard() {
     
     students.forEach((enrId: number) => {
       const studentAss = internalAssessments.filter(ia => ia.course === selectedCourse.id && ia.enrollment === enrId);
-      // Ensure we only count each type once
-      const uniqueAss = new Map();
-      studentAss.forEach(ia => uniqueAss.set(ia.title, ia));
-      
-      const studentTotal = Array.from(uniqueAss.values()).reduce((sum, ia) => 
-        sum + ((parseFloat(ia.marks_obtained || 0) / parseFloat(ia.max_marks || 100)) * ia.weightage), 0);
-        
+      const studentTotal = studentAss.reduce((sum, ia) => sum + (parseFloat(ia.marks_obtained || 0) * (ia.weightage / 100)), 0);
       marksList.push(studentTotal);
       totalMarks += studentTotal;
     });
@@ -277,8 +252,6 @@ export default function FacultyDashboard() {
     }
     
     const scheme = courseGradingSchemes.find(s => s.course === selectedCourse.id);
-    if (!confirm('Submit this grading curve for Admin review? You cannot change it once submitted.')) return;
-
     try {
       if (scheme) {
         await fetchAPI(`/academics/course-grading-schemes/${scheme.id}/finalize/`, {
@@ -286,14 +259,16 @@ export default function FacultyDashboard() {
           body: JSON.stringify({ mean: parseFloat(gradingSchemeForm.mean), std_dev: parseFloat(gradingSchemeForm.stdDev) })
         });
       } else {
-        await fetchAPI('/academics/course-grading-schemes/', {
+        const res = await fetchAPI('/academics/course-grading-schemes/', {
           method: 'POST',
           body: JSON.stringify({ course: selectedCourse.id, mean: parseFloat(gradingSchemeForm.mean), std_dev: parseFloat(gradingSchemeForm.stdDev), status: 'FINALIZED' })
         });
       }
+      alert('Grading scheme finalized and sent to Director for approval!');
       fetchAPI('/academics/course-grading-schemes/').then(setCourseGradingSchemes).catch(()=>{});
-      alert('Curve submitted for admin review!');
-    } catch (err: any) { alert('Failed to submit grading scheme: ' + (err.message || 'Error')); }
+    } catch (err: any) {
+      alert('Failed to finalize grading scheme: ' + (err.message || 'Error'));
+    }
   };
 
   const submitDiscipline = async (e: React.FormEvent) => {
@@ -463,7 +438,37 @@ export default function FacultyDashboard() {
               )}
             </div>
           ) : activeTab === 'internships' ? (
-            <InternshipManager />
+            <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
+              <h2 className="text-xl font-bold text-white mb-6">Internship Requests</h2>
+              <div className="space-y-4">
+                {internships.map(int => (
+                  <div key={int.id} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-white">{int.role} at {int.company_name}</p>
+                      <p className="text-sm text-slate-400">ENR-{int.enrollment} • {int.start_date} to {int.end_date} • Stipend: ₹{int.stipend}/mo</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                        int.status === 'APPROVED' || int.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                        int.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                        int.status === 'WAIVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                        'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                      }`}>{int.status}</span>
+                      {int.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'APPROVED' }) }).then(() => { alert('Approved!'); window.location.reload(); })} className="bg-green-600/20 hover:bg-green-600/40 text-green-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Approve</button>
+                          <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'REJECTED' }) }).then(() => { alert('Rejected!'); window.location.reload(); })} className="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Reject</button>
+                        </>
+                      )}
+                      {int.status === 'APPROVED' && (
+                         <button onClick={() => fetchAPI(`/academics/internships/${int.id}/update_status/`, { method: 'POST', body: JSON.stringify({ status: 'COMPLETED' }) }).then(() => { alert('Marked as Completed!'); window.location.reload(); })} className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold transition">Mark Completed</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {internships.length === 0 && <p className="text-slate-400">No internship records found.</p>}
+              </div>
+            </div>
           ) : (
             <>
               {/* Course Selector */}
@@ -585,7 +590,7 @@ export default function FacultyDashboard() {
                                     Auto-Calculate
                                   </button>
                                   <button onClick={finalizeGrading} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                    Request Admin Review
+                                    Finalize & Request Approval
                                   </button>
                                 </div>
                               )}
@@ -608,12 +613,7 @@ export default function FacultyDashboard() {
                               const hasMalpractice = disciplinaryCases.some(c => c.enrollment === enrId && c.course === selectedCourse.id && c.status !== 'RESOLVED');
                               
                               const studentAss = internalAssessments.filter(ia => ia.course === selectedCourse.id && ia.enrollment === enrId);
-                              
-                              // Ensure we only sum unique assessment types for display in case of dirty data
-                              const uniqueAss = new Map();
-                              studentAss.forEach(ia => uniqueAss.set(ia.title, ia));
-                              const totalMarks = Array.from(uniqueAss.values()).reduce((sum, ia) => 
-                                sum + ((parseFloat(ia.marks_obtained || 0) / parseFloat(ia.max_marks || 100)) * ia.weightage), 0);
+                              const totalMarks = studentAss.reduce((sum, ia) => sum + (parseFloat(ia.marks_obtained || 0) * (ia.weightage / 100)), 0);
                               
                               // Calculate relative grade if mean/stdDev is available
                               let relativeGrade = '--';
@@ -820,28 +820,30 @@ export default function FacultyDashboard() {
                         <table className="min-w-full divide-y divide-rose-900/30">
                           <thead className="bg-rose-950/40">
                             <tr>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Student ID</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Assessment</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Date</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Reason / Description</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Status</th>
-                              <th className="px-3 py-3 text-right text-xs font-bold text-rose-400 uppercase tracking-wider">Action</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Student</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Date & Type</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Incident Details</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Evidence (Optional)</th>
+                              <th className="px-4 py-4 text-right text-xs font-bold text-rose-400 uppercase tracking-wider">Action / Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-rose-900/20">
+                            
                             {/* Inline Form Row */}
                             <tr className="bg-rose-950/20 border-b border-rose-900/50">
-                              <td className="px-3 py-3 align-top">
-                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
+                              <td className="px-4 py-3 align-top">
+                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-rose-500"
                                   value={disciplineForm.enrollment_id} onChange={e => setDisciplineForm({ ...disciplineForm, enrollment_id: e.target.value })}>
-                                  <option value="">-- Choose --</option>
+                                  <option value="">-- Select Student --</option>
                                   {getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
                                     <option key={enrId} value={enrId}>ENR-{enrId}</option>
                                   ))}
                                 </select>
                               </td>
-                              <td className="px-3 py-3 align-top">
-                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
+                              <td className="px-4 py-3 align-top space-y-2">
+                                <input type="date" required style={{ colorScheme: 'dark' }} className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-rose-500"
+                                  value={disciplineForm.date_of_incident} onChange={e => setDisciplineForm({ ...disciplineForm, date_of_incident: e.target.value })} />
+                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-rose-500"
                                   value={disciplineForm.assessment_type} onChange={e => setDisciplineForm({ ...disciplineForm, assessment_type: e.target.value })}>
                                   <option value="ASSIGNMENT">Assignment</option>
                                   <option value="INTERNAL_EXAM">Internal Exam</option>
@@ -850,74 +852,50 @@ export default function FacultyDashboard() {
                                   <option value="OTHER">Other</option>
                                 </select>
                               </td>
-                              <td className="px-3 py-3 align-top">
-                                <input type="date" required style={{ colorScheme: 'dark' }} className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.date_of_incident} onChange={e => setDisciplineForm({ ...disciplineForm, date_of_incident: e.target.value })} />
-                              </td>
-                              <td className="px-3 py-3 align-top space-y-1">
-                                <input type="text" required placeholder="Title (e.g. Plagiarism)" className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
+                              <td className="px-4 py-3 align-top space-y-2">
+                                <input type="text" required placeholder="Title (e.g. Plagiarism)" className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-rose-500"
                                   value={disciplineForm.title} onChange={e => setDisciplineForm({ ...disciplineForm, title: e.target.value })} />
-                                <input type="text" required placeholder="Description..." className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
+                                <input type="text" required placeholder="Description (scrolls horizontally)..." className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-rose-500"
                                   value={disciplineForm.description} onChange={e => setDisciplineForm({ ...disciplineForm, description: e.target.value })} />
-                                <input id="evidence-upload" type="file" accept=".zip,.pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                  className="w-full text-slate-400 text-[9px] file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-rose-900/40 file:text-rose-400 file:font-semibold hover:file:bg-rose-900/60 file:cursor-pointer file:transition mt-1"
+                              </td>
+                              <td className="px-4 py-3 align-top">
+                                <input type="file" accept=".zip,.pdf,.doc,.docx,.png,.jpg,.jpeg"
+                                  className="w-full text-slate-400 text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-rose-900/40 file:text-rose-400 file:font-semibold hover:file:bg-rose-900/60 file:cursor-pointer file:transition"
                                   onChange={e => setDisciplineFile(e.target.files ? e.target.files[0] : null)} />
-                                {disciplineFile && (
-                                  <div className="text-[9px] font-medium text-emerald-400 mt-0.5 flex items-center justify-between">
-                                    <div className="flex items-center">
-                                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                      Selected: {disciplineFile.name}
-                                    </div>
-                                    <button 
-                                      onClick={() => {
-                                        setDisciplineFile(null);
-                                        const input = document.getElementById('evidence-upload') as HTMLInputElement;
-                                        if (input) input.value = '';
-                                      }}
-                                      className="text-rose-400 hover:text-rose-300 p-0.5 rounded-full hover:bg-rose-900/50 transition"
-                                      title="Remove file"
-                                    >
-                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                  </div>
-                                )}
                               </td>
-                              <td className="px-3 py-3 align-top">
-                                <span className="text-xs text-slate-500 italic">Pending Submit</span>
-                              </td>
-                              <td className="px-3 py-3 align-top text-right">
-                                <button onClick={submitDiscipline} className="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded text-xs font-bold transition whitespace-nowrap shadow-sm shadow-rose-900/20">
-                                  Report
+                              <td className="px-4 py-3 align-top text-right">
+                                <button onClick={submitDiscipline} className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap">
+                                  Report Incident
                                 </button>
                               </td>
                             </tr>
                             
                             {/* Display Rows */}
                             {disciplinaryCases.filter(dc => dc.course === selectedCourse.id).length === 0 ? (
-                              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500 text-sm">No malpractice incidents reported for this course.</td></tr>
+                              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500 text-sm">No malpractice incidents reported for this course.</td></tr>
                             ) : disciplinaryCases.filter(dc => dc.course === selectedCourse.id).map(dc => (
-                              <tr key={dc.id} className="hover:bg-slate-800/20 transition border-b border-rose-900/20 last:border-0">
-                                <td className="px-3 py-3 text-sm font-bold font-mono text-slate-300 align-top">
+                              <tr key={dc.id} className="hover:bg-slate-800/20 transition">
+                                <td className="px-4 py-4 text-sm font-bold font-mono text-slate-300 align-top">
                                   ENR-{dc.enrollment}
-                                  <div className="text-[9px] font-mono text-slate-500 mt-0.5">#{dc.case_number}</div>
+                                  <div className="text-[10px] font-mono text-slate-500 mt-1">Case #{dc.case_number}</div>
                                 </td>
-                                <td className="px-3 py-3 align-top">
-                                  <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">{dc.assessment_type.replace('_', ' ')}</div>
+                                <td className="px-4 py-4 align-top">
+                                  <div className="text-sm text-slate-300">{new Date(dc.date_of_incident).toLocaleDateString()}</div>
+                                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">{dc.assessment_type.replace('_', ' ')}</div>
                                 </td>
-                                <td className="px-3 py-3 align-top">
-                                  <div className="text-xs text-slate-400">{new Date(dc.date_of_incident).toLocaleDateString()}</div>
+                                <td className="px-4 py-4 align-top">
+                                  <p className="text-sm font-bold text-rose-300">{dc.title}</p>
+                                  <p className="text-xs text-slate-400 mt-1 max-w-sm truncate" title={dc.description}>{dc.description}</p>
                                 </td>
-                                <td className="px-3 py-3 align-top">
-                                  <p className="text-xs font-bold text-rose-300">{dc.title}</p>
-                                  <p className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] truncate" title={dc.description}>{dc.description}</p>
-                                  {dc.evidence_file && (
-                                    <button onClick={() => setPreviewEvidence(dc.evidence_file)} className="text-[9px] font-bold text-blue-400 hover:underline mt-1 inline-block">View Evidence</button>
+                                <td className="px-4 py-4 align-top">
+                                  {dc.evidence_file ? (
+                                    <a href={dc.evidence_file} target="_blank" className="text-xs font-bold text-blue-400 hover:underline">View Evidence</a>
+                                  ) : (
+                                    <span className="text-xs text-slate-600">No file</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 align-top">
-                                  <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                <td className="px-4 py-4 align-top text-right">
+                                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
                                     dc.status === 'REPORTED' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
                                     dc.status === 'UNDER_INVESTIGATION' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                                     dc.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
@@ -925,9 +903,6 @@ export default function FacultyDashboard() {
                                   }`}>
                                     {dc.status.replace('_', ' ')}
                                   </span>
-                                </td>
-                                <td className="px-3 py-3 align-top text-right">
-                                  <button className="text-xs font-medium text-slate-500 hover:text-white transition">View</button>
                                 </td>
                               </tr>
                             ))}
@@ -949,23 +924,6 @@ export default function FacultyDashboard() {
           )}
         </div>
       </div>
-      
-      {/* Evidence Preview Modal */}
-      {previewEvidence && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-              <h3 className="text-sm font-bold text-slate-200">Evidence Document</h3>
-              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-white p-1">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-950/50 p-4">
-              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-800 bg-white" title="Evidence Preview" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

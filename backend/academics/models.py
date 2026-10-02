@@ -256,6 +256,7 @@ class DisciplinaryCase(models.Model):
     date_of_incident = models.DateField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='OPEN')
     action_taken = models.TextField(blank=True, null=True)
+    evidence_file = models.FileField(upload_to='disciplinary_evidence/', blank=True, null=True)
     
     committee_decision = models.CharField(max_length=25, choices=COMMITTEE_DECISION_CHOICES, default='PENDING')
     committee_remarks = models.TextField(blank=True, null=True)
@@ -268,28 +269,129 @@ class DisciplinaryCase(models.Model):
         return f'{self.enrollment.enrollment_number} - {self.title} ({self.status})'
 
 
+class Company(models.Model):
+    name = models.CharField(max_length=255)
+    website = models.URLField(blank=True, null=True)
+    industry = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    hr_contact_name = models.CharField(max_length=100, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+
+    def __str__(self):
+        return self.name
+
+class FacultyInternshipOpportunity(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    faculty_creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    role = models.CharField(max_length=255)
+    description = models.TextField()
+    required_skills = models.TextField(blank=True)
+    eligibility = models.TextField(blank=True)
+    duration_months = models.IntegerField()
+    stipend = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    location = models.CharField(max_length=255, blank=True)
+    work_mode = models.CharField(max_length=20, default='ONSITE')
+    application_deadline = models.DateField()
+    available_positions = models.IntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.role} at {self.company.name}"
+
 class Internship(models.Model):
     STATUS_CHOICES = (
-        ('PENDING', 'Pending Approval'),
+        ('DRAFT', 'Draft'),
+        ('SUBMITTED', 'Submitted'),
+        ('PENDING', 'Pending Faculty Review'),
+        ('CHANGES_REQUIRED', 'Changes Required'),
+        ('RESUBMITTED', 'Resubmitted'),
         ('APPROVED', 'Approved'),
+        ('ASSIGNED', 'Assigned by Faculty'),
+        ('ACTIVE', 'Active'),
         ('COMPLETED', 'Completed'),
         ('REJECTED', 'Rejected'),
+        ('CANCELLED', 'Cancelled'),
         ('WAIVED', 'Waived'),
     )
+    WORK_MODE_CHOICES = (
+        ('ONSITE', 'On-site'),
+        ('REMOTE', 'Remote'),
+        ('HYBRID', 'Hybrid'),
+    )
+    
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='internships')
-    company_name = models.CharField(max_length=255)
+    opportunity = models.ForeignKey(FacultyInternshipOpportunity, on_delete=models.SET_NULL, null=True, blank=True, related_name='applications')
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='internships')
+    company_name = models.CharField(max_length=255, help_text="Legacy or custom company name", blank=True)
     role = models.CharField(max_length=255)
+    internship_type = models.CharField(max_length=100, blank=True)
+    work_mode = models.CharField(max_length=20, choices=WORK_MODE_CHOICES, default='ONSITE')
+    location = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+    
     start_date = models.DateField()
     end_date = models.DateField()
     stipend = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # Mentors
+    faculty_mentor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='mentored_internships')
     supervisor_name = models.CharField(max_length=255, blank=True)
     supervisor_email = models.EmailField(blank=True)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
-    report_file = models.FileField(upload_to='internships/', blank=True, null=True)
+    supervisor_phone = models.CharField(max_length=20, blank=True)
+    
+    # Workflow
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    applied_date = models.DateTimeField(auto_now_add=True)
+    approved_date = models.DateTimeField(null=True, blank=True)
+    completion_date = models.DateField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+    
+    # Documents are now managed by InternshipDocument model
+
+    
+    # Evaluations (1-5)
+    technical_skills_rating = models.IntegerField(null=True, blank=True)
+    communication_rating = models.IntegerField(null=True, blank=True)
+    teamwork_rating = models.IntegerField(null=True, blank=True)
+    problem_solving_rating = models.IntegerField(null=True, blank=True)
+    professionalism_rating = models.IntegerField(null=True, blank=True)
+    attendance_rating = models.IntegerField(null=True, blank=True)
+    faculty_remarks = models.TextField(blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.enrollment.enrollment_number} - {self.company_name} ({self.status})'
+
+class InternshipAuditLog(models.Model):
+    internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='audit_logs')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50)
+    remarks = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.internship.id} - {self.action} at {self.timestamp}"
+
+class InternshipDocument(models.Model):
+    DOCUMENT_TYPES = (
+        ('RESUME', 'Resume/CV'),
+        ('OFFER_LETTER', 'Offer Letter'),
+        ('CONFIRMATION', 'Internship Confirmation Letter'),
+        ('COVER_LETTER', 'Cover Letter'),
+        ('OTHER', 'Other Supporting Document'),
+    )
+    internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='documents')
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    file = models.FileField(upload_to='internships/documents/')
+    file_name = models.CharField(max_length=255, blank=True)
+    file_size = models.IntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.document_type} for {self.internship}"
 
 class InternalAssessment(models.Model):
     STATUS_CHOICES = (
@@ -297,9 +399,16 @@ class InternalAssessment(models.Model):
         ('EVALUATED', 'Evaluated'),
         ('FLAGGED_MALPRACTICE', 'Flagged Malpractice'),
     )
+    ASSESSMENT_TYPES = (
+        ('MID_1', 'Mid 1'),
+        ('MID_2', 'Mid 2'),
+        ('LAB_1', 'Lab 1'),
+        ('LAB_2', 'Lab 2'),
+        ('COMPRE', 'Compre'),
+    )
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='internal_assessments')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='internal_assessments')
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, choices=ASSESSMENT_TYPES, default='MID_1')
     max_marks = models.DecimalField(max_digits=5, decimal_places=2, default=50.00)
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     weightage = models.IntegerField(default=20)
@@ -320,4 +429,31 @@ class InternshipWindow(models.Model):
     
     def __str__(self):
         return self.title
+
+class CourseGradingScheme(models.Model):
+    STATUS_CHOICES = (
+        ('DRAFT', 'Draft'),
+        ('FINALIZED', 'Finalized (Pending Approval)'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    )
+    GRADING_TYPE_CHOICES = (
+        ('ABSOLUTE', 'Absolute'),
+        ('RELATIVE', 'Relative'),
+    )
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='grading_schemes')
+    grading_type = models.CharField(max_length=20, choices=GRADING_TYPE_CHOICES, default='RELATIVE')
+    mean = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    std_dev = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    finalized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='finalized_courses')
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_courses')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('course',)
+    
+    def __str__(self):
+        return f'{self.course.code} - {self.status}'
 

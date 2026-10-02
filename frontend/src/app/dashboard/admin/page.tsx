@@ -33,10 +33,12 @@ export default function AdminDashboard() {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [revaluations, setRevaluations] = useState<any[]>([]);
   const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
+  const [courseGradingSchemes, setCourseGradingSchemes] = useState<any[]>([]);
 
   // Forms
   const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '' });
   const [ttForm, setTtForm] = useState({ course: '', day: 'MON', start_time: '09:00', end_time: '10:00', room: '' });
+  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
 
   const refreshData = () => {
     fetchAPI('/admission/applications/').then(data => setApplications(data)).catch(() => {});
@@ -52,6 +54,7 @@ export default function AdminDashboard() {
     fetchAPI('/academics/transfers/').then(data => setTransfers(data)).catch(() => {});
     fetchAPI('/academics/revaluations/').then(data => setRevaluations(data)).catch(() => {});
     fetchAPI('/academics/disciplinary-cases/').then(data => setDisciplinaryCases(data)).catch(() => {});
+    fetchAPI('/academics/course-grading-schemes/').then(data => setCourseGradingSchemes(data)).catch(() => {});
   };
 
   useEffect(() => { refreshData(); }, []);
@@ -228,6 +231,7 @@ export default function AdminDashboard() {
     { id: 'transfers', label: 'Transfer / Exit', icon: '🚪', color: 'red' },
     { id: 'revaluations', label: 'Revaluations', icon: '📝', color: 'blue' },
     { id: 'discipline', label: 'Discipline', icon: '⚖️', color: 'rose' },
+    { id: 'grade-approvals', label: 'Grade Approvals', icon: '✅', color: 'emerald' },
   ];
 
   const colorMap: Record<string, string> = {
@@ -955,6 +959,11 @@ export default function AdminDashboard() {
                         <p><strong>Assessment Type:</strong> {c.assessment_type.replace('_', ' ')}</p>
                         <p><strong>Description:</strong> {c.description}</p>
                         <p><strong>Reported By:</strong> {c.reported_by_name || 'System'}</p>
+                        {c.evidence_file && (
+                          <div className="mt-2">
+                            <button onClick={() => setPreviewEvidence(c.evidence_file)} className="inline-block text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-200 transition">View Evidence File</button>
+                          </div>
+                        )}
                       </div>
 
                       {c.status === 'RESOLVED' && (
@@ -971,9 +980,101 @@ export default function AdminDashboard() {
               )}
             </div>
           )}
+          {/* ─── GRADE APPROVALS TAB ─── */}
+          {activeTab === 'grade-approvals' && (
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-900">Grade Approvals</h2>
+                <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-sm font-semibold border border-emerald-200">
+                  {courseGradingSchemes.filter(s => s.status === 'FINALIZED').length} Pending
+                </div>
+              </div>
+              <p className="text-slate-500 text-sm mb-6">Review and approve finalized relative grading curves submitted by faculty.</p>
+              
+              {courseGradingSchemes.length > 0 ? (
+                <div className="space-y-4">
+                  {courseGradingSchemes.map((scheme: any) => {
+                    const course = courses.find((c: any) => c.id === scheme.course);
+                    return (
+                    <div key={scheme.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-900">{course?.name || `Course ${scheme.course}`} ({course?.code})</h3>
+                          <p className="text-sm text-slate-500">Submitted by Faculty ID: {scheme.finalized_by}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider ${
+                          scheme.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                          scheme.status === 'FINALIZED' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                          scheme.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' :
+                          'bg-slate-200 text-slate-600 border-slate-300'
+                        }`}>{scheme.status.replace('_', ' ')}</span>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-xl border border-slate-100 text-sm text-slate-700 mb-4 flex space-x-8">
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Calculated Mean</p>
+                          <p className="text-xl font-medium text-slate-800">{scheme.mean}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Standard Deviation</p>
+                          <p className="text-xl font-medium text-slate-800">{scheme.std_dev}</p>
+                        </div>
+                      </div>
+
+                      {scheme.status === 'FINALIZED' && (
+                        <div className="flex space-x-3 mt-4">
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await fetchAPI(`/academics/course-grading-schemes/${scheme.id}/approve/`, { method: 'POST' });
+                                setCourseGradingSchemes(prev => prev.map(s => s.id === scheme.id ? { ...s, status: 'APPROVED' } : s));
+                                alert('Grading scheme finalized!');
+                              } catch { alert('Failed to finalize grading scheme.'); }
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                            Finalize Curve
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await fetchAPI(`/academics/course-grading-schemes/${scheme.id}/reject/`, { method: 'POST' });
+                                setCourseGradingSchemes(prev => prev.map(s => s.id === scheme.id ? { ...s, status: 'REJECTED' } : s));
+                                alert('Grading scheme rejected!');
+                              } catch { alert('Failed to reject grading scheme.'); }
+                            }}
+                            className="bg-rose-100 hover:bg-rose-200 text-rose-700 px-4 py-2 rounded-lg text-xs font-bold transition border border-rose-200">
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )})}
+                </div>
+              ) : (
+                <p className="text-slate-400 italic text-center py-10">No grading schemes submitted yet.</p>
+              )}
+            </div>
+          )}
 
         </div>
       </div>
+
+      {/* Evidence Preview Modal */}
+      {previewEvidence && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-700">Evidence Document</h3>
+              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-slate-600 p-1 bg-white rounded-full border border-slate-200 shadow-sm transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 p-4">
+              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-300 bg-white shadow-inner" title="Evidence Preview" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -142,6 +142,14 @@ export default function CommitteeDashboard() {
                       <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
                         <p className="text-slate-300 text-sm leading-relaxed">{selectedCase.description}</p>
                       </div>
+                      {selectedCase.evidence_file && (
+                        <div className="mt-4">
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Evidence</p>
+                          <a href={selectedCase.evidence_file} target="_blank" rel="noopener noreferrer" className="inline-block bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 font-bold px-4 py-2 rounded-lg transition border border-indigo-500/20">
+                            View / Download Evidence
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
 
