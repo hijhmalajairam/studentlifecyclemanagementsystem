@@ -27,9 +27,9 @@ export default function InternshipsTab() {
   }, []);
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden">
       <div className="p-8 border-b border-slate-100 bg-slate-50">
-        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Internships & Training</h2>
+        <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">Internships & Training</h2>
         <p className="text-sm text-slate-500 mt-1 font-medium">Manage student internships and open internship windows</p>
       </div>
 
@@ -40,7 +40,7 @@ export default function InternshipsTab() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 mb-8">
             {windows.map((w: any) => (
-              <div key={w.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div key={w.id} className="p-4 rounded border border-slate-200 bg-white shadow-sm">
                 <div className="flex justify-between">
                   <h4 className="font-bold text-slate-800">{w.title}</h4>
                   <span className={`px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded ${w.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>

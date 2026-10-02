@@ -1,7 +1,17 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { fetchAPI } from '@/lib/api';
-import { Camera, User as UserIcon, Mail, Phone, Shield, Building, MapPin, Calendar, CheckCircle2, Lock, Edit3, BookOpen, Fingerprint, Hash, Briefcase } from 'lucide-react';
+import { 
+  Camera, 
+  User as UserIcon, 
+  Mail, 
+  Phone, 
+  Shield, 
+  Building, 
+  Lock, 
+  Briefcase,
+  AlertTriangle
+} from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -77,19 +87,18 @@ export default function ProfilePage() {
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Placeholder for actual photo upload logic
     if (e.target.files && e.target.files[0]) {
-      setMessage('Photo upload simulated successfully! (Backend endpoint needed)');
+      setMessage('Photo upload simulated successfully!');
       setTimeout(() => setMessage(''), 3000);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="text-slate-500 font-medium">Loading profile...</p>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+          <p className="text-sm text-slate-500 font-medium">Loading profile...</p>
         </div>
       </div>
     );
@@ -101,222 +110,253 @@ export default function ProfilePage() {
   const displayName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-8 animate-in fade-in duration-300 font-sans">
       
-      {/* Cover Banner */}
-      <div className="relative w-full h-48 md:h-64 rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 overflow-hidden shadow-lg">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-        
-        {/* Decorative elements */}
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 blur-3xl rounded-full"></div>
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 blur-3xl rounded-full"></div>
-      </div>
-
-      <div className="relative -mt-20 md:-mt-24 px-4 sm:px-8 flex flex-col md:flex-row gap-6 items-start md:items-end">
-        
-        {/* Avatar with Camera Icon */}
-        <div className="relative group shrink-0">
-          <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white bg-gradient-to-tr from-slate-100 to-slate-200 shadow-2xl flex items-center justify-center text-4xl md:text-5xl font-black text-slate-400 overflow-hidden relative">
-            {initials}
-            
-            {/* Hover Overlay */}
-            <div 
-              onClick={handlePhotoClick}
-              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer backdrop-blur-sm"
-            >
-              <Camera className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <button 
-            onClick={handlePhotoClick}
-            className="absolute bottom-2 right-2 p-2.5 bg-white text-blue-600 rounded-full shadow-lg border border-slate-100 hover:bg-blue-50 hover:scale-105 transition-all md:hidden"
-          >
-            <Camera className="w-5 h-5" />
-          </button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*"
-            onChange={handlePhotoChange}
-          />
-        </div>
-
-        {/* Name and Basic Info */}
-        <div className="flex-1 pb-2">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{displayName}</h1>
-          <p className="text-slate-500 font-medium mt-1 flex items-center">
-            <Mail className="w-4 h-4 mr-2" /> {profile.email || profile.username}
-          </p>
-          
-          <div className="flex flex-wrap items-center gap-3 mt-4">
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200 shadow-sm">
-              <Shield className="w-3.5 h-3.5 mr-1.5" />
-              {profile.role?.replace('_', ' ')}
-            </span>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Active
-            </span>
-          </div>
-        </div>
-      </div>
-
+      {/* Success Notification */}
       {message && (
-        <div className="mx-4 sm:mx-8 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center shadow-sm animate-in fade-in zoom-in duration-300">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 mr-3" />
-          <p className="text-sm font-semibold text-emerald-700">{message}</p>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-md flex items-center shadow-sm">
+          <p className="text-sm font-medium text-emerald-800">{message}</p>
         </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-0 sm:px-4">
-        
-        {/* Left Sidebar - Tabs */}
-        <div className="lg:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden sticky top-24">
-            <div className="p-4 bg-slate-50 border-b border-slate-100">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Settings Menu</h3>
+      {/* Header Section */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        {/* Subtle decorative top border */}
+        <div className="h-2 bg-slate-900 w-full"></div>
+        <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            {/* Avatar */}
+            <div className="relative group shrink-0">
+              <div className="w-20 h-20 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl font-semibold text-slate-600 shadow-sm overflow-hidden">
+                {initials}
+                
+                {/* Hover Overlay */}
+                <div 
+                  onClick={handlePhotoClick}
+                  className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                >
+                  <Camera className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={handlePhotoChange}
+              />
             </div>
-            <div className="flex flex-col p-2 gap-1">
-              <TabButton active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} icon={<UserIcon className="w-4 h-4" />} label="Personal Details" />
-              <TabButton active={activeTab === 'institutional'} onClick={() => setActiveTab('institutional')} icon={<Building className="w-4 h-4" />} label={userRole === 'STUDENT' ? "Academic Record" : "Institutional Details"} />
-              <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={<Lock className="w-4 h-4" />} label="Security & Login" />
+
+            {/* Basic Info */}
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{displayName}</h1>
+              <p className="text-sm text-slate-500 mt-1 flex items-center">
+                {profile.email || profile.username}
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                  {profile.role?.replace('_', ' ')}
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                  Active Account
+                </span>
+              </div>
             </div>
           </div>
+          
+          <div className="shrink-0">
+             <button onClick={() => setActiveTab('personal')} className="px-4 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors shadow-sm">
+               Edit Profile
+             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout Grid */}
+      <div className="flex flex-col md:flex-row gap-8 items-start">
+        
+        {/* Left Sidebar Navigation */}
+        <div className="w-full md:w-64 shrink-0 flex flex-col gap-1 sticky top-6">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">Account Settings</h3>
+          <TabButton 
+            active={activeTab === 'personal'} 
+            onClick={() => setActiveTab('personal')} 
+            icon={<UserIcon className="w-4 h-4" />} 
+            label="Personal Details" 
+          />
+          <TabButton 
+            active={activeTab === 'institutional'} 
+            onClick={() => setActiveTab('institutional')} 
+            icon={<Building className="w-4 h-4" />} 
+            label={userRole === 'STUDENT' ? "Academic Record" : "Institutional Details"} 
+          />
+          <TabButton 
+            active={activeTab === 'security'} 
+            onClick={() => setActiveTab('security')} 
+            icon={<Lock className="w-4 h-4" />} 
+            label="Security & Login" 
+          />
         </div>
 
         {/* Right Content Area */}
-        <div className="lg:col-span-9 space-y-6">
+        <div className="flex-1 min-w-0">
           
           {/* PERSONAL DETAILS TAB */}
           {activeTab === 'personal' && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in duration-300">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">Personal Information</h3>
-                  <p className="text-sm text-slate-500 mt-1">Manage your personal details and contact preferences.</p>
-                </div>
-              </div>
+            <div className="space-y-6 animate-in fade-in duration-300">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <ProfileDetail label="First Name" value={profile.first_name || '-'} icon={<UserIcon className="w-4 h-4 text-slate-400" />} />
-                <ProfileDetail label="Last Name" value={profile.last_name || '-'} icon={<UserIcon className="w-4 h-4 text-slate-400" />} />
-                <ProfileDetail label="Primary Email" value={profile.email || '-'} icon={<Mail className="w-4 h-4 text-slate-400" />} />
-                <ProfileDetail label="System Username" value={profile.username} icon={<Fingerprint className="w-4 h-4 text-slate-400" />} />
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
+                  <p className="text-sm text-slate-500 mt-1">Manage your basic personal details.</p>
+                </div>
+                <dl className="divide-y divide-slate-100">
+                  <InfoRow label="First Name" value={profile.first_name} />
+                  <InfoRow label="Last Name" value={profile.last_name} />
+                  <InfoRow label="Primary Email" value={profile.email} />
+                  <InfoRow label="System Username" value={profile.username} />
+                </dl>
               </div>
 
-              <div className="mt-10 pt-8 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-900 mb-6">Contact Phone Number</h4>
-                <form onSubmit={handleSubmit(handleSave)} className="flex flex-col sm:flex-row gap-4 max-w-lg">
-                  <div className="flex-1 w-full relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-slate-400" />
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">Contact Information</h2>
+                  <p className="text-sm text-slate-500 mt-1">Update your contact details for official communication.</p>
+                </div>
+                <div className="p-6">
+                  <form onSubmit={handleSubmit(handleSave)} className="max-w-md space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Phone className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="tel"
+                          placeholder="+91 XXXXX XXXXX"
+                          className={`w-full bg-white border ${errors.phone ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500' : 'border-slate-300 focus:ring-slate-900/10 focus:border-slate-900'} text-slate-900 pl-10 pr-3 py-2.5 rounded-md outline-none focus:ring-2 transition-all text-sm shadow-sm`}
+                          {...register('phone')}
+                        />
+                      </div>
+                      {errors.phone && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.phone.message}</p>}
                     </div>
-                    <input
-                      type="tel"
-                      placeholder="+91 XXXXX XXXXX"
-                      className={`w-full bg-slate-50 border ${errors.phone ? 'border-red-300 focus:ring-red-500/20' : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500'} text-slate-900 pl-11 pr-4 py-3.5 rounded-xl outline-none focus:ring-4 transition-all font-semibold shadow-sm`}
-                      {...register('phone')}
-                    />
-                    {errors.phone && <span className="text-xs text-red-500 mt-2 block font-bold">{errors.phone.message}</span>}
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={updateMutation.isPending}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all hover:shadow-lg disabled:opacity-50"
-                  >
-                    {updateMutation.isPending ? 'Saving...' : 'Update'}
-                  </button>
-                </form>
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="submit"
+                        disabled={updateMutation.isPending}
+                        className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-md text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
+                      >
+                        {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
+
             </div>
           )}
 
           {/* INSTITUTIONAL / ACADEMIC TAB */}
           {activeTab === 'institutional' && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in duration-300">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">{userRole === 'STUDENT' ? 'Academic Record' : 'Institutional Details'}</h3>
-                  <p className="text-sm text-slate-500 mt-1">Your official university designations and records.</p>
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {userRole === 'STUDENT' ? 'Academic Record' : 'Institutional Details'}
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1">Your official university designations and assigned records.</p>
                 </div>
+                
+                <dl className="divide-y divide-slate-100">
+                  {userRole === 'STUDENT' && studentProfile ? (
+                    <>
+                      <InfoRow label="Enrollment Number" value={studentProfile.enrollment?.enrollment_number} />
+                      <InfoRow label="Program Name" value={studentProfile.enrollment?.program?.name} />
+                      <InfoRow label="Current Semester" value={studentProfile.enrollment?.current_semester ? `Semester ${studentProfile.enrollment.current_semester}` : null} />
+                      <InfoRow label="Academic Status" value={studentProfile.enrollment?.status} />
+                    </>
+                  ) : userRole === 'FACULTY' && facultyProfile ? (
+                    <>
+                      <InfoRow label="Faculty ID" value={facultyProfile.faculty_id} />
+                      <InfoRow label="Enrollment Number" value={facultyProfile.faculty_enrollment_number} />
+                      <InfoRow label="Department" value={facultyProfile.department_name} />
+                      <InfoRow label="Designation" value={facultyProfile.designation} />
+                      <InfoRow label="Administrative Role" value={facultyProfile.admin_role !== 'None' ? facultyProfile.admin_role : null} />
+                      <InfoRow label="Specialization" value={facultyProfile.specialization} />
+                      <InfoRow label="Highest Qualification" value={facultyProfile.highest_qualification} />
+                      <InfoRow label="Years of Experience" value={facultyProfile.years_of_experience} />
+                      <InfoRow label="Employment Type" value={facultyProfile.employment_type} />
+                      <InfoRow label="Institutional Email" value={facultyProfile.institutional_email} />
+                      <InfoRow label="Office Room" value={facultyProfile.office_room} />
+                      <InfoRow label="Current Status" value={facultyProfile.status} />
+                    </>
+                  ) : (
+                    <>
+                      <InfoRow label="Department" value={profile.role === 'ADMIN' ? 'System Administration' : 'General'} />
+                      <InfoRow label="Designation" value={profile.role === 'ADMIN' ? 'System Administrator' : 'Staff Member'} />
+                      <InfoRow label="Employee ID" value={profile.role === 'ADMIN' ? 'SYS-ADM-001' : null} />
+                      <InfoRow label="Official Email" value={`official.${profile.username}@veritasgrove.edu`} />
+                    </>
+                  )}
+                </dl>
               </div>
-              
-              {userRole === 'STUDENT' && studentProfile ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <ProfileDetail label="Enrollment Number" value={studentProfile.enrollment?.enrollment_number || '-'} icon={<Hash className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Program Name" value={studentProfile.enrollment?.program?.name || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Current Semester" value={`Semester ${studentProfile.enrollment?.current_semester || '-'}`} icon={<Calendar className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Status" value={studentProfile.enrollment?.status || '-'} icon={<CheckCircle2 className="w-4 h-4 text-slate-400" />} />
-                </div>
-              ) : userRole === 'FACULTY' && facultyProfile ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <ProfileDetail label="Faculty ID" value={facultyProfile.faculty_id || '-'} icon={<Hash className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Enrollment Number" value={facultyProfile.faculty_enrollment_number || '-'} icon={<Fingerprint className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Department" value={facultyProfile.department_name || '-'} icon={<Building className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Designation" value={facultyProfile.designation || '-'} icon={<Briefcase className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Admin Role" value={facultyProfile.admin_role || 'None'} icon={<Shield className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Specialization" value={facultyProfile.specialization || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Highest Qualification" value={facultyProfile.highest_qualification || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Years of Experience" value={String(facultyProfile.years_of_experience ?? '-')} icon={<Calendar className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Employment Type" value={facultyProfile.employment_type || '-'} icon={<Briefcase className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Institutional Email" value={facultyProfile.institutional_email || '-'} icon={<Mail className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Office Room" value={facultyProfile.office_room || '-'} icon={<MapPin className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Status" value={facultyProfile.status || '-'} icon={<CheckCircle2 className="w-4 h-4 text-slate-400" />} />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <ProfileDetail label="Department" value={profile.role === 'ADMIN' ? 'System Administration' : 'General Department'} icon={<Building className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Designation" value={profile.role === 'ADMIN' ? 'System Administrator' : 'Staff Member'} icon={<Briefcase className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Employee ID" value={profile.role === 'ADMIN' ? 'SYS-ADM-001' : 'EMP-PENDING'} icon={<Hash className="w-4 h-4 text-slate-400" />} />
-                  <ProfileDetail label="Official Email" value={`official.${profile.username}@veritas.edu`} icon={<Mail className="w-4 h-4 text-slate-400" />} />
-                </div>
-              )}
             </div>
           )}
 
           {/* SECURITY TAB */}
           {activeTab === 'security' && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in duration-300">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">Security & Login</h3>
-                  <p className="text-sm text-slate-500 mt-1">Manage your account security settings.</p>
-                </div>
-              </div>
+            <div className="space-y-6 animate-in fade-in duration-300">
               
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">Account Password</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Last changed recently</p>
-                    </div>
-                  </div>
-                  <button className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition-colors">
-                    Change Password
-                  </button>
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">Security & Authentication</h2>
+                  <p className="text-sm text-slate-500 mt-1">Manage your account security and sign-in methods.</p>
                 </div>
-
-                <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                      <Shield className="w-5 h-5" />
-                    </div>
+                
+                <div className="divide-y divide-slate-100">
+                  <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
                     <div>
-                      <p className="font-bold text-slate-900">Two-Factor Authentication</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Add an extra layer of security</p>
+                      <h3 className="text-sm font-semibold text-slate-900">Account Password</h3>
+                      <p className="text-sm text-slate-500 mt-1">Ensure your account is using a long, random password to stay secure.</p>
                     </div>
+                    <button className="px-4 py-2 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap">
+                      Change Password
+                    </button>
                   </div>
-                  <button className="px-4 py-2 border border-slate-200 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors">
-                    Enable 2FA
+                  
+                  <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Two-Factor Authentication (2FA)</h3>
+                      <p className="text-sm text-slate-500 mt-1">Add an extra layer of security to your account.</p>
+                    </div>
+                    <button className="px-4 py-2 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap">
+                      Enable 2FA
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-red-100 bg-red-50/30">
+                  <h2 className="text-lg font-bold text-red-900 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
+                    Danger Zone
+                  </h2>
+                </div>
+                
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-red-50/30 transition-colors">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Active Sessions</h3>
+                    <p className="text-sm text-slate-500 mt-1">Log out of all other active sessions across your devices.</p>
+                  </div>
+                  <button className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-md text-sm font-medium hover:bg-red-50 transition-colors shadow-sm whitespace-nowrap">
+                    Sign Out All Devices
                   </button>
                 </div>
               </div>
+
             </div>
           )}
 
@@ -330,26 +370,26 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-md transition-all text-sm ${
         active 
-          ? 'bg-blue-50 text-blue-700 font-bold' 
+          ? 'bg-slate-100 text-slate-900 font-semibold' 
           : 'text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900'
       }`}
     >
-      <span className={active ? 'text-blue-600' : 'text-slate-400'}>{icon}</span>
-      <span className="text-sm">{label}</span>
+      <span className={active ? 'text-slate-700' : 'text-slate-400'}>{icon}</span>
+      <span>{label}</span>
     </button>
   );
 }
 
-function ProfileDetail({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
+  const displayValue = value?.toString();
   return (
-    <div className="flex items-start space-x-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 transition-all">
-      <div className="mt-0.5">{icon}</div>
-      <div className="flex flex-col">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</span>
-        <span className="text-sm font-semibold text-slate-900">{value}</span>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+      <dt className="text-sm font-medium text-slate-500">{label}</dt>
+      <dd className="text-sm text-slate-900 font-medium sm:col-span-2">
+        {displayValue && displayValue.trim() !== '' && displayValue !== '-' ? displayValue : <span className="text-slate-400 italic font-normal">Not provided</span>}
+      </dd>
     </div>
   );
 }

@@ -312,7 +312,7 @@ export default function AdminDashboard() {
 
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex overflow-hidden theme-transition font-sans">
+    <div className="h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex overflow-hidden theme-transition font-sans">
       <UnifiedSidebar
         activeSection={activeTab}
         setActiveSection={setActiveTab}
@@ -396,11 +396,11 @@ export default function AdminDashboard() {
 
             {/* ─── ATTENDANCE TAB ─── */}
             {activeTab === 'academics' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
-                <div className="flex flex-col md:flex-row gap-4 mb-8 items-end bg-slate-50/50 p-5 rounded-2xl border border-slate-200">
+              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg shadow-2xl p-8">
+                <div className="flex flex-col md:flex-row gap-4 mb-8 items-end bg-slate-50/50 p-5 rounded-md border border-slate-200">
                   <div className="flex-1 w-full">
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Course</label>
-                    <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:border-cyan-500"
+                    <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none focus:border-cyan-500"
                       onChange={e => { const cId = parseInt(e.target.value); setSelectedCourse(visibleCourses.find(c => c.id === cId)); }}>
                       <option value="">-- Choose --</option>
                       {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
@@ -408,13 +408,13 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 w-full">
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Date</label>
-                    <input type="date" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:border-cyan-500" style={{ colorScheme: 'light' }}
+                    <input type="date" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none focus:border-cyan-500" style={{ colorScheme: 'light' }}
                       value={attendanceDate} onChange={e => setAttendanceDate(e.target.value)} />
                   </div>
                 </div>
                 {selectedCourse ? (
                   <>
-                    <div className="bg-slate-50/50 rounded-2xl border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-50/50 rounded-md border border-slate-200 overflow-hidden">
                       <table className="min-w-full divide-y divide-slate-100">
                         <thead className="bg-white">
                           <tr>
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
                             <tr key={enrId} className="hover:bg-white/30 transition">
                               <td className="px-8 py-4 text-sm font-bold font-mono text-slate-700">ENR-{enrId}</td>
                               <td className="px-8 py-4 text-right">
-                                <div className="inline-flex space-x-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                <div className="inline-flex space-x-2 bg-slate-50 p-1 rounded border border-slate-200">
                                   <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-sm font-medium transition ${attendanceData[enrId] === 'PRESENT' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-slate-400 border border-transparent'}`}>
                                     <input type="radio" className="hidden" name={`s-${enrId}`} checked={attendanceData[enrId] === 'PRESENT'} onChange={() => handleAttendanceChange(enrId, 'PRESENT')} /> Present
                                   </label>
@@ -444,22 +444,22 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                     <div className="mt-6 flex justify-end">
-                      <button onClick={submitAttendance} className="bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-900 px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Save Attendance</button>
+                      <button onClick={submitAttendance} className="bg-blue-600 text-slate-900 px-8 py-3 rounded font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Save Attendance</button>
                     </div>
                   </>
                 ) : (
-                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">Select a course above</div>
+                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-md">Select a course above</div>
                 )}
               </div>
             )}
 
             {/* ─── GRADE ENTRY TAB ─── */}
             {activeTab === 'grade_entry' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl">
+              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8 shadow-2xl">
                 <h2 className="text-xl font-bold text-slate-900 mb-6">Course Grade Entry</h2>
                 <div className="mb-6">
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Course</label>
-                  <select className="w-full max-w-md bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                  <select className="w-full max-w-md bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                     value={selectedCourse?.id || ''} onChange={e => setSelectedCourse(visibleCourses.find(c => c.id === parseInt(e.target.value)) || null)}>
                     <option value="">-- Select --</option>
                     {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
 
                 {selectedCourse ? (
                   <>
-                    <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden">
+                    <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
                       <table className="min-w-full text-left">
                         <thead className="bg-slate-50/50 border-b border-slate-200">
                           <tr>
@@ -503,18 +503,18 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                     <div className="mt-6 flex justify-end">
-                      <button onClick={submitGrades} className="bg-gradient-to-r from-purple-600 to-pink-600 text-slate-900 px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Submit Grades</button>
+                      <button onClick={submitGrades} className="bg-blue-600 text-slate-900 px-8 py-3 rounded font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Submit Grades</button>
                     </div>
                   </>
                 ) : (
-                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">Select a course above</div>
+                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-md">Select a course above</div>
                 )}
               </div>
             )}
 
             {/* ─── LEAVES TAB ─── */}
             {activeTab === 'leaves' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
+              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg shadow-2xl p-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-slate-900">Pending Leave Requests</h2>
                   <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-xs font-bold">{visibleLeaves.filter(l => l.status === 'PENDING').length} pending</span>
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
                 {visibleLeaves.length > 0 ? (
                   <div className="space-y-3">
                     {visibleLeaves.map((l: any) => (
-                      <div key={l.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl">
+                      <div key={l.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
@@ -532,7 +532,7 @@ export default function AdminDashboard() {
                                   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                                 }`}>{l.status}</span>
                             </div>
-                            <p className="text-sm text-slate-400 mb-1">📅 {l.start_date} → {l.end_date}</p>
+                            <p className="text-sm text-slate-400 mb-1">{l.start_date} → {l.end_date}</p>
                             <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border-l-4 border-slate-300 mt-2">"{l.reason}"</p>
                           </div>
                           {l.status === 'PENDING' && (
@@ -562,12 +562,12 @@ export default function AdminDashboard() {
             {/* ─── FEE MANAGEMENT ─── */}
             {activeTab === 'fees' && (
               <div className="space-y-8">
-                <form onSubmit={createFee} className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
+                <form onSubmit={createFee} className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Create Fee Record</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Enrollment ID</label>
-                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                         value={feeForm.enrollment} onChange={e => setFeeForm({ ...feeForm, enrollment: e.target.value })}>
                         <option value="">-- Select --</option>
                         {enrollments.map((e: any) => <option key={e.id} value={e.id}>{e.enrollment_number}</option>)}
@@ -575,23 +575,23 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Semester</label>
-                      <input type="number" min="1" max="8" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                      <input type="number" min="1" max="8" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                         value={feeForm.semester} onChange={e => setFeeForm({ ...feeForm, semester: e.target.value })} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Amount (₹)</label>
-                      <input type="number" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                      <input type="number" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                         value={feeForm.amount} onChange={e => setFeeForm({ ...feeForm, amount: e.target.value })} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Due Date</label>
-                      <input type="date" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none" style={{ colorScheme: 'light' }}
+                      <input type="date" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
                         value={feeForm.due_date} onChange={e => setFeeForm({ ...feeForm, due_date: e.target.value })} />
                     </div>
                   </div>
-                  <button type="submit" disabled={!hasWriteAccess} className={`bg-gradient-to-r from-purple-600 to-pink-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Create Fee</button>
+                  <button type="submit" disabled={!hasWriteAccess} className={`bg-blue-600 text-slate-900 px-6 py-3 rounded font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Create Fee</button>
                 </form>
-                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden">
+                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
                   <table className="min-w-full text-left">
                     <thead className="bg-slate-50/50 border-b border-slate-200">
                       <tr>
@@ -628,12 +628,12 @@ export default function AdminDashboard() {
             {/* ─── TIMETABLE ─── */}
             {activeTab === 'timetable' && (
               <div className="space-y-8">
-                <form onSubmit={createTimetableSlot} className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
+                <form onSubmit={createTimetableSlot} className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Add Timetable Slot</h3>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Course</label>
-                      <select required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                      <select required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                         value={ttForm.course} onChange={e => setTtForm({ ...ttForm, course: e.target.value })}>
                         <option value="">-- Select --</option>
                         {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
@@ -641,30 +641,30 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Day</label>
-                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
+                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
                         value={ttForm.day} onChange={e => setTtForm({ ...ttForm, day: e.target.value })}>
                         {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Time</label>
-                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none" style={{ colorScheme: 'light' }}
+                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
                         value={ttForm.start_time} onChange={e => setTtForm({ ...ttForm, start_time: e.target.value })} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Time</label>
-                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none" style={{ colorScheme: 'light' }}
+                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
                         value={ttForm.end_time} onChange={e => setTtForm({ ...ttForm, end_time: e.target.value })} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Room</label>
-                      <input type="text" placeholder="e.g. LH-301" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none placeholder-slate-500"
+                      <input type="text" placeholder="e.g. LH-301" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none placeholder-slate-500"
                         value={ttForm.room} onChange={e => setTtForm({ ...ttForm, room: e.target.value })} />
                     </div>
                   </div>
-                  <button type="submit" disabled={!hasWriteAccess} className={`bg-gradient-to-r from-pink-600 to-purple-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Add Slot</button>
+                  <button type="submit" disabled={!hasWriteAccess} className={`bg-blue-600 text-slate-900 px-6 py-3 rounded font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Add Slot</button>
                 </form>
-                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden">
+                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
                   <table className="min-w-full text-left">
                     <thead className="bg-slate-50/50 border-b border-slate-200">
                       <tr>
@@ -693,11 +693,11 @@ export default function AdminDashboard() {
 
             {/* ─── TRANSFERS ─── */}
             {activeTab === 'transfers' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
+              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
                 {visibleTransfers.length > 0 ? (
                   <div className="space-y-3">
                     {visibleTransfers.map((t: any) => (
-                      <div key={t.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl flex items-start justify-between">
+                      <div key={t.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md flex items-start justify-between">
                         <div>
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="font-mono text-sm font-bold text-slate-700">ENR-{t.enrollment}</span>
@@ -724,11 +724,11 @@ export default function AdminDashboard() {
 
             {/* ─── REVALUATIONS ─── */}
             {activeTab === 'revaluations' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
+              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
                 {visibleRevaluations.length > 0 ? (
                   <div className="space-y-3">
                     {visibleRevaluations.map((r: any) => (
-                      <div key={r.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl flex items-start justify-between">
+                      <div key={r.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md flex items-start justify-between">
                         <div>
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="font-bold text-slate-900">{r.course_code}</span>

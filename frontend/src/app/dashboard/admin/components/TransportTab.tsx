@@ -48,8 +48,8 @@ export default function TransportTab() {
     <div className="p-6 space-y-6">
       {/* Stats Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl shadow-sm">
-          <div className="p-3 rounded-xl bg-slate-200 text-slate-800">
+        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-sm">
+          <div className="p-3 rounded bg-slate-200 text-slate-800">
             <Bus className="w-6 h-6 text-slate-800" />
           </div>
           <div>
@@ -58,8 +58,8 @@ export default function TransportTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-blue-50 p-6 rounded-3xl shadow-sm">
-          <div className="p-3 rounded-xl bg-blue-100 text-blue-700">
+        <div className="flex items-center gap-4 bg-blue-50 p-6 rounded-lg shadow-sm">
+          <div className="p-3 rounded bg-blue-100 text-blue-700">
             <MapPin className="w-6 h-6" />
           </div>
           <div>
@@ -68,8 +68,8 @@ export default function TransportTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-3xl shadow-sm">
-          <div className="p-3 rounded-xl bg-emerald-100 text-emerald-700">
+        <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-lg shadow-sm">
+          <div className="p-3 rounded bg-emerald-100 text-emerald-700">
             <User className="w-6 h-6" />
           </div>
           <div>
@@ -82,7 +82,7 @@ export default function TransportTab() {
       {/* Main content: Live Routes + Pass Requests */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Live Routes Table */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Live Routes</h3>
             <div className="text-sm text-slate-500 flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function TransportTab() {
         </div>
 
         {/* Pass Requests */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow flex flex-col">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Pass Requests</h3>
             <div className="text-sm text-slate-500 flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function TransportTab() {
             {passRequests.length === 0 && <div className="text-sm text-slate-500">No requests at the moment.</div>}
 
             {passRequests.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+              <div key={p.id} className="flex items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-md">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-lg bg-slate-200">
                     <User className="w-6 h-6 text-slate-700" />

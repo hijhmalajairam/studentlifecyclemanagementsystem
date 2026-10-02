@@ -27,28 +27,28 @@ export default function StudentsTab({ enrollments, applications, expandedRow, se
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-900">Enrolled Students</h2>
-        <button onClick={() => setIsAdding(true)} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all">+ Add New Student</button>
+        <button onClick={() => setIsAdding(true)} className="bg-indigo-600 text-white px-5 py-2.5 rounded font-bold shadow-md hover:bg-indigo-700 transition-all">+ Add New Student</button>
       </div>
 
       {isAdding && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl mb-6">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xl mb-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">Create Student Account</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input type="text" placeholder="Username" className="p-3 border border-slate-300 rounded-xl" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
-            <input type="email" placeholder="Email" className="p-3 border border-slate-300 rounded-xl" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            <input type="text" placeholder="First Name" className="p-3 border border-slate-300 rounded-xl" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
-            <input type="text" placeholder="Last Name" className="p-3 border border-slate-300 rounded-xl" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
-            <input type="text" placeholder="Phone" className="p-3 border border-slate-300 rounded-xl" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-            <input type="text" placeholder="Password" className="p-3 border border-slate-300 rounded-xl" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+            <input type="text" placeholder="Username" className="p-3 border border-slate-300 rounded" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
+            <input type="email" placeholder="Email" className="p-3 border border-slate-300 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+            <input type="text" placeholder="First Name" className="p-3 border border-slate-300 rounded" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
+            <input type="text" placeholder="Last Name" className="p-3 border border-slate-300 rounded" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
+            <input type="text" placeholder="Phone" className="p-3 border border-slate-300 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <input type="text" placeholder="Password" className="p-3 border border-slate-300 rounded" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
           </div>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
-            <button onClick={handleAdd} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md">Create Account</button>
+            <button onClick={() => setIsAdding(false)} className="px-4 py-2 rounded text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
+            <button onClick={handleAdd} className="px-6 py-2 bg-indigo-600 text-white rounded font-bold hover:bg-indigo-700 shadow-md">Create Account</button>
           </div>
         </div>
       )}
 
-      <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg shadow-2xl overflow-hidden">
         <table className="min-w-full text-left">
           <thead className="bg-slate-50/50 border-b border-slate-200">
             <tr>
@@ -83,7 +83,7 @@ export default function StudentsTab({ enrollments, applications, expandedRow, se
                       const studentApp = applications.find(a => a.enrollment_number === e.enrollment_number);
                       return studentApp ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                          <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
                             <h4 className="font-bold text-slate-900 text-sm mb-4">Profile Details</h4>
                             <div className="space-y-2">
                               <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Username:</span> <span className="text-slate-800">{studentApp.profile_details?.username}</span></p>
@@ -92,7 +92,7 @@ export default function StudentsTab({ enrollments, applications, expandedRow, se
                               <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Entry Type:</span> <span className="text-slate-800">{studentApp.entry_type}</span></p>
                             </div>
                           </div>
-                          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                          <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
                             <h4 className="font-bold text-slate-900 text-sm mb-4">Academic & Seat Info</h4>
                             <div className="space-y-2">
                               {studentApp.seat_allocation ? (

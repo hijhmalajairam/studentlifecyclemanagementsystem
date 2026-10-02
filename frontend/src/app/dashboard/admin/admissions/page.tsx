@@ -161,7 +161,7 @@ export default function AdminAdmissionsDashboard() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex justify-between items-center">
+        <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admissions Office</h1>
             <p className="text-gray-500 mt-1">Manage all online and offline student applications.</p>
@@ -169,7 +169,7 @@ export default function AdminAdmissionsDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-2 bg-white p-2 rounded-xl border border-gray-100 shadow-sm w-max">
+        <div className="flex space-x-2 bg-white p-2 rounded border border-gray-100 shadow-sm w-max">
           <button onClick={() => setActiveTab('review')} className={`px-4 py-2 text-sm font-medium rounded-lg transition ${activeTab === 'review' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>Review Applications</button>
           <button onClick={() => setActiveTab('offline')} className={`px-4 py-2 text-sm font-medium rounded-lg transition ${activeTab === 'offline' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>New Offline Entry</button>
           <button onClick={() => setActiveTab('allocation')} className={`px-4 py-2 text-sm font-medium rounded-lg transition ${activeTab === 'allocation' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>Seat Allocation</button>
@@ -177,7 +177,7 @@ export default function AdminAdmissionsDashboard() {
 
         {/* Tab 1: Review */}
         {activeTab === 'review' && (
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Applications</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -249,7 +249,7 @@ export default function AdminAdmissionsDashboard() {
 
                             <div className="grid grid-cols-3 gap-8">
                               {/* Applicant Data */}
-                              <div className="col-span-1 bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                              <div className="col-span-1 bg-white p-5 rounded border border-gray-200 shadow-sm">
                                 <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100">Profile Details</h4>
                                 <dl className="space-y-3 text-sm">
                                   <div><dt className="text-gray-500 text-xs">Full Name</dt><dd className="font-medium text-gray-900">{app.profile_details?.first_name} {app.profile_details?.last_name}</dd></div>
@@ -262,7 +262,7 @@ export default function AdminAdmissionsDashboard() {
                               </div>
 
                               {/* Documents & Interview */}
-                              <div className="col-span-1 bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                              <div className="col-span-1 bg-white p-5 rounded border border-gray-200 shadow-sm">
                                 <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100">Documents</h4>
                                 {app.documents?.length === 0 ? (
                                   <p className="text-xs text-gray-500 italic">No documents uploaded.</p>
@@ -284,7 +284,7 @@ export default function AdminAdmissionsDashboard() {
                               </div>
 
                               {/* Admin Actions */}
-                              <div className="col-span-1 bg-gray-100 p-5 rounded-xl border border-gray-200">
+                              <div className="col-span-1 bg-gray-100 p-5 rounded border border-gray-200">
                                 <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">Admin Actions</h4>
                                 <div className="flex flex-col space-y-3">
                                   {app.status === 'SUBMITTED' && (
@@ -299,7 +299,7 @@ export default function AdminAdmissionsDashboard() {
                                   {app.status === 'ENROLLED' && (
                                     <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200 text-center">
                                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Enrollment Number</p>
-                                      <p className="text-lg font-black text-gray-900">{app.enrollment_number}</p>
+                                      <p className="text-lg font-semibold text-gray-900">{app.enrollment_number}</p>
                                     </div>
                                   )}
                                 </div>
@@ -319,7 +319,7 @@ export default function AdminAdmissionsDashboard() {
         {/* Schedule Interview Modal */}
         {scheduleAppId && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="bg-white rounded-md p-8 max-w-md w-full shadow-2xl">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Schedule Interview</h3>
               <form onSubmit={handleScheduleSubmit} className="space-y-4">
                 <div>
@@ -346,7 +346,7 @@ export default function AdminAdmissionsDashboard() {
 
         {/* Tab 2: Offline Entry */}
         {activeTab === 'offline' && (
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-2xl">
+          <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 max-w-2xl">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Manual Offline Application Entry</h2>
             {offSubmitMsg && <div className="mb-4 p-4 bg-indigo-50 text-indigo-700 rounded-lg text-sm">{offSubmitMsg}</div>}
             <form onSubmit={submitOffline} className="space-y-6">
@@ -375,7 +375,7 @@ export default function AdminAdmissionsDashboard() {
 
         {/* Tab 3: Seat Allocation */}
         {activeTab === 'allocation' && (
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-2xl">
+          <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 max-w-2xl">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Allocate Seat to Selected Student</h2>
             {allocMsg && <div className="mb-4 p-4 bg-purple-50 text-purple-700 rounded-lg text-sm">{allocMsg}</div>}
             <form onSubmit={allocateSeat} className="space-y-6">

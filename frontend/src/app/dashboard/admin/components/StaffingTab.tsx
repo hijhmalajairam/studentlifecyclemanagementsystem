@@ -71,14 +71,14 @@ export default function StaffingTab() {
   });
 
   return (
-    <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl">
+    <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h2 className="text-xl font-bold text-slate-900">Staffing &amp; Roles</h2>
         <div className="w-full md:w-1/3">
           <input
             type="text"
             placeholder="Search by name or email..."
-            className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3 rounded-xl outline-none focus:border-cyan-500"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3 rounded outline-none focus:border-cyan-500"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -88,7 +88,7 @@ export default function StaffingTab() {
       {loading ? (
         <p className="text-slate-400 text-center py-8">Loading faculty...</p>
       ) : (
-        <div className="bg-slate-50/50 rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="bg-slate-50/50 rounded-md border border-slate-200 overflow-hidden">
           <table className="min-w-full divide-y divide-slate-100 text-left">
             <thead className="bg-white">
               <tr>
@@ -159,7 +159,7 @@ export default function StaffingTab() {
                             </button>
                             <button
                               onClick={() => handleSaveRoles(f.id)}
-                              className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all"
+                              className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2 rounded text-xs font-bold shadow-md hover:shadow-lg transition-all"
                             >
                               Save Roles
                             </button>

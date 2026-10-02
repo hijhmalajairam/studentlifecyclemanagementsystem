@@ -43,7 +43,7 @@ const AlumniTab = () => {
   const progressPercentage = (fundraisingData.current / fundraisingData.target) * 100;
 
   return (
-    <div className="bg-slate-50 font-sans text-slate-900 rounded-3xl">
+    <div className="bg-slate-50 font-sans text-slate-900 rounded-lg">
       
       {/* Header Section */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 p-2">
@@ -52,11 +52,11 @@ const AlumniTab = () => {
           <p className="text-sm text-slate-500 mt-1">Manage past students, events, and fundraising campaigns.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
+          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             New Event
           </button>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200 flex items-center gap-2">
+          <button className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200 flex items-center gap-2">
             <Users className="w-4 h-4" />
             Invite Alumni
           </button>
@@ -70,8 +70,8 @@ const AlumniTab = () => {
           
           {/* Top Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
+            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-50 rounded flex items-center justify-center shrink-0">
                 <Users className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
@@ -79,8 +79,8 @@ const AlumniTab = () => {
                 <p className="text-2xl font-bold text-slate-900">14,205</p>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-50 rounded flex items-center justify-center shrink-0">
                 <Briefcase className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
@@ -88,8 +88,8 @@ const AlumniTab = () => {
                 <p className="text-2xl font-bold text-slate-900">92%</p>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center shrink-0">
+            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-50 rounded flex items-center justify-center shrink-0">
                 <Calendar className="w-6 h-6 text-amber-600" />
               </div>
               <div>
@@ -100,7 +100,7 @@ const AlumniTab = () => {
           </div>
 
           {/* Directory Table */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-lg font-semibold text-slate-900">Alumni Directory</h2>
               <div className="flex gap-2">
@@ -109,12 +109,12 @@ const AlumniTab = () => {
                   <input 
                     type="text" 
                     placeholder="Search alumni..." 
-                    className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64"
+                    className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <button className="p-2 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors">
+                <button className="p-2 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 transition-colors">
                   <Filter className="w-4 h-4" />
                 </button>
               </div>
@@ -135,7 +135,7 @@ const AlumniTab = () => {
                     <tr key={alumnus.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 border border-indigo-200 shadow-sm">
+                          <div className="w-10 h-10 rounded bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 border border-indigo-200 shadow-sm">
                             {alumnus.avatar}
                           </div>
                           <div>
@@ -155,7 +155,7 @@ const AlumniTab = () => {
                         <p className="text-xs text-slate-500">{alumnus.role}</p>
                       </td>
                       <td className="p-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-widest ${
                           alumnus.status === 'active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
                           {alumnus.status}
@@ -173,7 +173,7 @@ const AlumniTab = () => {
         <div className="space-y-6">
           
           {/* Fundraising Widget */}
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <TrendingUp className="w-32 h-32" />
@@ -184,7 +184,7 @@ const AlumniTab = () => {
                     <h3 className="text-lg font-semibold text-white">Fundraising</h3>
                     <p className="text-indigo-200 text-sm">{fundraisingData.campaignName}</p>
                   </div>
-                  <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <div className="p-2 bg-white/10 rounded backdrop-blur-sm">
                     <DollarSign className="w-5 h-5 text-indigo-300" />
                   </div>
                 </div>
@@ -212,7 +212,7 @@ const AlumniTab = () => {
           </div>
 
           {/* Upcoming Events Widget */}
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200">
             <div className="p-5 border-b border-slate-200 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-slate-900">Upcoming Events</h3>
               <button className="text-sm text-indigo-600 font-bold hover:text-indigo-700">See All</button>
@@ -221,11 +221,11 @@ const AlumniTab = () => {
               {eventsData.map((event) => (
                 <div key={event.id} className="p-5 hover:bg-slate-50 transition-colors group cursor-pointer">
                   <div className="flex gap-4">
-                    <div className="w-12 h-14 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">
+                    <div className="w-12 h-14 bg-indigo-50 border border-indigo-100 rounded flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] font-semibold uppercase text-indigo-600 tracking-wider">
                         {event.date.split(' ')[0]}
                       </span>
-                      <span className="text-lg font-black text-slate-900 leading-none mt-1">
+                      <span className="text-lg font-semibold text-slate-900 leading-none mt-1">
                         {event.date.split(' ')[1].replace(',', '')}
                       </span>
                     </div>

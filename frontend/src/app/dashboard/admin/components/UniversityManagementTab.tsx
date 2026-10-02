@@ -101,13 +101,13 @@ export default function UniversityManagementTab() {
   };
 
   const entityTabs = [
-    { id: 'departments' as ActiveEntity, label: 'Departments', count: departments.length, emoji: '🏢' },
-    { id: 'programs' as ActiveEntity, label: 'Programs', count: programs.length, emoji: '🎓' },
-    { id: 'courses' as ActiveEntity, label: 'Courses', count: courses.length, emoji: '📚' },
+    { id: 'departments' as ActiveEntity, label: 'Departments', count: departments.length, emoji: '' },
+    { id: 'programs' as ActiveEntity, label: 'Programs', count: programs.length, emoji: '' },
+    { id: 'courses' as ActiveEntity, label: 'Courses', count: courses.length, emoji: '' },
   ];
 
-  const inputCls = "w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-slate-900 placeholder-slate-400 transition-all";
-  const labelCls = "block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2";
+  const inputCls = "w-full bg-white border border-slate-300 rounded px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-slate-900 placeholder-slate-400 transition-all";
+  const labelCls = "block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2";
 
   return (
     <div className="space-y-6">
@@ -115,16 +115,16 @@ export default function UniversityManagementTab() {
       <div className="flex items-center gap-3 flex-wrap">
         {entityTabs.map(tab => (
           <button key={tab.id} onClick={() => { setActiveEntity(tab.id); resetForms(); }}
-            className={`px-5 py-3 rounded-2xl text-sm font-bold transition-all flex items-center gap-2 border ${activeEntity === tab.id
+            className={`px-5 py-3 rounded-md text-sm font-bold transition-all flex items-center gap-2 border ${activeEntity === tab.id
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-lg shadow-blue-500/25'
               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}>
             <span>{tab.emoji}</span>
             {tab.label}
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeEntity === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>{tab.count}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${activeEntity === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>{tab.count}</span>
           </button>
         ))}
         <button onClick={() => { setShowForm(!showForm); setEditingId(null); }}
-          className="ml-auto px-5 py-3 rounded-2xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2">
+          className="ml-auto px-5 py-3 rounded-md text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2">
           <span className="text-lg leading-none">{showForm ? '×' : '+'}</span>
           {showForm ? 'Cancel' : `Add ${activeEntity === 'departments' ? 'Department' : activeEntity === 'programs' ? 'Program' : 'Course'}`}
         </button>
@@ -132,8 +132,8 @@ export default function UniversityManagementTab() {
 
       {/* CREATE / EDIT FORM */}
       {showForm && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg">
-          <h3 className="text-lg font-black text-slate-900 mb-6">
+        <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-900 mb-6">
             {editingId ? 'Edit' : 'Create New'} {activeEntity === 'departments' ? 'Department' : activeEntity === 'programs' ? 'Program' : 'Course'}
           </h3>
 
@@ -144,7 +144,7 @@ export default function UniversityManagementTab() {
                 <div><label className={labelCls}>Code</label><input required className={inputCls} placeholder="e.g. CSE" value={deptForm.code} onChange={e => setDeptForm({ ...deptForm, code: e.target.value })} /></div>
               </div>
               <div><label className={labelCls}>Description</label><textarea className={inputCls + " min-h-[80px]"} placeholder="Optional description..." value={deptForm.description} onChange={e => setDeptForm({ ...deptForm, description: e.target.value })} /></div>
-              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Department</button>
+              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Department</button>
             </form>
           )}
 
@@ -163,7 +163,7 @@ export default function UniversityManagementTab() {
                 <div><label className={labelCls}>Duration (Years)</label><input type="number" min="1" max="6" required className={inputCls} value={progForm.duration_years} onChange={e => setProgForm({ ...progForm, duration_years: e.target.value })} /></div>
               </div>
               <div><label className={labelCls}>Description</label><textarea className={inputCls + " min-h-[80px]"} placeholder="Optional description..." value={progForm.description} onChange={e => setProgForm({ ...progForm, description: e.target.value })} /></div>
-              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Program</button>
+              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Program</button>
             </form>
           )}
 
@@ -175,14 +175,14 @@ export default function UniversityManagementTab() {
                 <div><label className={labelCls}>Credits</label><input type="number" min="1" max="10" required className={inputCls} value={courseForm.credits} onChange={e => setCourseForm({ ...courseForm, credits: e.target.value })} /></div>
                 <div><label className={labelCls}>Semester</label><input type="number" min="1" max="8" required className={inputCls} value={courseForm.semester} onChange={e => setCourseForm({ ...courseForm, semester: e.target.value })} /></div>
               </div>
-              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Course</button>
+              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">{editingId ? 'Update' : 'Create'} Course</button>
             </form>
           )}
         </div>
       )}
 
       {/* DATA TABLE */}
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
         {loading ? (
           <div className="py-20 text-center text-slate-400 font-bold">Loading...</div>
         ) : (
@@ -192,10 +192,10 @@ export default function UniversityManagementTab() {
               <table className="min-w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department Name</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Programs</th>
-                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Code</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Department Name</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Programs</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -203,7 +203,7 @@ export default function UniversityManagementTab() {
                     <tr><td colSpan={4} className="px-6 py-16 text-center text-slate-400 font-bold">No departments yet. Create one above!</td></tr>
                   ) : departments.map(d => (
                     <tr key={d.id} className="hover:bg-slate-50 transition group">
-                      <td className="px-6 py-4"><span className="bg-blue-500/10 text-blue-600 px-3 py-1 rounded-lg text-xs font-black border border-blue-500/20">{d.code}</span></td>
+                      <td className="px-6 py-4"><span className="bg-blue-500/10 text-blue-600 px-3 py-1 rounded-lg text-xs font-semibold border border-blue-500/20">{d.code}</span></td>
                       <td className="px-6 py-4 font-bold text-slate-900 text-sm">{d.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{programs.filter(p => p.department === d.id).length} programs</td>
                       <td className="px-6 py-4 text-right">
@@ -223,11 +223,11 @@ export default function UniversityManagementTab() {
               <table className="min-w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Program Name</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Duration</th>
-                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Code</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Program Name</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Department</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Duration</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -235,7 +235,7 @@ export default function UniversityManagementTab() {
                     <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-400 font-bold">No programs yet. Create one above!</td></tr>
                   ) : programs.map(p => (
                     <tr key={p.id} className="hover:bg-slate-50 transition group">
-                      <td className="px-6 py-4"><span className="bg-indigo-500/10 text-indigo-600 px-3 py-1 rounded-lg text-xs font-black border border-indigo-500/20">{p.code}</span></td>
+                      <td className="px-6 py-4"><span className="bg-indigo-500/10 text-indigo-600 px-3 py-1 rounded-lg text-xs font-semibold border border-indigo-500/20">{p.code}</span></td>
                       <td className="px-6 py-4 font-bold text-slate-900 text-sm">{p.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{p.department_name || departments.find(d => d.id === p.department)?.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{p.duration_years} years</td>
@@ -256,11 +256,11 @@ export default function UniversityManagementTab() {
               <table className="min-w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course Name</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Credits</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Semester</th>
-                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Code</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Course Name</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Credits</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Semester</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -268,7 +268,7 @@ export default function UniversityManagementTab() {
                     <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-400 font-bold">No courses yet. Create one above!</td></tr>
                   ) : courses.map(c => (
                     <tr key={c.id} className="hover:bg-slate-50 transition group">
-                      <td className="px-6 py-4"><span className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black border border-emerald-500/20">{c.code}</span></td>
+                      <td className="px-6 py-4"><span className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-lg text-xs font-semibold border border-emerald-500/20">{c.code}</span></td>
                       <td className="px-6 py-4 font-bold text-slate-900 text-sm">{c.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{c.credits}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">Sem {c.semester}</td>

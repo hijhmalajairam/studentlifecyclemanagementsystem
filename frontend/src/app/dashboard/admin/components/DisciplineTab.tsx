@@ -43,10 +43,10 @@ export default function DisciplineTab() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden">
       <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Disciplinary Cases</h2>
+          <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">Disciplinary Cases</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Review and resolve reported academic malpractices</p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function DisciplineTab() {
         )}
 
         {selectedCase && (
-          <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+          <div className="mt-8 p-6 bg-slate-50 rounded-md border border-slate-200">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Record Decision for: {selectedCase.title}</h3>
             <p className="text-sm text-slate-600 mb-4">{selectedCase.description}</p>
             <form onSubmit={handleDecision} className="space-y-4">

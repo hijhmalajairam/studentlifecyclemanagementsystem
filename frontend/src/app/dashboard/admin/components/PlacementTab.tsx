@@ -102,7 +102,7 @@ const PlacementTab = () => {
   const [studentSearch, setStudentSearch] = useState('');
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8 font-sans text-slate-900">
+    <div className="h-full bg-slate-50 p-6 md:p-8 font-sans text-slate-900">
       
       {/* Header Section */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -111,11 +111,11 @@ const PlacementTab = () => {
           <p className="text-slate-500 mt-1">Manage company drives, monitor student readiness, and track placement metrics.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
+          <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
             <Download className="w-4 h-4" />
             Export Reports
           </button>
-          <button className="px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-sm font-semibold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2">
+          <button className="px-5 py-2.5 bg-slate-900 text-white rounded-md text-sm font-semibold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             New Drive
           </button>
@@ -125,8 +125,8 @@ const PlacementTab = () => {
       {/* Top Recruiter Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-            <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
+          <div key={idx} className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+            <div className={`p-4 rounded-md ${stat.bg} ${stat.color}`}>
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
@@ -140,7 +140,7 @@ const PlacementTab = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         
         {/* Company Drives Table */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Company Drives</h2>
@@ -151,7 +151,7 @@ const PlacementTab = () => {
               <input 
                 type="text" 
                 placeholder="Search companies..." 
-                className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent w-full sm:w-64 bg-slate-50"
+                className="pl-9 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent w-full sm:w-64 bg-slate-50"
                 value={driveSearch}
                 onChange={(e) => setDriveSearch(e.target.value)}
               />
@@ -173,7 +173,7 @@ const PlacementTab = () => {
                   <tr key={drive.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center shrink-0">
                           <Building2 className="w-5 h-5 text-slate-600" />
                         </div>
                         <div>
@@ -198,7 +198,7 @@ const PlacementTab = () => {
                       <p className="text-xs text-slate-400 mt-1.5">{drive.applicants} applicants</p>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-700">
+                      <button className="p-2 hover:bg-slate-100 rounded transition-colors text-slate-400 hover:text-slate-700">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </td>
@@ -215,7 +215,7 @@ const PlacementTab = () => {
         </div>
 
         {/* Student Readiness Table */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -227,7 +227,7 @@ const PlacementTab = () => {
               <p className="text-sm text-slate-500 mt-1">Identify skill gaps and placement probability.</p>
             </div>
             <div className="flex gap-2">
-              <button className="p-2 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors">
+              <button className="p-2 border border-slate-200 rounded text-slate-500 hover:bg-slate-50 transition-colors">
                 <Filter className="w-4 h-4" />
               </button>
               <div className="relative">
@@ -235,7 +235,7 @@ const PlacementTab = () => {
                 <input 
                   type="text" 
                   placeholder="Search students..." 
-                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-48 bg-slate-50"
+                  className="pl-9 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-48 bg-slate-50"
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                 />

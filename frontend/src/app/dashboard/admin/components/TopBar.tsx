@@ -77,7 +77,7 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
           <input
             type="text"
             placeholder="Search students, courses, faculty..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
           />
         </div>
       </div>
@@ -89,22 +89,22 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
           <div className="relative" ref={roleRef}>
             <button
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-              className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-500 hover:bg-blue-500/20 transition-all"
+              className="flex items-center space-x-2 px-4 py-2 rounded bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-500 hover:bg-blue-500/20 transition-all"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
               <span>{activeRole}</span>
               <ChevronDown className="w-3 h-3" />
             </button>
             {showRoleDropdown && (
-              <div className="absolute right-0 top-full mt-3 w-56 bg-[var(--card-bg)] border border-[var(--sidebar-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                <p className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Switch Role</p>
+              <div className="absolute right-0 top-full mt-3 w-56 bg-[var(--card-bg)] border border-[var(--sidebar-border)] rounded-md shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                <p className="px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Switch Role</p>
                 {allRoles.map(role => (
                   <button
                     key={role}
                     onClick={() => { setActiveRole(role); setShowRoleDropdown(false); }}
                     className={`w-full text-left px-5 py-2.5 text-xs font-bold transition-all ${
                       activeRole === role
-                        ? 'bg-gradient-to-r from-[var(--primary-gradient-start)] to-[var(--primary-gradient-end)] text-white shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md'
                         : 'text-[var(--text-secondary)] hover:bg-[var(--card-hover)]'
                     }`}
                   >
@@ -119,14 +119,14 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
         {/* Dark Mode Toggle */}
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all shadow-sm"
+          className="w-10 h-10 rounded flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all shadow-sm"
           title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
         </button>
 
         {/* Notifications */}
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all relative shadow-sm">
+        <button className="w-10 h-10 rounded flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all relative shadow-sm">
           <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md">3</span>
         </button>
@@ -135,16 +135,16 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
         <div className="relative pl-2" ref={profileRef}>
           <button
             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-            className="flex items-center space-x-2 rounded-xl transition-transform hover:scale-105 active:scale-95"
+            className="flex items-center space-x-2 rounded transition-transform hover:scale-105 active:scale-95"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-black shadow-lg shadow-pink-500/30">
+            <div className="w-10 h-10 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold shadow-lg shadow-pink-500/30">
               {user?.first_name?.[0]?.toUpperCase() || 'U'}
             </div>
           </button>
           {showProfileDropdown && (
-            <div className="absolute right-0 top-full mt-3 w-64 bg-[var(--card-bg)] border border-[var(--sidebar-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 top-full mt-3 w-64 bg-[var(--card-bg)] border border-[var(--sidebar-border)] rounded-md shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
               <div className="px-5 py-4 border-b border-[var(--sidebar-border)]">
-                <p className="text-sm font-black text-[var(--text-primary)]">{user?.first_name} {user?.last_name}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{user?.first_name} {user?.last_name}</p>
                 <p className="text-[11px] font-medium text-[var(--text-secondary)] mt-0.5">{user?.email}</p>
                 {facultyProfile?.institutional_email && (
                   <p className="text-[10px] font-bold text-blue-500 mt-1 bg-blue-500/10 inline-block px-2 py-0.5 rounded-md">{facultyProfile.institutional_email}</p>

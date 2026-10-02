@@ -92,7 +92,7 @@ export default function LibraryTab() {
         <StatCard icon={TriangleAlert} label="Overdue" value={stats.overdue} detail="Requires follow-up today" iconClass="bg-rose-100 text-rose-700" />
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/40">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-200/40">
         <div className="flex flex-col gap-5 border-b border-slate-100 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2 text-slate-900">
@@ -108,7 +108,7 @@ export default function LibraryTab() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search title, author or ISBN"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
+              className="w-full rounded-md border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
             />
           </label>
         </div>
@@ -152,10 +152,10 @@ export default function LibraryTab() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-slate-900 p-6 text-white shadow-xl shadow-slate-300/40 sm:p-8">
+      <section className="rounded-lg border border-slate-200 bg-slate-900 p-6 text-white shadow-xl shadow-slate-300/40 sm:p-8">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div>
-            <div className="mb-4 inline-flex rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
+            <div className="mb-4 inline-flex rounded-md bg-white/10 p-3 ring-1 ring-white/15">
               <BookCopy className="h-6 w-6" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight">Issue / Return Desk</h2>
@@ -166,23 +166,23 @@ export default function LibraryTab() {
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
+          <div className="rounded-lg bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><UserRound className="h-3.5 w-3.5" /> Student ID</span>
-                <input value={studentId} onChange={(event) => setStudentId(event.target.value)} placeholder="e.g. STU-2026-041" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
+                <input value={studentId} onChange={(event) => setStudentId(event.target.value)} placeholder="e.g. STU-2026-041" className="w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
               </label>
               <label className="block">
                 <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><BookCopy className="h-3.5 w-3.5" /> Book ID</span>
-                <input value={bookId} onChange={(event) => setBookId(event.target.value)} placeholder="e.g. BK-1001" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm uppercase outline-none transition placeholder:normal-case placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
+                <input value={bookId} onChange={(event) => setBookId(event.target.value)} placeholder="e.g. BK-1001" className="w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm uppercase outline-none transition placeholder:normal-case placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
               </label>
             </div>
-            {deskMessage && <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{deskMessage}</p>}
+            {deskMessage && <p className="mt-4 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">{deskMessage}</p>}
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={() => handleDeskAction('issue')} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300 transition hover:from-slate-700 hover:to-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200">
+              <button type="button" onClick={() => handleDeskAction('issue')} className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-slate-800 to-slate-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300 transition hover:from-slate-700 hover:to-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200">
                 <ArrowUpFromLine className="h-4 w-4" /> Issue book
               </button>
-              <button type="button" onClick={() => handleDeskAction('return')} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-200 transition hover:from-sky-500 hover:to-cyan-400 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <button type="button" onClick={() => handleDeskAction('return')} className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-sky-600 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-200 transition hover:from-sky-500 hover:to-cyan-400 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 <ArrowDownToLine className="h-4 w-4" /> Return book
               </button>
             </div>
@@ -195,13 +195,13 @@ export default function LibraryTab() {
 
 function StatCard({ icon: Icon, label, value, detail, iconClass }: { icon: typeof LibraryBig; label: string; value: number; detail: string; iconClass: string }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-500">{label}</p>
           <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{value}</p>
         </div>
-        <div className={`rounded-2xl p-3 ${iconClass}`}><Icon className="h-5 w-5" /></div>
+        <div className={`rounded-md p-3 ${iconClass}`}><Icon className="h-5 w-5" /></div>
       </div>
       <p className="mt-5 text-xs text-slate-400">{detail}</p>
     </div>

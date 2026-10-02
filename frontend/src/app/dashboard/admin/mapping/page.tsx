@@ -196,46 +196,46 @@ export default function SystemMappingPage() {
     <div className="flex flex-col h-[calc(100vh-60px)] bg-[#020617] -m-6 p-6 rounded-tl-2xl overflow-hidden relative font-sans">
       {/* Top Stats Bar */}
       <div className="flex gap-4 mb-6 z-10 shrink-0">
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-4 flex-1 shadow-lg flex items-center">
+        <div className="bg-[#0f172a] border border-slate-800 rounded p-4 flex-1 shadow-lg flex items-center">
            <div className="bg-sky-500/10 p-3 rounded-lg mr-4"><Users className="text-sky-400" size={24} /></div>
            <div>
               <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Users</div>
-              <div className="text-2xl font-black text-sky-100">{stats?.total_users || 0}</div>
+              <div className="text-2xl font-semibold text-sky-100">{stats?.total_users || 0}</div>
            </div>
         </div>
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-4 flex-1 shadow-lg flex items-center">
+        <div className="bg-[#0f172a] border border-slate-800 rounded p-4 flex-1 shadow-lg flex items-center">
            <div className="bg-emerald-500/10 p-3 rounded-lg mr-4"><UserCheck className="text-emerald-400" size={24} /></div>
            <div>
               <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Students</div>
-              <div className="text-2xl font-black text-emerald-100">{stats?.students || 0}</div>
+              <div className="text-2xl font-semibold text-emerald-100">{stats?.students || 0}</div>
            </div>
         </div>
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-4 flex-1 shadow-lg flex items-center">
+        <div className="bg-[#0f172a] border border-slate-800 rounded p-4 flex-1 shadow-lg flex items-center">
            <div className="bg-purple-500/10 p-3 rounded-lg mr-4"><Building2 className="text-purple-400" size={24} /></div>
            <div>
               <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Faculty</div>
-              <div className="text-2xl font-black text-purple-100">{stats?.faculty || 0}</div>
+              <div className="text-2xl font-semibold text-purple-100">{stats?.faculty || 0}</div>
            </div>
         </div>
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-4 flex-1 shadow-lg flex items-center">
+        <div className="bg-[#0f172a] border border-slate-800 rounded p-4 flex-1 shadow-lg flex items-center">
            <div className="bg-orange-500/10 p-3 rounded-lg mr-4"><UserSquare2 className="text-orange-400" size={24} /></div>
            <div>
               <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Prospective</div>
-              <div className="text-2xl font-black text-orange-100">{stats?.prospective || 0}</div>
+              <div className="text-2xl font-semibold text-orange-100">{stats?.prospective || 0}</div>
            </div>
         </div>
-        <div className="bg-[#0f172a] border border-red-900/50 rounded-xl p-4 flex-1 shadow-lg flex items-center relative overflow-hidden">
+        <div className="bg-[#0f172a] border border-red-900/50 rounded p-4 flex-1 shadow-lg flex items-center relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
            <div className="bg-red-500/20 p-3 rounded-lg mr-4 z-10"><AlertTriangle className="text-red-400" size={24} /></div>
            <div className="z-10">
               <div className="text-red-300/80 text-xs font-bold uppercase tracking-wider">Missing Mappings</div>
-              <div className="text-2xl font-black text-red-400">{stats?.missing_mappings || 0}</div>
+              <div className="text-2xl font-semibold text-red-400">{stats?.missing_mappings || 0}</div>
            </div>
         </div>
       </div>
 
       {/* Main Canvas */}
-      <div className="flex-1 bg-[#020617] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+      <div className="flex-1 bg-[#020617] border border-slate-800 rounded-md overflow-hidden shadow-2xl relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
