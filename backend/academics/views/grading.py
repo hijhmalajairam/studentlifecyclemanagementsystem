@@ -76,3 +76,58 @@ class RevaluationRequestViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+from ..models import InternalAssessment, CourseGradingScheme
+from ..serializers import InternalAssessmentSerializer, CourseGradingSchemeSerializer
+
+class InternalAssessmentViewSet(viewsets.ModelViewSet):
+    queryset = InternalAssessment.objects.all()
+    serializer_class = InternalAssessmentSerializer
+
+    @action(detail=False, methods=['get'])
+    def my_assessments(self, request):
+        try:
+            enrollment = Enrollment.objects.get(user=request.user)
+            assessments = InternalAssessment.objects.filter(enrollment=enrollment)
+            serializer = self.get_serializer(assessments, many=True)
+            return Response(serializer.data)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Not enrolled."}, status=400)
+
+
+
+class CourseGradingSchemeViewSet(viewsets.ModelViewSet):
+    queryset = CourseGradingScheme.objects.all()
+    serializer_class = CourseGradingSchemeSerializer
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+    @action(detail=True, methods=['post'])
+    def finalize(self, request, pk=None):
+        scheme = self.get_object()
+        scheme.status = 'FINALIZED'
+        scheme.finalized_by = request.user
+        scheme.mean = request.data.get('mean', scheme.mean)
+        scheme.std_dev = request.data.get('std_dev', scheme.std_dev)
+        scheme.save()
+        return Response({'status': 'Grading scheme finalized and sent for approval.'})
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        if request.user.role not in ['ADMIN', 'DIRECTOR']:
+            return Response({'detail': 'Permission denied.'}, status=403)
+        scheme = self.get_object()
+        scheme.status = 'APPROVED'
+        scheme.approved_by = request.user
+        scheme.save()
+        return Response({'status': 'Grading scheme approved.'})
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if request.user.role not in ['ADMIN', 'DIRECTOR']:
+            return Response({'detail': 'Permission denied.'}, status=403)
+        scheme = self.get_object()
+        scheme.status = 'REJECTED'
+        scheme.save()
+        return Response({'status': 'Grading scheme rejected.'})

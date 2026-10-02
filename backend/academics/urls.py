@@ -5,7 +5,9 @@ from .views import (
     AttendanceViewSet, LeaveViewSet, ResultViewSet,
     FeeViewSet, TimetableViewSet, NotificationViewSet,
     RevaluationRequestViewSet, TransferRequestViewSet, NoDuesViewSet,
-    DisciplinaryCaseViewSet, InternshipViewSet, FacultyProfileViewSet, StudentProfileViewSet
+    DisciplinaryCaseViewSet, InternshipViewSet, FacultyProfileViewSet, StudentProfileViewSet,
+    CompanyViewSet, FacultyInternshipOpportunityViewSet, InternshipDocumentViewSet,
+    InternshipWindowViewSet, InternalAssessmentViewSet, CourseGradingSchemeViewSet
 )
 from .views.placements import AIPlacementViewSet
 
@@ -29,6 +31,12 @@ router.register(r'internships', InternshipViewSet)
 router.register(r'faculty', FacultyProfileViewSet)
 router.register(r'student-profiles', StudentProfileViewSet, basename='student-profiles')
 router.register(r'placements', AIPlacementViewSet, basename='placements')
+router.register(r'companies', CompanyViewSet)
+router.register(r'faculty-opportunities', FacultyInternshipOpportunityViewSet)
+router.register(r'internship-documents', InternshipDocumentViewSet)
+router.register(r'internship-windows', InternshipWindowViewSet)
+router.register(r'internal-assessments', InternalAssessmentViewSet)
+router.register(r'course-grading-schemes', CourseGradingSchemeViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -18,6 +18,7 @@ import RegistrationView from './components/RegistrationView';
 import StudentOverviewTab from './components/StudentOverviewTab';
 import PlacementPrepTab from './components/PlacementPrepTab';
 import FinancialAidTab from './components/FinancialAidTab';
+import StudentInternshipPortal from './components/StudentInternshipPortal';
 import GrievanceTab from './components/GrievanceTab';
 import '../admin/dashboard-theme.css';
 import TopBar from '../admin/components/TopBar';

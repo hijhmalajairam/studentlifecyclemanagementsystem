@@ -5,6 +5,8 @@ import { fetchAPI } from '@/lib/api';
 import '../admin/dashboard-theme.css'; // Reuse theme
 import MyTimetable from './components/MyTimetable';
 import MyClasses from './components/MyClasses';
+import InternshipManager from './components/InternshipManager';
+import FacultyOpportunities from './components/FacultyOpportunities';
 
 export default function FacultyDashboard() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -62,6 +64,15 @@ export default function FacultyDashboard() {
       ]
     }
   ];
+
+  
+  sidebarSections.push({
+    group: 'Internships',
+    items: [
+      { id: 'internship_manager', label: 'Internship Manager', icon: '🏢' },
+      { id: 'faculty_opportunities', label: 'My Opportunities', icon: '🧑‍🏫' },
+    ]
+  });
 
   if (isHOD) {
     sidebarSections.push({
@@ -196,6 +207,8 @@ export default function FacultyDashboard() {
             <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px]">
               {activeSection === 'my_timetable' && <MyTimetable />}
               {activeSection === 'my_classes' && <MyClasses />}
+              {activeSection === 'internship_manager' && <InternshipManager />}
+              {activeSection === 'faculty_opportunities' && <FacultyOpportunities />}
               {activeSection === 'my_dashboard' && (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4 opacity-50">⊞</div>
@@ -204,7 +217,7 @@ export default function FacultyDashboard() {
                 </div>
               )}
               {/* Fallback for HOD/Placement tabs for now */}
-              {!['my_timetable', 'my_classes', 'my_dashboard'].includes(activeSection) && (
+              {!['my_timetable', 'my_classes', 'my_dashboard', 'internship_manager', 'faculty_opportunities'].includes(activeSection) && (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4 opacity-50">
                     {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}

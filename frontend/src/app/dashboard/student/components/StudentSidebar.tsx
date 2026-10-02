@@ -111,6 +111,12 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
           {!collapsed && <span>AI Placement Prep</span>}
         </div>
 
+        <div className={navItemClass('internship')} onClick={() => setActiveSection('internship')}>
+          <BookOpen size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Internship Portal</span>}
+        </div>
+
+
         <div className={navItemClass('mobile_portal')} onClick={() => setActiveSection('mobile_portal')}>
           <Smartphone size={18} className={collapsed ? 'mx-auto' : ''} />
           {!collapsed && <span>Mobile Portal</span>}
