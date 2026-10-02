@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { fetchAPI } from '@/lib/api';
 
 export default function AdminAdmissionsDashboard() {
   const [activeTab, setActiveTab] = useState<'review' | 'offline' | 'allocation'>('review');
@@ -40,11 +41,9 @@ export default function AdminAdmissionsDashboard() {
 
   const fetchInterviewers = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/users/interviewers/', {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        setInterviewers(await res.json());
+      const data = await fetchAPI('/users/interviewers/');
+      if (data) {
+        setInterviewers(data);
       }
     } catch (e) {
       
@@ -53,11 +52,9 @@ export default function AdminAdmissionsDashboard() {
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/admission/applications/', {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        setApplications(await res.json());
+      const data = await fetchAPI('/admission/applications/');
+      if (data) {
+        setApplications(data);
       }
     } catch (e) {
       
@@ -87,38 +84,27 @@ export default function AdminAdmissionsDashboard() {
         }
       };
 
-      const res = await fetch('http://localhost:8000/api/admission/applications/create_offline/', {
+      const res = await fetchAPI('/admission/applications/create_offline/', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
       
-      if (res.ok) {
+      if (res) {
         setOffSubmitMsg('Successfully created offline application!');
         fetchApplications();
         // clear form
         setOffUsername(''); setOffEmail(''); setOffPassword(''); setOffFirstName(''); setOffLastName(''); setOffPhone(''); setOffPrevSchool(''); setOffMarks('');
-      } else {
-        const err = await res.json();
-        setOffSubmitMsg('Error: ' + JSON.stringify(err));
       }
-    } catch (err) {
-      setOffSubmitMsg('Error creating offline application.');
+    } catch (err: any) {
+      setOffSubmitMsg('Error creating offline application: ' + err.message);
     }
   };
 
   const allocateSeat = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:8000/api/admission/allocations/', {
+      const res = await fetchAPI('/admission/allocations/', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           application: allocAppId,
           allocated_department: allocDept,
@@ -126,30 +112,23 @@ export default function AdminAdmissionsDashboard() {
           allocated_batch: allocBatch
         })
       });
-      if (res.ok) {
+      if (res) {
         setAllocMsg('Seat allocated successfully! Student moved to FEE PENDING.');
         fetchApplications();
         setAllocAppId(''); setAllocProgram(''); setAllocDept(''); setAllocBatch('');
-      } else {
-        const err = await res.json();
-        setAllocMsg('Error: ' + JSON.stringify(err));
       }
-    } catch (err) {
-      setAllocMsg('Error allocating seat.');
+    } catch (err: any) {
+      setAllocMsg('Error allocating seat: ' + err.message);
     }
   };
 
   const updateStatus = async (appId: number, newStatus: string, additionalData: any = {}) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/admission/applications/${appId}/`, {
+      const res = await fetchAPI(`/admission/applications/${appId}/`, {
         method: 'PATCH',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ status: newStatus, ...additionalData })
       });
-      if (res.ok) {
+      if (res) {
         setScheduleAppId(null);
         fetchApplications();
       }

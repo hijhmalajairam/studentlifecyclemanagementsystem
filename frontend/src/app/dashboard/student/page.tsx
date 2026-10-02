@@ -18,7 +18,6 @@ import RegistrationView from './components/RegistrationView';
 import StudentOverviewTab from './components/StudentOverviewTab';
 import PlacementPrepTab from './components/PlacementPrepTab';
 import FinancialAidTab from './components/FinancialAidTab';
-import StudentInternshipPortal from './components/StudentInternshipPortal';
 import GrievanceTab from './components/GrievanceTab';
 import '../admin/dashboard-theme.css';
 import TopBar from '../admin/components/TopBar';
@@ -299,10 +298,10 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-3">
-                      <button className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">
+                      <button onClick={() => window.print()} className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">
                         Download PDF
                       </button>
-                      <button className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">
+                      <button onClick={() => window.print()} className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">
                         Print Preview
                       </button>
                       <button className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
@@ -531,23 +530,6 @@ export default function StudentDashboard() {
           </div>
         </main>
       </div>
-
-      {/* Evidence Preview Modal */}
-      {previewEvidence && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700">Evidence Document</h3>
-              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-slate-600 p-1 bg-white rounded-full border border-slate-200 shadow-sm transition">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-100 p-4">
-              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-300 bg-white shadow-inner" title="Evidence Preview" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

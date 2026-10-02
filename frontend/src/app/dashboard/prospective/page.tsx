@@ -1,19 +1,16 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { fetchAPI } from '@/lib/api';
+
 const fetchProfile = async () => {
-  const res = await fetch('http://localhost:8000/api/admission/profiles/my_profile/', { credentials: 'include' });
-  if (res.status === 401 || res.status === 403) throw new Error('Unauthorized');
-  if (!res.ok) throw new Error('Failed to fetch profile');
-  return res.json();
+  return await fetchAPI('/admission/profiles/my_profile/');
 };
 
 const fetchApplications = async () => {
-  const res = await fetch('http://localhost:8000/api/admission/applications/my_applications/', { credentials: 'include' });
-  if (!res.ok) throw new Error('Failed to fetch applications');
-  return res.json();
+  return await fetchAPI('/admission/applications/my_applications/');
 };
 
 export default function ProspectiveDashboard() {
@@ -27,30 +24,24 @@ export default function ProspectiveDashboard() {
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ['profile'],
     queryFn: fetchProfile,
+    retry: false,
   });
 
   const { data: apps, isLoading: appsLoading } = useQuery({
     queryKey: ['applications'],
     queryFn: fetchApplications,
     enabled: !!profile,
+    retry: false,
   });
-
-  if (profileError) {
-    router.push('/login');
-    return null;
-  }
 
   const application = apps && apps.length > 0 ? apps[0] : null;
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const res = await fetch('http://localhost:8000/api/admission/documents/', {
+      return await fetchAPI('/admission/documents/', {
         method: 'POST',
-        credentials: 'include',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
     },
     onSuccess: () => {
       setDocName('');
@@ -64,12 +55,9 @@ export default function ProspectiveDashboard() {
 
   const payFeesMutation = useMutation({
     mutationFn: async (appId: number) => {
-      const res = await fetch(`http://localhost:8000/api/admission/applications/${appId}/pay_fees/`, {
+      return await fetchAPI(`/admission/applications/${appId}/pay_fees/`, {
         method: 'POST',
-        credentials: 'include',
       });
-      if (!res.ok) throw new Error('Payment failed');
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
@@ -89,7 +77,9 @@ export default function ProspectiveDashboard() {
     uploadMutation.mutate(formData);
   };
 
-  if (profileLoading || appsLoading) {
+
+
+  if (profileLoading || (profile && appsLoading)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -179,8 +169,14 @@ export default function ProspectiveDashboard() {
             <div className="mt-8 bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
               <h3 className="text-lg font-semibold text-purple-800">Seat Allocated!</h3>
               <p className="text-purple-700 mt-1">
-                You have been allocated to <strong>{application.seat_allocation?.allocated_program}</strong> in the <strong>{application.seat_allocation?.allocated_department}</strong> department. 
+                You have been allocated to <strong>{application.seat_allocation?.allocated_program_name || application.seat_allocation?.allocated_program}</strong> in the <strong>{application.seat_allocation?.allocated_department_name || 'Department'}</strong>. 
               </p>
+              {application.scholarship && application.scholarship.status === 'APPROVED' && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                  <p className="text-amber-800 font-semibold">🎓 Scholarship: {application.scholarship.concession_percentage}% Fee Concession</p>
+                  <p className="text-amber-700 text-sm mt-0.5">{application.scholarship.reason}</p>
+                </div>
+              )}
               <button 
                 onClick={() => payFeesMutation.mutate(application.id)} 
                 disabled={payFeesMutation.isPending}
@@ -196,13 +192,42 @@ export default function ProspectiveDashboard() {
               <div className="absolute top-0 right-0 opacity-10">
                 <svg className="w-48 h-48 transform translate-x-16 -translate-y-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               </div>
-              <h3 className="text-3xl font-extrabold mb-2">Welcome to Veritas Grove University!</h3>
+              <h3 className="text-3xl font-extrabold mb-2">🎉 Welcome to Veritas Grove University!</h3>
               <p className="text-teal-50 text-lg mb-6">Your fees have been received and your enrollment is confirmed.</p>
               
-              <div className="bg-white/20 backdrop-blur-md rounded-xl p-6 border border-white/30 inline-block">
-                <p className="text-teal-50 text-sm font-semibold uppercase tracking-wider mb-1">Official Enrollment Number</p>
-                <p className="text-4xl font-black tracking-tight">{application.enrollment_number}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30">
+                  <p className="text-teal-50 text-xs font-semibold uppercase tracking-wider mb-1">Enrollment Number</p>
+                  <p className="text-2xl font-black tracking-tight">{application.enrollment_number}</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30">
+                  <p className="text-teal-50 text-xs font-semibold uppercase tracking-wider mb-1">Program</p>
+                  <p className="text-lg font-bold">{application.seat_allocation?.allocated_program_name || 'Assigned Program'}</p>
+                  <p className="text-teal-100 text-sm">{application.seat_allocation?.allocated_department_name || ''}</p>
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30">
+                  <p className="text-teal-50 text-xs font-semibold uppercase tracking-wider mb-1">📧 University Email</p>
+                  <p className="text-lg font-bold">{profile?.user?.first_name?.toLowerCase()}.{profile?.user?.last_name?.toLowerCase()}@veritasgrove.edu.in</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30">
+                  <p className="text-teal-50 text-xs font-semibold uppercase tracking-wider mb-1">🔑 Student Portal</p>
+                  <p className="text-lg font-bold">Username: {profile?.user?.username}</p>
+                  <p className="text-teal-100 text-sm">Use your existing password to log in</p>
+                </div>
+              </div>
+
+              {application.scholarship && application.scholarship.status === 'APPROVED' && (
+                <div className="bg-amber-400/30 backdrop-blur-md rounded-xl p-5 border border-amber-300/40 mb-6">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-1">🎓 Scholarship Awarded</p>
+                  <p className="text-xl font-black">{application.scholarship.concession_percentage}% Fee Concession</p>
+                  <p className="text-teal-50 text-sm mt-1">{application.scholarship.reason}</p>
+                </div>
+              )}
+
+              <p className="text-teal-100 text-sm mt-4">Your role has been upgraded to <strong>Student</strong>. Refresh the page to access your Student Dashboard.</p>
             </div>
           )}
         </div>

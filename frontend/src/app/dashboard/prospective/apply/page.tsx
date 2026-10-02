@@ -145,234 +145,282 @@ function ApplicationFormContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 p-6 sm:p-12 font-sans selection:bg-indigo-200">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-100">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F9FAFB] font-sans selection:bg-indigo-200">
         
-        {/* Sidebar Tracker */}
-        <div className="w-full md:w-1/3 bg-indigo-900 text-white p-8 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            <button onClick={() => router.push('/dashboard/prospective/catalog')} className="relative z-10 text-indigo-200 hover:text-white flex items-center text-sm font-medium mb-8 transition-colors">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-            Back to Catalog
-          </button>
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">Application Form</h2>
-            <p className="text-indigo-200 text-sm mb-12">Applying for {programName}</p>
+        {/* Left Panel (Image) */}
+        <div className="flex flex-col w-full h-[180px] lg:h-auto lg:w-[50%] xl:w-[55%] relative overflow-hidden flex-shrink-0">
+          <div 
+            className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/campus-bg.jpg')" }}
+          ></div>
+          <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#0A0F28]/85 via-[#0A0F28]/50 to-transparent"></div>
 
-            <div className="space-y-6">
-              {[
-                { id: 1, name: 'Personal Info' },
-                { id: 2, name: 'Contact Details' },
-                { id: 3, name: 'Parents/Guardian' },
-                { id: 4, name: 'Academic History' }
-              ].map(s => (
-                <div key={s.id} className={`flex items-center space-x-4 ${step === s.id ? 'opacity-100' : 'opacity-40'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${step === s.id ? 'bg-white text-indigo-900' : 'bg-indigo-800 text-white border border-indigo-700'}`}>
-                    {step > s.id ? '✓' : s.id}
-                  </div>
-                  <span className="font-medium tracking-wide">{s.name}</span>
+          <div className="relative z-10 flex flex-col h-full p-6 lg:p-12 xl:p-16">
+            <button onClick={() => router.push('/dashboard/prospective/catalog')} className="text-white hover:text-indigo-200 flex items-center text-base font-semibold mb-4 lg:mb-12 transition-colors w-fit">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path></svg>
+              Back to Catalog
+            </button>
+            
+            <div className="hidden lg:flex flex-col flex-1 justify-center max-w-sm">
+              <h2 className="text-3xl xl:text-4xl font-extrabold mb-2 text-white">Application Form</h2>
+              <p className="text-gray-300 font-medium text-sm xl:text-base mb-10">Applying for {programName}</p>
+
+              <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6">
+                <div className="space-y-6 relative">
+                  {/* Connector Line */}
+                  <div className="absolute left-[15px] top-4 bottom-4 w-[2px] bg-white/10 -z-10"></div>
+                  
+                  {[
+                    { id: 1, name: 'Personal Info' },
+                    { id: 2, name: 'Contact Details' },
+                    { id: 3, name: 'Parents/Guardian' },
+                    { id: 4, name: 'Academic History' }
+                  ].map(s => (
+                    <div key={s.id} className={`flex items-center space-x-4 ${step === s.id ? 'opacity-100' : 'opacity-75'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0 ${step === s.id ? 'bg-white text-slate-900' : (step > s.id ? 'bg-indigo-500 text-white' : 'bg-transparent text-white border-2 border-white/40')}`}>
+                        {step > s.id ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg> : s.id}
+                      </div>
+                      <span className="font-semibold tracking-wide text-white">{s.name}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div className="hidden lg:block mt-auto pt-8">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">VG</div>
+                  <span className="text-white/80 font-medium text-sm tracking-widest uppercase">Begin your engineering journey.</span>
+               </div>
             </div>
           </div>
         </div>
         
-        {/* Main Form Area */}
-        <div className="w-full md:w-2/3 p-8 lg:p-12 bg-white relative">
-          {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 text-sm border-l-4 border-red-500 shadow-sm">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={submitApplication}>
+        {/* Right Panel (Form) */}
+        <div className="flex w-full lg:w-[50%] xl:w-[45%] min-w-[320px] sm:min-w-[440px] items-center justify-center p-6 sm:p-12 @container/form">
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-12 relative">
             
-            {/* STEP 1: Personal */}
-            {step === 1 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth</label>
-                    <input type="date" required value={dob} onChange={e => setDob(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
+            <div className="mb-8">
+               <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-bold text-indigo-600 tracking-wider">STEP {step} OF 4</span>
+                  <div className="flex gap-1 flex-1 max-w-[100px] ml-2">
+                     {[1,2,3,4].map(i => (
+                        <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
+                     ))}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                    <select value={gender} onChange={e => setGender(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none">
-                      <option value="M">Male</option>
-                      <option value="F">Female</option>
-                      <option value="O">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none">
-                      <option value="GEN">General</option>
-                      <option value="SC">SC</option>
-                      <option value="ST">ST</option>
-                      <option value="OBC">OBC</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-                    <input type="text" placeholder="e.g. O+" value={bloodGroup} onChange={e => setBloodGroup(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Nationality</label>
-                    <input type="text" required value={nationality} onChange={e => setNationality(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: Contact */}
-            {step === 2 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Contact Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Student Phone Number</label>
-                    <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Permanent Address</label>
-                    <textarea rows={2} required value={permAddress} onChange={e => setPermAddress(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Correspondence Address</label>
-                    <textarea rows={2} value={corrAddress} onChange={e => setCorrAddress(e.target.value)} placeholder="Leave blank if same as permanent" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                    <input type="text" required value={city} onChange={e => setCity(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
-                    <input type="text" required value={state} onChange={e => setState(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Pincode</label>
-                    <input type="text" required value={pincode} onChange={e => setPincode(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: Parents */}
-            {step === 3 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Parent/Guardian Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Father's Name</label>
-                    <input type="text" required value={fatherName} onChange={e => setFatherName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Mother's Name</label>
-                    <input type="text" required value={motherName} onChange={e => setMotherName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Guardian Name</label>
-                    <input type="text" value={guardianName} onChange={e => setGuardianName(e.target.value)} placeholder="If applicable" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Guardian Occupation</label>
-                    <input type="text" value={guardianOcc} onChange={e => setGuardianOcc(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Annual Family Income (₹)</label>
-                    <input type="number" required value={familyIncome} onChange={e => setFamilyIncome(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: Academics */}
-            {step === 4 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Academic History</h3>
-                
-                <div className="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <h4 className="font-semibold text-slate-800 mb-4 border-b border-slate-200 pb-2">10th Standard</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">School Name</label>
-                      <input type="text" required value={tenthSchool} onChange={e => setTenthSchool(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Board</label>
-                      <input type="text" required value={tenthBoard} onChange={e => setTenthBoard(e.target.value)} placeholder="CBSE/ICSE/State" className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Passing Year</label>
-                      <input type="number" required value={tenthYear} onChange={e => setTenthYear(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Percentage (%)</label>
-                      <input type="number" step="0.01" required value={tenthPercent} onChange={e => setTenthPercent(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <h4 className="font-semibold text-slate-800 mb-4 border-b border-slate-200 pb-2">12th Standard / Diploma</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">School/College Name</label>
-                      <input type="text" required value={twelfthSchool} onChange={e => setTwelfthSchool(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Board / University</label>
-                      <input type="text" required value={twelfthBoard} onChange={e => setTwelfthBoard(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Passing Year</label>
-                      <input type="number" required value={twelfthYear} onChange={e => setTwelfthYear(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Percentage (%)</label>
-                      <input type="number" step="0.01" required value={twelfthPercent} onChange={e => setTwelfthPercent(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-sm" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Extra-Curricular Achievements</label>
-                  <textarea rows={3} value={extraCurr} onChange={e => setExtraCurr(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                </div>
-
-                <div className="flex items-center space-x-6">
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input type="checkbox" checked={gapYears} onChange={e => setGapYears(e.target.checked)} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300" />
-                    <span className="text-sm font-medium text-slate-700">Any Gap Years?</span>
-                  </label>
-
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input type="checkbox" checked={scholarshipReq} onChange={e => setScholarshipReq(e.target.checked)} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300" />
-                    <span className="text-sm font-medium text-slate-700">Apply for Scholarship</span>
-                  </label>
-                </div>
-
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="mt-12 flex justify-between border-t border-slate-100 pt-6">
-              {step > 1 ? (
-                <button type="button" onClick={prevStep} className="px-6 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">
-                  Back
-                </button>
-              ) : <div></div>}
-              
-              <button type="submit" disabled={submitting} className="px-8 py-2.5 bg-indigo-600 text-white font-medium rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center">
-                {step < 4 ? 'Next Step' : (submitting ? 'Submitting...' : 'Submit Application')}
-                {step < 4 && !submitting && <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>}
-              </button>
+               </div>
+               <h3 className="text-[28px] font-bold text-gray-900 leading-tight mb-2">
+                  {step === 1 && 'Personal Information'}
+                  {step === 2 && 'Contact Details'}
+                  {step === 3 && 'Parents & Guardian'}
+                  {step === 4 && 'Academic History'}
+               </h3>
+               <p className="text-sm text-gray-500">Please provide your details below.</p>
             </div>
 
-          </form>
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 text-sm border border-red-200 shadow-sm flex items-start">
+                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                {error}
+              </div>
+            )}
+            
+            <form onSubmit={submitApplication}>
+              
+              {/* STEP 1 */}
+              {step === 1 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-1 @[640px]/form:grid-cols-2 gap-5">
+                    
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Date of Birth <span className="text-red-500">*</span></label>
+                      <input type="date" required value={dob} onChange={e => setDob(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    
+                    <div className="flex flex-col relative">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Gender <span className="text-red-500">*</span></label>
+                      <select required value={gender} onChange={e => setGender(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900 appearance-none">
+                        <option value="" disabled>Select gender</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other</option>
+                      </select>
+                      <div className="absolute right-3.5 top-[34px] pointer-events-none">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col relative">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Category <span className="text-red-500">*</span></label>
+                      <select required value={category} onChange={e => setCategory(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900 appearance-none">
+                        <option value="" disabled>Select category</option>
+                        <option value="GEN">General</option>
+                        <option value="SC">SC</option>
+                        <option value="ST">ST</option>
+                        <option value="OBC">OBC</option>
+                      </select>
+                      <div className="absolute right-3.5 top-[34px] pointer-events-none">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col relative">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Blood Group</label>
+                      <select value={bloodGroup} onChange={e => setBloodGroup(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900 appearance-none">
+                        <option value="">Select blood group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                      </select>
+                      <div className="absolute right-3.5 top-[34px] pointer-events-none">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Nationality <span className="text-red-500">*</span></label>
+                      <input type="text" required value={nationality} onChange={e => setNationality(e.target.value)} placeholder="e.g. Indian" className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2 */}
+              {step === 2 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-1 @[640px]/form:grid-cols-2 gap-5">
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Student Phone Number <span className="text-red-500">*</span></label>
+                      <input type="tel" required placeholder="e.g. +91 9876543210" value={phone} onChange={e => setPhone(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Permanent Address <span className="text-red-500">*</span></label>
+                      <textarea rows={2} required placeholder="Enter full address..." value={permAddress} onChange={e => setPermAddress(e.target.value)} className="rounded-[10px] border border-gray-300 bg-white text-[15px] p-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900 resize-none" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Correspondence Address</label>
+                      <textarea rows={2} placeholder="Leave blank if same as permanent" value={corrAddress} onChange={e => setCorrAddress(e.target.value)} className="rounded-[10px] border border-gray-300 bg-white text-[15px] p-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900 resize-none" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">City <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="City name" value={city} onChange={e => setCity(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">State <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="State name" value={state} onChange={e => setState(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Pincode <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="e.g. 110001" value={pincode} onChange={e => setPincode(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3 */}
+              {step === 3 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-1 @[640px]/form:grid-cols-2 gap-5">
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Father's Name <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="Full name" value={fatherName} onChange={e => setFatherName(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Mother's Name <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="Full name" value={motherName} onChange={e => setMotherName(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Local Guardian Name</label>
+                      <input type="text" placeholder="Optional" value={guardianName} onChange={e => setGuardianName(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Guardian Occupation</label>
+                      <input type="text" placeholder="Optional" value={guardianOcc} onChange={e => setGuardianOcc(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">Annual Family Income</label>
+                      <input type="number" placeholder="e.g. 500000" value={familyIncome} onChange={e => setFamilyIncome(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4 */}
+              {step === 4 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-1 @[640px]/form:grid-cols-2 gap-5">
+                    
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">10th School Name <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="Full school name" value={tenthSchool} onChange={e => setTenthSchool(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">10th Board <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="e.g. CBSE, ICSE, State" value={tenthBoard} onChange={e => setTenthBoard(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">10th Percentage <span className="text-red-500">*</span></label>
+                      <input type="number" step="0.01" required placeholder="e.g. 85.50" value={tenthPercent} onChange={e => setTenthPercent(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2 mt-2">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">12th / Diploma School Name <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="Full school name" value={twelfthSchool} onChange={e => setTwelfthSchool(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">12th Board <span className="text-red-500">*</span></label>
+                      <input type="text" required placeholder="e.g. CBSE, ICSE, State" value={twelfthBoard} onChange={e => setTwelfthBoard(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[14px] font-medium text-gray-700 mb-1.5">12th Percentage <span className="text-red-500">*</span></label>
+                      <input type="number" step="0.01" required placeholder="e.g. 92.00" value={twelfthPercent} onChange={e => setTwelfthPercent(e.target.value)} className="h-12 rounded-[10px] border border-gray-300 bg-white text-[15px] px-[14px] focus:outline-none focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/20 text-gray-900" />
+                    </div>
+
+                    <div className="flex flex-col @[640px]/form:col-span-2 mt-2">
+                      <label className="flex items-center space-x-3 p-4 border border-gray-200 rounded-[10px] cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" checked={gapYears} onChange={e => setGapYears(e.target.checked)} className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <span className="text-[15px] font-medium text-gray-700">I have taken one or more gap years</span>
+                      </label>
+                    </div>
+                    <div className="flex flex-col @[640px]/form:col-span-2">
+                      <label className="flex items-center space-x-3 p-4 border border-gray-200 rounded-[10px] cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" checked={scholarshipReq} onChange={e => setScholarshipReq(e.target.checked)} className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <span className="text-[15px] font-medium text-gray-700">I would like to apply for a scholarship</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <hr className="my-8 border-gray-200" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                   {step > 1 ? (
+                     <button type="button" onClick={prevStep} className="px-5 py-2.5 rounded-[10px] font-medium text-[15px] text-gray-600 hover:bg-gray-100 transition-colors">
+                       Back
+                     </button>
+                   ) : (
+                     <button type="button" className="px-5 py-2.5 rounded-[10px] font-medium text-[15px] text-gray-400 hover:text-gray-600 transition-colors">
+                       Save draft
+                     </button>
+                   )}
+                </div>
+                
+                <button type="submit" disabled={submitting} className="px-8 py-[12px] bg-indigo-600 text-white font-medium text-[15px] rounded-[10px] shadow-sm hover:bg-indigo-700 active:bg-indigo-800 transition-all focus:outline-none focus:ring-[3px] focus:ring-indigo-600/30 flex items-center">
+                  {step < 4 ? 'Next Step' : (submitting ? 'Submitting...' : 'Submit Application')}
+                  {step < 4 && !submitting && <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>}
+                </button>
+              </div>
+
+            </form>
+          </div>
         </div>
-      </div>
     </div>
   );
 }
@@ -380,7 +428,7 @@ function ApplicationFormContent() {
 export default function ApplicationForm() {
   return (
     <Suspense fallback={
-      <div className="min-h-[calc(100vh-64px)] bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     }>

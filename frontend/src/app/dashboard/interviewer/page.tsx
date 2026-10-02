@@ -149,7 +149,7 @@ export default function InterviewerDashboard() {
                                       <span className="block font-bold text-sm text-slate-800 mb-1">{doc.document_name}</span>
                                       <div className="flex items-center space-x-2">
                                         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-md ${doc.status === 'VERIFIED' ? 'bg-green-100 text-green-700' : doc.status === 'FORGED' ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'}`}>{doc.status}</span>
-                                        <a href={`http://localhost:8000${doc.file}`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">View File ↗</a>
+                                        <a href={doc.file.startsWith('http') ? doc.file : `http://localhost:8000${doc.file}`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">View File ↗</a>
                                       </div>
                                     </div>
                                     <div className="space-x-1 flex">

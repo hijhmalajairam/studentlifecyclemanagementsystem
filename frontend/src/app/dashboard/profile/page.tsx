@@ -38,6 +38,12 @@ export default function ProfilePage() {
     enabled: userRole === 'STUDENT',
   });
 
+  const { data: facultyProfile } = useQuery({
+    queryKey: ['facultyProfile'],
+    queryFn: () => fetchAPI('/academics/faculty/my_profile/'),
+    enabled: userRole === 'FACULTY',
+  });
+
   const { register, handleSubmit, formState: { errors } } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     values: {
@@ -243,6 +249,21 @@ export default function ProfilePage() {
                   <ProfileDetail label="Program Name" value={studentProfile.enrollment?.program?.name || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
                   <ProfileDetail label="Current Semester" value={`Semester ${studentProfile.enrollment?.current_semester || '-'}`} icon={<Calendar className="w-4 h-4 text-slate-400" />} />
                   <ProfileDetail label="Status" value={studentProfile.enrollment?.status || '-'} icon={<CheckCircle2 className="w-4 h-4 text-slate-400" />} />
+                </div>
+              ) : userRole === 'FACULTY' && facultyProfile ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <ProfileDetail label="Faculty ID" value={facultyProfile.faculty_id || '-'} icon={<Hash className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Enrollment Number" value={facultyProfile.faculty_enrollment_number || '-'} icon={<Fingerprint className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Department" value={facultyProfile.department_name || '-'} icon={<Building className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Designation" value={facultyProfile.designation || '-'} icon={<Briefcase className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Admin Role" value={facultyProfile.admin_role || 'None'} icon={<Shield className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Specialization" value={facultyProfile.specialization || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Highest Qualification" value={facultyProfile.highest_qualification || '-'} icon={<BookOpen className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Years of Experience" value={String(facultyProfile.years_of_experience ?? '-')} icon={<Calendar className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Employment Type" value={facultyProfile.employment_type || '-'} icon={<Briefcase className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Institutional Email" value={facultyProfile.institutional_email || '-'} icon={<Mail className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Office Room" value={facultyProfile.office_room || '-'} icon={<MapPin className="w-4 h-4 text-slate-400" />} />
+                  <ProfileDetail label="Status" value={facultyProfile.status || '-'} icon={<CheckCircle2 className="w-4 h-4 text-slate-400" />} />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

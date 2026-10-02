@@ -91,3 +91,4 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+@keyframes slideProgress { from { width: 0%; } to { width: 100%; } } .animate-slide-progress { animation: slideProgress 5s linear infinite; }

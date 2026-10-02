@@ -8,7 +8,7 @@ type UpcomingCourse = {
   grade: number; // 0 - 10 scale
 };
 
-export default function StudentOverviewTab(): JSX.Element {
+export default function StudentOverviewTab() {
   // Bunk Budget state (local/mock)
   const [totalClasses, setTotalClasses] = useState<number>(120);
   const [attendedClasses, setAttendedClasses] = useState<number>(96);
@@ -29,12 +29,11 @@ export default function StudentOverviewTab(): JSX.Element {
   const [currentCGPA, setCurrentCGPA] = useState<number>(7.6); // on 10 scale
   const [completedCredits, setCompletedCredits] = useState<number>(90);
 
-  const [upcomingCourses, setUpcomingCourses] = useState<UpcomingCourse[]>()
-    || [
-      { id: "c1", name: "Math", credits: 4, grade: 8.0 },
-      { id: "c2", name: "Physics", credits: 3, grade: 7.5 },
-      { id: "c3", name: "Elective", credits: 2, grade: 9.0 },
-    ];
+  const [upcomingCourses, setUpcomingCourses] = useState<UpcomingCourse[]>([
+    { id: "c1", name: "Math", credits: 4, grade: 8.0 },
+    { id: "c2", name: "Physics", credits: 3, grade: 7.5 },
+    { id: "c3", name: "Elective", credits: 2, grade: 9.0 },
+  ]);
 
   // Derived calculations for GPA projection
   const upcomingCredits = useMemo(() => upcomingCourses.reduce((s, c) => s + c.credits, 0), [upcomingCourses]);

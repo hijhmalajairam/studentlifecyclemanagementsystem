@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
+import { fetchAPI } from '@/lib/api';
+
 interface AuthGuardProps {
   children: React.ReactNode;
   allowedRoles?: string[];
@@ -17,17 +19,15 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/users/profile/', {
-          credentials: 'include'
-        });
-
-        if (res.ok) {
-          const user = await res.json();
+        const user = await fetchAPI('/users/profile/');
+        
+        if (user) {
           // Update local storage so Navbar stays synced
           localStorage.setItem('user', JSON.stringify(user));
 
           if (allowedRoles && allowedRoles.length > 0) {
-            const hasRole = allowedRoles.includes(user.role) || (allowedRoles.includes('ADMIN') && user.is_staff);
+            const allRoles = user.all_roles || [user.role];
+            const hasRole = allowedRoles.some(r => allRoles.includes(r)) || (allowedRoles.includes('ADMIN') && user.is_staff);
             if (!hasRole) {
               const correctPath = getDashboardPath(user);
               router.replace(correctPath);
@@ -66,7 +66,6 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
 export function getDashboardPath(user: any): string {
   if (user.is_staff || user.role === 'ADMIN') return '/dashboard/admin';
-  if (user.role === 'COMMITTEE') return '/dashboard/committee';
   if (user.role === 'PROSPECTIVE_STUDENT') return '/dashboard/prospective';
   if (user.role === 'FACULTY') return '/dashboard/faculty';
   if (user.role === 'PARENT') return '/dashboard/parent';

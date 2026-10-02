@@ -5,6 +5,8 @@ import React from 'react';
 import './dashboard-theme.css';
 import UnifiedSidebar from './components/UnifiedSidebar';
 import TopBar from './components/TopBar';
+import DisciplineTab from './components/DisciplineTab';
+import InternshipsTab from './components/InternshipsTab';
 import DashboardOverview from './components/DashboardOverview';
 import FacultyTab from './components/FacultyTab';
 import AdmissionsTab from './components/AdmissionsTab';
@@ -50,10 +52,6 @@ export default function AdminDashboard() {
   const [timetable, setTimetable] = useState<any[]>([]);
   const [transfers, setTransfers] = useState<any[]>([]);
   const [revaluations, setRevaluations] = useState<any[]>([]);
-  const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
-  const [courseGradingSchemes, setCourseGradingSchemes] = useState<any[]>([]);
-  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
-
 
   const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '' });
   const [ttForm, setTtForm] = useState({ course: '', day: 'MON', start_time: '09:00', end_time: '10:00', room: '' });
@@ -86,7 +84,7 @@ export default function AdminDashboard() {
         setActiveRole(isAdminUser ? 'Administrator' : 'Faculty');
 
         // Fetch faculty profile for topbar details if faculty
-        if (u.role === 'FACULTY' || u.all_roles?.includes('FACULTY')) {
+        if (['FACULTY', 'HOD', 'INTERVIEWER'].includes(u.role) || u.all_roles?.includes('FACULTY')) {
           fetchAPI(`/academics/faculty-profiles/?user=${u.id}`).then(data => {
             if (data && data.length > 0) setFacultyProfile(data[0]);
           }).catch(() => { });
@@ -100,7 +98,25 @@ export default function AdminDashboard() {
   }, [darkMode]);
 
   const allRoles = currentUser?.all_roles || [];
-  const isAdmin = currentUser?.is_staff || allRoles.includes('ADMIN');
+  const isTrueAdmin = currentUser?.is_staff || allRoles.includes('ADMIN');
+    const isDean = allRoles.includes('DEAN') || facultyProfile?.admin_role === 'Dean' || facultyProfile?.admin_role === 'Academics Dean';
+    const isInterviewer = allRoles.includes('INTERVIEWER');
+    const isAdmin = isTrueAdmin || isDean || isInterviewer;
+  const isHOD = allRoles.includes('HOD') || facultyProfile?.admin_role === 'Head of Department';
+  const isTransport = facultyProfile?.admin_role === 'Transport Incharge';
+  const myDepartmentId = facultyProfile?.department;
+
+  // Apply RBAC Filters
+  const visibleDepartments = departments;
+  const visiblePrograms = programs;
+  const visibleCourses = courses; 
+  const visibleApplications = isAdmin ? applications : []; // Admissions processed by admin
+  const hasWriteAccess = isAdmin || isHOD;
+  const visibleTimetable = timetable;
+  const visibleLeaves = leaves;
+  const visibleTransfers = transfers;
+  const visibleRevaluations = revaluations;
+  const visibleFees = fees;
 
   const updateStatus = async (id: number, status: string) => {
     try {
@@ -120,11 +136,11 @@ export default function AdminDashboard() {
 
   const allocateSeat = async (id: number) => {
     const form = allocationForms[id];
-    if (!form?.allocated_department || !form.allocated_program || !form.allocated_batch) return alert('Enter department, program, and batch.');
+    if (!form?.allocated_program) return alert('Please select a program.');
     try {
       await fetchAPI('/admission/allocations/', { method: 'POST', body: JSON.stringify({ application: id, ...form }) });
       refreshData();
-    } catch { alert('Seat allocation failed. The application must first be selected.'); }
+    } catch (error: any) { alert('Seat allocation failed: ' + (error.message || error)); }
   };
 
   const verifyFeePayment = async (appId: number) => {
@@ -302,6 +318,8 @@ export default function AdminDashboard() {
         setActiveSection={setActiveTab}
         user={currentUser}
         isAdmin={isAdmin}
+        isHOD={isHOD}
+        isTransport={isTransport}
         facultyProfile={facultyProfile}
       />
       <div className="flex-1 flex flex-col min-w-0">
@@ -318,13 +336,21 @@ export default function AdminDashboard() {
           <div className="max-w-7xl mx-auto">
 
             {/* ─── OVERVIEW TAB ─── */}
-            {activeTab === 'overview' && (
+            {activeTab === 'internships' && (
+                <InternshipsTab />
+              )}
+
+              {activeTab === 'discipline' && (
+                <DisciplineTab />
+              )}
+
+              {activeTab === 'overview' && (
               <DashboardOverview
                 enrollments={enrollments}
-                applications={applications}
-                programs={programs}
-                departments={departments}
-                courses={courses}
+                applications={visibleApplications}
+                programs={visiblePrograms}
+                departments={visibleDepartments}
+                courses={visibleCourses}
                 leaves={leaves}
                 fees={fees}
                 isAdmin={isAdmin}
@@ -339,16 +365,19 @@ export default function AdminDashboard() {
 
             {/* ─── FACULTY TAB ─── */}
             {activeTab === 'faculty' && (
-              <FacultyTab isAdmin={isAdmin} departments={departments} />
+              <FacultyTab isAdmin={isAdmin} departments={visibleDepartments} />
             )}
 
             {/* ─── ADMISSIONS TAB ─── */}
             {activeTab === 'admissions' && (
               <AdmissionsTab
                 isAdmin={isAdmin}
-                applications={applications}
-                departments={departments}
-                programs={programs}
+                applications={visibleApplications}
+                scheduleInterview={scheduleInterview}
+                interviewDates={interviewDates}
+                setInterviewDates={setInterviewDates}
+                departments={visibleDepartments}
+                programs={visiblePrograms}
                 offlineForm={offlineForm}
                 setOfflineForm={setOfflineForm}
                 createOfflineApplication={createOfflineApplication}
@@ -372,9 +401,9 @@ export default function AdminDashboard() {
                   <div className="flex-1 w-full">
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Course</label>
                     <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none focus:border-cyan-500"
-                      onChange={e => { const cId = parseInt(e.target.value); setSelectedCourse(courses.find(c => c.id === cId)); }}>
+                      onChange={e => { const cId = parseInt(e.target.value); setSelectedCourse(visibleCourses.find(c => c.id === cId)); }}>
                       <option value="">-- Choose --</option>
-                      {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
+                      {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
                     </select>
                   </div>
                   <div className="flex-1 w-full">
@@ -431,9 +460,9 @@ export default function AdminDashboard() {
                 <div className="mb-6">
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Course</label>
                   <select className="w-full max-w-md bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
-                    value={selectedCourse?.id || ''} onChange={e => setSelectedCourse(courses.find(c => c.id === parseInt(e.target.value)) || null)}>
+                    value={selectedCourse?.id || ''} onChange={e => setSelectedCourse(visibleCourses.find(c => c.id === parseInt(e.target.value)) || null)}>
                     <option value="">-- Select --</option>
-                    {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
+                    {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
                   </select>
                 </div>
 
@@ -488,11 +517,11 @@ export default function AdminDashboard() {
               <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-slate-900">Pending Leave Requests</h2>
-                  <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-xs font-bold">{leaves.filter(l => l.status === 'PENDING').length} pending</span>
+                  <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-xs font-bold">{visibleLeaves.filter(l => l.status === 'PENDING').length} pending</span>
                 </div>
-                {leaves.length > 0 ? (
+                {visibleLeaves.length > 0 ? (
                   <div className="space-y-3">
-                    {leaves.map((l: any) => (
+                    {visibleLeaves.map((l: any) => (
                       <div key={l.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -508,8 +537,8 @@ export default function AdminDashboard() {
                           </div>
                           {l.status === 'PENDING' && (
                             <div className="flex space-x-2 ml-4">
-                              <button onClick={() => updateLeaveStatus(l.id, 'APPROVED')} disabled={!isAdmin} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                              <button onClick={() => updateLeaveStatus(l.id, 'REJECTED')} disabled={!isAdmin} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
+                              <button onClick={() => updateLeaveStatus(l.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
+                              <button onClick={() => updateLeaveStatus(l.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
                             </div>
                           )}
                         </div>
@@ -560,7 +589,7 @@ export default function AdminDashboard() {
                         value={feeForm.due_date} onChange={e => setFeeForm({ ...feeForm, due_date: e.target.value })} />
                     </div>
                   </div>
-                  <button type="submit" disabled={!isAdmin} className={`bg-gradient-to-r from-purple-600 to-pink-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Create Fee</button>
+                  <button type="submit" disabled={!hasWriteAccess} className={`bg-gradient-to-r from-purple-600 to-pink-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Create Fee</button>
                 </form>
                 <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden">
                   <table className="min-w-full text-left">
@@ -574,9 +603,9 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {fees.length === 0 ? (
+                      {visibleFees.length === 0 ? (
                         <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">No fee records.</td></tr>
-                      ) : fees.map((f: any) => (
+                      ) : visibleFees.map((f: any) => (
                         <tr key={f.id} className="hover:bg-slate-50 transition">
                           <td className="px-6 py-4 text-sm font-mono text-cyan-400">ENR-{f.enrollment}</td>
                           <td className="px-6 py-4 text-sm text-slate-700">{f.semester}</td>
@@ -607,7 +636,7 @@ export default function AdminDashboard() {
                       <select required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded-xl outline-none"
                         value={ttForm.course} onChange={e => setTtForm({ ...ttForm, course: e.target.value })}>
                         <option value="">-- Select --</option>
-                        {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
+                        {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
                       </select>
                     </div>
                     <div>
@@ -633,7 +662,7 @@ export default function AdminDashboard() {
                         value={ttForm.room} onChange={e => setTtForm({ ...ttForm, room: e.target.value })} />
                     </div>
                   </div>
-                  <button type="submit" disabled={!isAdmin} className={`bg-gradient-to-r from-pink-600 to-purple-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Add Slot</button>
+                  <button type="submit" disabled={!hasWriteAccess} className={`bg-gradient-to-r from-pink-600 to-purple-600 text-slate-900 px-6 py-3 rounded-xl font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Add Slot</button>
                 </form>
                 <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden">
                   <table className="min-w-full text-left">
@@ -646,9 +675,9 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {timetable.length === 0 ? (
+                      {visibleTimetable.length === 0 ? (
                         <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">No timetable slots.</td></tr>
-                      ) : timetable.map((t: any) => (
+                      ) : visibleTimetable.map((t: any) => (
                         <tr key={t.id} className="hover:bg-slate-50 transition">
                           <td className="px-6 py-4 text-sm"><span className="font-bold text-cyan-400">{t.course_code}</span> <span className="text-slate-400">- {t.course_name}</span></td>
                           <td className="px-6 py-4 text-sm text-slate-700">{t.day}</td>
@@ -665,9 +694,9 @@ export default function AdminDashboard() {
             {/* ─── TRANSFERS ─── */}
             {activeTab === 'transfers' && (
               <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
-                {transfers.length > 0 ? (
+                {visibleTransfers.length > 0 ? (
                   <div className="space-y-3">
-                    {transfers.map((t: any) => (
+                    {visibleTransfers.map((t: any) => (
                       <div key={t.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl flex items-start justify-between">
                         <div>
                           <div className="flex items-center space-x-3 mb-2">
@@ -682,8 +711,8 @@ export default function AdminDashboard() {
                         </div>
                         {t.status === 'PENDING' && (
                           <div className="flex space-x-2 ml-4">
-                            <button onClick={() => updateTransferStatus(t.id, 'APPROVED')} disabled={!isAdmin} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                            <button onClick={() => updateTransferStatus(t.id, 'REJECTED')} disabled={!isAdmin} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
+                            <button onClick={() => updateTransferStatus(t.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
+                            <button onClick={() => updateTransferStatus(t.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
                           </div>
                         )}
                       </div>
@@ -696,9 +725,9 @@ export default function AdminDashboard() {
             {/* ─── REVALUATIONS ─── */}
             {activeTab === 'revaluations' && (
               <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8">
-                {revaluations.length > 0 ? (
+                {visibleRevaluations.length > 0 ? (
                   <div className="space-y-3">
-                    {revaluations.map((r: any) => (
+                    {visibleRevaluations.map((r: any) => (
                       <div key={r.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-2xl flex items-start justify-between">
                         <div>
                           <div className="flex items-center space-x-3 mb-2">
@@ -713,8 +742,8 @@ export default function AdminDashboard() {
                         </div>
                         {r.status === 'PENDING' && (
                           <div className="flex space-x-2 ml-4">
-                            <button onClick={() => updateRevalStatus(r.id, 'APPROVED')} disabled={!isAdmin} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                            <button onClick={() => updateRevalStatus(r.id, 'REJECTED')} disabled={!isAdmin} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
+                            <button onClick={() => updateRevalStatus(r.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
+                            <button onClick={() => updateRevalStatus(r.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
                           </div>
                         )}
                       </div>
@@ -756,23 +785,6 @@ export default function AdminDashboard() {
           </div>
         </main>
       </div>
-
-      {/* Evidence Preview Modal */}
-      {previewEvidence && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700">Evidence Document</h3>
-              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-slate-600 p-1 bg-white rounded-full border border-slate-200 shadow-sm transition">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-100 p-4">
-              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-300 bg-white shadow-inner" title="Evidence Preview" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

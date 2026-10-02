@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
   const headers: any = {
@@ -9,11 +9,20 @@ export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
     headers['Content-Type'] = headers['Content-Type'] || 'application/json';
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+  } catch (error: any) {
+    console.error(`Network Error fetching ${endpoint}:`, error);
+    // Return null instead of throwing to prevent Next.js error overlays when backend is down
+    return null;
+  }
+
+  if (!response) return null;
 
   if (response.status === 401) {
     if (typeof window !== 'undefined') {

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { fetchAPI } from '@/lib/api';
 
 export default function Register() {
   const router = useRouter();
@@ -23,15 +24,13 @@ export default function Register() {
 
     try {
       // 1. Create User
-      const userRes = await fetch('http://localhost:8000/api/users/register/', {
+      const userRes = await fetchAPI('/users/register/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username, email, password, first_name: firstName, last_name: lastName, role
         }),
       });
-      const userData = await userRes.json();
-      if (!userRes.ok) throw new Error(userData.detail || userData.username?.[0] || userData.email?.[0] || 'Registration failed');
+      const userData = userRes;
 
       if (userData.user) localStorage.setItem('user', JSON.stringify(userData.user));
 
@@ -53,8 +52,14 @@ export default function Register() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Left Pane - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800">
-        <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-20"></div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-800 to-purple-900">
+        {/* Background Image with 50% transparency */}
+        <div 
+          className="absolute inset-0 z-0 opacity-50 bg-cover bg-center bg-no-repeat "
+          style={{ backgroundImage: "url('/journey-bg.png')" }}
+        ></div>
+        {/* Additional shade gradient on top as requested */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-indigo-900/80 to-transparent"></div>
         <div className="relative z-10 flex flex-col justify-center items-center text-center p-12 w-full text-white">
           <h1 className="text-5xl font-extrabold tracking-tight mb-6">Start Your Journey</h1>
           <p className="text-xl font-light text-indigo-100 max-w-md">
@@ -133,3 +138,4 @@ export default function Register() {
     </div>
   );
 }
+
