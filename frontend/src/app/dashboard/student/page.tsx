@@ -158,7 +158,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] text-slate-800 flex overflow-hidden theme-transition font-sans">
+    <div className="h-screen bg-[#f4f7fa] text-slate-800 flex overflow-hidden theme-transition font-sans">
       <StudentSidebar activeSection={activeSection} setActiveSection={setActiveSection} user={user} />
       
       <div className="flex-1 flex flex-col min-w-0">
