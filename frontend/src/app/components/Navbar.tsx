@@ -80,6 +80,7 @@ export default function Navbar() {
     PROSPECTIVE_STUDENT: 'from-blue-500 to-cyan-500',
     FACULTY: 'from-emerald-500 to-teal-500',
     PARENT: 'from-purple-500 to-pink-500',
+    COMMITTEE: 'from-indigo-500 to-violet-500',
   };
 
   const roleBadgeColors: Record<string, string> = {
@@ -89,6 +90,7 @@ export default function Navbar() {
     PROSPECTIVE_STUDENT: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
     FACULTY: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
     PARENT: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    COMMITTEE: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
   };
 
   const navLinks = [];

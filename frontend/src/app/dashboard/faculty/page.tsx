@@ -5,12 +5,22 @@ import { fetchAPI } from '@/lib/api';
 import '../admin/dashboard-theme.css'; // Reuse theme
 import MyTimetable from './components/MyTimetable';
 import MyClasses from './components/MyClasses';
+import InternshipManager from './components/InternshipManager';
+import FacultyOpportunities from './components/FacultyOpportunities';
 
 export default function FacultyDashboard() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [facultyProfile, setFacultyProfile] = useState<any>(null);
   const [activeSection, setActiveSection] = useState('my_dashboard');
   const [loading, setLoading] = useState(true);
+
+  const [internalAssessments, setInternalAssessments] = useState<any[]>([]);
+  const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
+  const [courseGradingSchemes, setCourseGradingSchemes] = useState<any[]>([]);
+  const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
+  
+  // Grading Scheme State
+  const [gradingSchemeForm, setGradingSchemeForm] = useState({ mean: '', stdDev: '' });
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -54,6 +64,15 @@ export default function FacultyDashboard() {
       ]
     }
   ];
+
+  
+  sidebarSections.push({
+    group: 'Internships',
+    items: [
+      { id: 'internship_manager', label: 'Internship Manager', icon: '🏢' },
+      { id: 'faculty_opportunities', label: 'My Opportunities', icon: '🧑‍🏫' },
+    ]
+  });
 
   if (isHOD) {
     sidebarSections.push({
@@ -188,6 +207,8 @@ export default function FacultyDashboard() {
             <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px]">
               {activeSection === 'my_timetable' && <MyTimetable />}
               {activeSection === 'my_classes' && <MyClasses />}
+              {activeSection === 'internship_manager' && <InternshipManager />}
+              {activeSection === 'faculty_opportunities' && <FacultyOpportunities />}
               {activeSection === 'my_dashboard' && (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4 opacity-50">⊞</div>
@@ -196,7 +217,7 @@ export default function FacultyDashboard() {
                 </div>
               )}
               {/* Fallback for HOD/Placement tabs for now */}
-              {!['my_timetable', 'my_classes', 'my_dashboard'].includes(activeSection) && (
+              {!['my_timetable', 'my_classes', 'my_dashboard', 'internship_manager', 'faculty_opportunities'].includes(activeSection) && (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4 opacity-50">
                     {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}
@@ -214,6 +235,23 @@ export default function FacultyDashboard() {
           </div>
         </main>
       </div>
+      
+      {/* Evidence Preview Modal */}
+      {previewEvidence && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+              <h3 className="text-sm font-bold text-slate-200">Evidence Document</h3>
+              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-white p-1">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-950/50 p-4">
+              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-800 bg-white" title="Evidence Preview" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

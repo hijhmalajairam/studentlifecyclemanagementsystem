@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'academics',
     'alumni',
     'users',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -55,7 +56,6 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'erp_core.urls'
@@ -83,12 +83,8 @@ WSGI_APPLICATION = 'erp_core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'erp_db',
-        'USER': 'postgres',
-        'PASSWORD': config('DB_PASSWORD', default='2503'),
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
