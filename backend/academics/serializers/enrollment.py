@@ -3,6 +3,8 @@ from ..models import Enrollment, SemesterRegistration
 from .core import CourseSerializer
 
 class EnrollmentSerializer(serializers.ModelSerializer):
+    program_name = serializers.CharField(source='program.name', read_only=True)
+
     class Meta:
         model = Enrollment
         fields = '__all__'

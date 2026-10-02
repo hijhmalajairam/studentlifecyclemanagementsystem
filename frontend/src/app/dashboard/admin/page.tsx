@@ -18,6 +18,13 @@ import LibraryTab from './components/LibraryTab';
 import AlumniTab from './components/AlumniTab';
 import TransportTab from './components/TransportTab';
 import PlacementTab from './components/PlacementTab';
+import AttendanceTab from './components/AttendanceTab';
+import GradeEntryTab from './components/GradeEntryTab';
+import LeavesTab from './components/LeavesTab';
+import FeesTab from './components/FeesTab';
+import TimetableTab from './components/TimetableTab';
+import TransfersTab from './components/TransfersTab';
+import RevaluationsTab from './components/RevaluationsTab';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -137,8 +144,17 @@ export default function AdminDashboard() {
   const allocateSeat = async (id: number) => {
     const form = allocationForms[id];
     if (!form?.allocated_program) return alert('Please select a program.');
+    if (!form?.start_year || !form?.end_year) return alert('Please select both a Start Year and an End Year.');
+    
+    const payload = {
+      application: id,
+      allocated_department: form.allocated_department,
+      allocated_program: form.allocated_program,
+      allocated_batch: `${form.start_year}-${form.end_year}`
+    };
+
     try {
-      await fetchAPI('/admission/allocations/', { method: 'POST', body: JSON.stringify({ application: id, ...form }) });
+      await fetchAPI('/admission/allocations/', { method: 'POST', body: JSON.stringify(payload) });
       refreshData();
     } catch (error: any) { alert('Seat allocation failed: ' + (error.message || error)); }
   };
@@ -151,8 +167,8 @@ export default function AdminDashboard() {
       await fetchAPI(`/admission/applications/${appId}/pay_fees/`, { method: 'POST' });
       alert("Fee payment verified. Student enrolled!");
       refreshData();
-    } catch {
-      alert("Failed to verify fee payment.");
+    } catch (err: any) {
+      alert("Failed to verify fee payment: " + (err.message || err));
     }
   };
 
@@ -396,157 +412,40 @@ export default function AdminDashboard() {
 
             {/* ─── ATTENDANCE TAB ─── */}
             {activeTab === 'academics' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg shadow-2xl p-8">
-                <div className="flex flex-col md:flex-row gap-4 mb-8 items-end bg-slate-50/50 p-5 rounded-md border border-slate-200">
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Course</label>
-                    <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none focus:border-cyan-500"
-                      onChange={e => { const cId = parseInt(e.target.value); setSelectedCourse(visibleCourses.find(c => c.id === cId)); }}>
-                      <option value="">-- Choose --</option>
-                      {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Date</label>
-                    <input type="date" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none focus:border-cyan-500" style={{ colorScheme: 'light' }}
-                      value={attendanceDate} onChange={e => setAttendanceDate(e.target.value)} />
-                  </div>
-                </div>
-                {selectedCourse ? (
-                  <>
-                    <div className="bg-slate-50/50 rounded-md border border-slate-200 overflow-hidden">
-                      <table className="min-w-full divide-y divide-slate-100">
-                        <thead className="bg-white">
-                          <tr>
-                            <th className="px-8 py-4 text-left text-xs font-bold text-slate-400 uppercase">Enrollment</th>
-                            <th className="px-8 py-4 text-right text-xs font-bold text-slate-400 uppercase">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {getStudentsForCourse(selectedCourse.id).length === 0 ? (
-                            <tr><td colSpan={2} className="px-8 py-12 text-center text-slate-400">No students.</td></tr>
-                          ) : getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
-                            <tr key={enrId} className="hover:bg-white/30 transition">
-                              <td className="px-8 py-4 text-sm font-bold font-mono text-slate-700">ENR-{enrId}</td>
-                              <td className="px-8 py-4 text-right">
-                                <div className="inline-flex space-x-2 bg-slate-50 p-1 rounded border border-slate-200">
-                                  <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-sm font-medium transition ${attendanceData[enrId] === 'PRESENT' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-slate-400 border border-transparent'}`}>
-                                    <input type="radio" className="hidden" name={`s-${enrId}`} checked={attendanceData[enrId] === 'PRESENT'} onChange={() => handleAttendanceChange(enrId, 'PRESENT')} /> Present
-                                  </label>
-                                  <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-sm font-medium transition ${attendanceData[enrId] === 'ABSENT' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'text-slate-400 border border-transparent'}`}>
-                                    <input type="radio" className="hidden" name={`s-${enrId}`} checked={attendanceData[enrId] === 'ABSENT'} onChange={() => handleAttendanceChange(enrId, 'ABSENT')} /> Absent
-                                  </label>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-6 flex justify-end">
-                      <button onClick={submitAttendance} className="bg-blue-600 text-slate-900 px-8 py-3 rounded font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Save Attendance</button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-md">Select a course above</div>
-                )}
-              </div>
+              <AttendanceTab
+                courses={visibleCourses}
+                selectedCourse={selectedCourse}
+                setSelectedCourse={setSelectedCourse}
+                attendanceDate={attendanceDate}
+                setAttendanceDate={setAttendanceDate}
+                attendanceData={attendanceData}
+                handleAttendanceChange={handleAttendanceChange}
+                submitAttendance={submitAttendance}
+                getStudentsForCourse={getStudentsForCourse}
+              />
             )}
 
             {/* ─── GRADE ENTRY TAB ─── */}
             {activeTab === 'grade_entry' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8 shadow-2xl">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Course Grade Entry</h2>
-                <div className="mb-6">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Course</label>
-                  <select className="w-full max-w-md bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                    value={selectedCourse?.id || ''} onChange={e => setSelectedCourse(visibleCourses.find(c => c.id === parseInt(e.target.value)) || null)}>
-                    <option value="">-- Select --</option>
-                    {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
-                  </select>
-                </div>
-
-                {selectedCourse ? (
-                  <>
-                    <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
-                      <table className="min-w-full text-left">
-                        <thead className="bg-slate-50/50 border-b border-slate-200">
-                          <tr>
-                            <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Enrollment ID</th>
-                            <th className="px-8 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Marks (out of 100)</th>
-                            <th className="px-8 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Grade</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {getStudentsForCourse(selectedCourse.id).length === 0 ? (
-                            <tr><td colSpan={3} className="px-8 py-12 text-center text-slate-400">No students.</td></tr>
-                          ) : getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
-                            <tr key={enrId} className="hover:bg-white/30 transition">
-                              <td className="px-8 py-4 text-sm font-bold font-mono text-slate-700">ENR-{enrId}</td>
-                              <td className="px-8 py-4 text-center">
-                                <input type="number" min="0" max="100" placeholder="Marks"
-                                  className="w-24 bg-white border border-slate-300 text-slate-900 p-2 rounded-lg text-center outline-none focus:border-purple-500"
-                                  value={gradeEntries[enrId]?.marks || ''}
-                                  onChange={e => handleGradeChange(enrId, 'marks', e.target.value)} />
-                              </td>
-                              <td className="px-8 py-4 text-right">
-                                <select className="bg-white border border-slate-300 text-slate-900 p-2 rounded-lg outline-none focus:border-purple-500"
-                                  value={gradeEntries[enrId]?.grade || ''}
-                                  onChange={e => handleGradeChange(enrId, 'grade', e.target.value)}>
-                                  <option value="">--</option>
-                                  {['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'].map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-6 flex justify-end">
-                      <button onClick={submitGrades} className="bg-blue-600 text-slate-900 px-8 py-3 rounded font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Submit Grades</button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-48 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-md">Select a course above</div>
-                )}
-              </div>
+              <GradeEntryTab
+                courses={visibleCourses}
+                selectedCourse={selectedCourse}
+                setSelectedCourse={setSelectedCourse}
+                gradeEntries={gradeEntries}
+                handleGradeChange={handleGradeChange}
+                submitGrades={submitGrades}
+                getStudentsForCourse={getStudentsForCourse}
+              />
             )}
 
             {/* ─── LEAVES TAB ─── */}
             {activeTab === 'leaves' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg shadow-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-slate-900">Pending Leave Requests</h2>
-                  <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-xs font-bold">{visibleLeaves.filter(l => l.status === 'PENDING').length} pending</span>
-                </div>
-                {visibleLeaves.length > 0 ? (
-                  <div className="space-y-3">
-                    {visibleLeaves.map((l: any) => (
-                      <div key={l.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <span className="font-mono text-sm font-bold text-slate-700">ENR-{l.enrollment}</span>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${l.status === 'APPROVED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                l.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                  'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                }`}>{l.status}</span>
-                            </div>
-                            <p className="text-sm text-slate-400 mb-1">{l.start_date} → {l.end_date}</p>
-                            <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border-l-4 border-slate-300 mt-2">"{l.reason}"</p>
-                          </div>
-                          {l.status === 'PENDING' && (
-                            <div className="flex space-x-2 ml-4">
-                              <button onClick={() => updateLeaveStatus(l.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                              <button onClick={() => updateLeaveStatus(l.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-slate-400 italic text-center py-12">No leave requests found.</p>}
-              </div>
+              <LeavesTab
+                leaves={visibleLeaves}
+                updateLeaveStatus={updateLeaveStatus}
+                isAdmin={isAdmin}
+                hasWriteAccess={hasWriteAccess}
+              />
             )}
 
             {/* ─── STUDENTS TAB ─── */}
@@ -561,196 +460,48 @@ export default function AdminDashboard() {
 
             {/* ─── FEE MANAGEMENT ─── */}
             {activeTab === 'fees' && (
-              <div className="space-y-8">
-                <form onSubmit={createFee} className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6">Create Fee Record</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Enrollment ID</label>
-                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                        value={feeForm.enrollment} onChange={e => setFeeForm({ ...feeForm, enrollment: e.target.value })}>
-                        <option value="">-- Select --</option>
-                        {enrollments.map((e: any) => <option key={e.id} value={e.id}>{e.enrollment_number}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Semester</label>
-                      <input type="number" min="1" max="8" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                        value={feeForm.semester} onChange={e => setFeeForm({ ...feeForm, semester: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Amount (₹)</label>
-                      <input type="number" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                        value={feeForm.amount} onChange={e => setFeeForm({ ...feeForm, amount: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Due Date</label>
-                      <input type="date" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
-                        value={feeForm.due_date} onChange={e => setFeeForm({ ...feeForm, due_date: e.target.value })} />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={!hasWriteAccess} className={`bg-blue-600 text-slate-900 px-6 py-3 rounded font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Create Fee</button>
-                </form>
-                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="min-w-full text-left">
-                    <thead className="bg-slate-50/50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Enrollment</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Semester</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Amount</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Due Date</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {visibleFees.length === 0 ? (
-                        <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">No fee records.</td></tr>
-                      ) : visibleFees.map((f: any) => (
-                        <tr key={f.id} className="hover:bg-slate-50 transition">
-                          <td className="px-6 py-4 text-sm font-mono text-cyan-400">ENR-{f.enrollment}</td>
-                          <td className="px-6 py-4 text-sm text-slate-700">{f.semester}</td>
-                          <td className="px-6 py-4 text-sm text-slate-900">₹{parseFloat(f.amount).toLocaleString()}</td>
-                          <td className="px-6 py-4 text-sm text-slate-400">{f.due_date}</td>
-                          <td className="px-6 py-4 text-sm">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${f.status === 'PAID' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                              f.status === 'OVERDUE' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                              }`}>{f.status}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <FeesTab
+                fees={visibleFees}
+                enrollments={enrollments}
+                feeForm={feeForm}
+                setFeeForm={setFeeForm}
+                createFee={createFee}
+                isAdmin={isAdmin}
+                hasWriteAccess={hasWriteAccess}
+              />
             )}
 
             {/* ─── TIMETABLE ─── */}
             {activeTab === 'timetable' && (
-              <div className="space-y-8">
-                <form onSubmit={createTimetableSlot} className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6">Add Timetable Slot</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Course</label>
-                      <select required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                        value={ttForm.course} onChange={e => setTtForm({ ...ttForm, course: e.target.value })}>
-                        <option value="">-- Select --</option>
-                        {visibleCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Day</label>
-                      <select className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none"
-                        value={ttForm.day} onChange={e => setTtForm({ ...ttForm, day: e.target.value })}>
-                        {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Time</label>
-                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
-                        value={ttForm.start_time} onChange={e => setTtForm({ ...ttForm, start_time: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Time</label>
-                      <input type="time" required className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none" style={{ colorScheme: 'light' }}
-                        value={ttForm.end_time} onChange={e => setTtForm({ ...ttForm, end_time: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Room</label>
-                      <input type="text" placeholder="e.g. LH-301" className="w-full bg-white border border-slate-300 text-slate-900 p-3 rounded outline-none placeholder-slate-500"
-                        value={ttForm.room} onChange={e => setTtForm({ ...ttForm, room: e.target.value })} />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={!hasWriteAccess} className={`bg-blue-600 text-slate-900 px-6 py-3 rounded font-bold transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}>Add Slot</button>
-                </form>
-                <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="min-w-full text-left">
-                    <thead className="bg-slate-50/50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Course</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Day</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Time</th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Room</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {visibleTimetable.length === 0 ? (
-                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">No timetable slots.</td></tr>
-                      ) : visibleTimetable.map((t: any) => (
-                        <tr key={t.id} className="hover:bg-slate-50 transition">
-                          <td className="px-6 py-4 text-sm"><span className="font-bold text-cyan-400">{t.course_code}</span> <span className="text-slate-400">- {t.course_name}</span></td>
-                          <td className="px-6 py-4 text-sm text-slate-700">{t.day}</td>
-                          <td className="px-6 py-4 text-sm font-mono text-slate-900">{t.start_time?.slice(0, 5)} - {t.end_time?.slice(0, 5)}</td>
-                          <td className="px-6 py-4 text-sm text-slate-400">{t.room || '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <TimetableTab
+                timetable={visibleTimetable}
+                courses={visibleCourses}
+                ttForm={ttForm}
+                setTtForm={setTtForm}
+                createTimetableSlot={createTimetableSlot}
+                isAdmin={isAdmin}
+                hasWriteAccess={hasWriteAccess}
+              />
             )}
 
             {/* ─── TRANSFERS ─── */}
             {activeTab === 'transfers' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
-                {visibleTransfers.length > 0 ? (
-                  <div className="space-y-3">
-                    {visibleTransfers.map((t: any) => (
-                      <div key={t.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="font-mono text-sm font-bold text-slate-700">ENR-{t.enrollment}</span>
-                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs text-slate-400">{t.request_type.replace('_', ' ')}</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${t.status === 'APPROVED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                              t.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                              }`}>{t.status}</span>
-                          </div>
-                          <p className="text-sm text-slate-700">{t.reason}</p>
-                        </div>
-                        {t.status === 'PENDING' && (
-                          <div className="flex space-x-2 ml-4">
-                            <button onClick={() => updateTransferStatus(t.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                            <button onClick={() => updateTransferStatus(t.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-slate-400 italic text-center py-12">No transfer/exit requests.</p>}
-              </div>
+              <TransfersTab
+                transfers={visibleTransfers}
+                updateTransferStatus={updateTransferStatus}
+                isAdmin={isAdmin}
+                hasWriteAccess={hasWriteAccess}
+              />
             )}
 
             {/* ─── REVALUATIONS ─── */}
             {activeTab === 'revaluations' && (
-              <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-lg p-8">
-                {visibleRevaluations.length > 0 ? (
-                  <div className="space-y-3">
-                    {visibleRevaluations.map((r: any) => (
-                      <div key={r.id} className="bg-slate-50/50 p-5 border border-slate-200 rounded-md flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="font-bold text-slate-900">{r.course_code}</span>
-                            <span className="text-xs text-slate-400">Original: {r.original_grade} ({r.original_marks})</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${r.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                              r.status === 'REJECTED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                              }`}>{r.status}</span>
-                          </div>
-                          <p className="text-sm text-slate-700">{r.reason}</p>
-                        </div>
-                        {r.status === 'PENDING' && (
-                          <div className="flex space-x-2 ml-4">
-                            <button onClick={() => updateRevalStatus(r.id, 'APPROVED')} disabled={!hasWriteAccess} className={`bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-xs font-bold border border-green-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600/30'}`}>Approve</button>
-                            <button onClick={() => updateRevalStatus(r.id, 'REJECTED')} disabled={!hasWriteAccess} className={`bg-red-600/20 text-red-400 px-4 py-2 rounded-lg text-xs font-bold border border-red-500/30 transition ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600/30'}`}>Reject</button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-slate-400 italic text-center py-12">No revaluation requests.</p>}
-              </div>
+              <RevaluationsTab
+                revaluations={visibleRevaluations}
+                updateRevalStatus={updateRevalStatus}
+                isAdmin={isAdmin}
+                hasWriteAccess={hasWriteAccess}
+              />
             )}
 
             {/* ─── STAFFING TAB ─── */}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { fetchAPI } from '@/lib/api';
 
 function ApplicationFormContent() {
   const router = useRouter();
@@ -58,9 +59,9 @@ function ApplicationFormContent() {
       return;
     }
 
-    fetch('http://localhost:8000/api/academics/programs/')
-      .then(res => res.json())
+    fetchAPI('/academics/programs/')
       .then(data => {
+        if (!data) return;
         const programs = Array.isArray(data) ? data : data.results || [];
         const prog = programs.find((p: any) => p.id === selectedProgram);
         if (prog) setProgramName(prog.name);
@@ -87,10 +88,8 @@ function ApplicationFormContent() {
 
     try {
       // 1. Create Profile
-      const profileRes = await fetch('http://localhost:8000/api/admission/profiles/', {
+      await fetchAPI('/admission/profiles/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           date_of_birth: dob, gender, category, blood_group: bloodGroup, nationality,
           phone, permanent_address: permAddress, correspondence_address: corrAddress,
@@ -102,10 +101,8 @@ function ApplicationFormContent() {
       });
       
       // 2. Create Application
-      const appRes = await fetch('http://localhost:8000/api/admission/applications/', {
+      await fetchAPI('/admission/applications/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           program: selectedProgram,
           entry_type: 'ONLINE',
@@ -123,11 +120,6 @@ function ApplicationFormContent() {
           status: 'SUBMITTED'
         }),
       });
-      
-      if (!appRes.ok) {
-        const errorData = await appRes.json();
-        throw new Error(JSON.stringify(errorData) || 'Failed to submit application');
-      }
 
       // Force a full reload to ensure the dashboard fetches the fresh application data
       window.location.href = '/dashboard/prospective';

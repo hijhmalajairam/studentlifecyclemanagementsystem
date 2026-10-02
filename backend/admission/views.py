@@ -107,12 +107,13 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
             if application.status != 'FEE_PENDING':
                 return Response({"detail": "Fees are not pending for this application."}, status=status.HTTP_400_BAD_REQUEST)
                 
-            # Verify documents before fee payment
-            if application.documents.count() == 0:
-                return Response({"detail": "Please upload your documents first."}, status=status.HTTP_400_BAD_REQUEST)
-            unverified = application.documents.exclude(status='VERIFIED')
-            if unverified.exists():
-                return Response({"detail": "All your documents must be verified before you can pay the fee."}, status=status.HTTP_400_BAD_REQUEST)
+            # Verify documents before fee payment (Admins can override)
+            if request.user.role != 'ADMIN':
+                if application.documents.count() == 0:
+                    return Response({"detail": "Please upload your documents first."}, status=status.HTTP_400_BAD_REQUEST)
+                unverified = application.documents.exclude(status='VERIFIED')
+                if unverified.exists():
+                    return Response({"detail": "All your documents must be verified before you can pay the fee."}, status=status.HTTP_400_BAD_REQUEST)
 
             # 1. Update Application Status
             application.status = 'ENROLLED'
@@ -138,7 +139,8 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
                 user=user,
                 defaults={
                     'enrollment_number': enrollment_num,
-                    'fee_paid': True
+                    'fee_paid': True,
+                    'program': application.program
                 }
             )
 
@@ -237,7 +239,7 @@ class SeatAllocationViewSet(viewsets.ModelViewSet):
         if application.status not in ['SELECTED']:
             raise serializers.ValidationError({"detail": "Application must be SELECTED to allocate a seat."})
             
-        serializer.save(allocated_by=self.request.user)
+        serializer.save(allocated_by=self.request.user, application=application)
         
         # After allocation, they are ready for fee payment/enrollment
         application.status = 'FEE_PENDING'

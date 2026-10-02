@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.db import models as db_models
 from .utils import get_target_user, calculate_gpa
-from ..models import AcademicTerm, Department, Course, CourseSection, Program
-from ..serializers import DepartmentSerializer, AcademicTermSerializer, CourseSerializer, ProgramSerializer, CourseSectionSerializer
+from ..models import AcademicTerm, Department, Course, CourseSection, Program, Batch
+from ..serializers import DepartmentSerializer, AcademicTermSerializer, CourseSerializer, ProgramSerializer, CourseSectionSerializer, BatchSerializer
 
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all()
@@ -15,6 +15,11 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 class ProgramViewSet(viewsets.ModelViewSet):
     queryset = Program.objects.select_related('department').all()
     serializer_class = ProgramSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class BatchViewSet(viewsets.ModelViewSet):
+    queryset = Batch.objects.select_related('program').all()
+    serializer_class = BatchSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 from django.utils import timezone

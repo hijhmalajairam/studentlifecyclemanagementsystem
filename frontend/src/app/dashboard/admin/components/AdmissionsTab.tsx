@@ -321,18 +321,41 @@ export default function AdmissionsTab({
                               Contact: <strong className="text-[var(--text-secondary)]">{app.profile_details?.email}</strong> · <strong className="text-[var(--text-secondary)]">{app.profile_details?.phone || 'No phone'}</strong>
                             </p>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_department || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', allocated_batch: '' }), allocated_department: e.target.value } }))} 
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                              <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_department || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', start_year: '', end_year: '' }), allocated_department: e.target.value } }))} 
                                 className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]">
                                 <option value="">Select Department</option>
                                 {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                               </select>
-                              <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_program || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', allocated_batch: '' }), allocated_program: e.target.value } }))} 
+                              <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_program || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', start_year: '', end_year: '' }), allocated_program: e.target.value } }))} 
                                 className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]">
                                 <option value="">Select Program</option>
                                 {programs.filter((p: any) => !allocationForms[app.id]?.allocated_department || p.department === Number(allocationForms[app.id].allocated_department)).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
                               </select>
-
+                              <select 
+                                disabled={!isAdmin}
+                                value={allocationForms[app.id]?.start_year || ''}
+                                onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', start_year: '', end_year: '' }), start_year: e.target.value } }))}
+                                className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]"
+                              >
+                                <option value="">Start Year</option>
+                                {[...Array(5)].map((_, i) => {
+                                  const year = new Date().getFullYear() - 1 + i;
+                                  return <option key={year} value={year}>{year}</option>;
+                                })}
+                              </select>
+                              <select 
+                                disabled={!isAdmin}
+                                value={allocationForms[app.id]?.end_year || ''}
+                                onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', start_year: '', end_year: '' }), end_year: e.target.value } }))}
+                                className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]"
+                              >
+                                <option value="">End Year</option>
+                                {[...Array(8)].map((_, i) => {
+                                  const year = new Date().getFullYear() + 1 + i;
+                                  return <option key={year} value={year}>{year}</option>;
+                                })}
+                              </select>
                             </div>
                             
                             <button onClick={() => allocateSeat(app.id)} disabled={!isAdmin || app.status !== 'SELECTED'} 

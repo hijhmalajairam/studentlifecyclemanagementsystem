@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    DepartmentViewSet, ProgramViewSet, EnrollmentViewSet, CourseViewSet, CourseSectionViewSet, SemesterRegistrationViewSet,
+    DepartmentViewSet, ProgramViewSet, BatchViewSet, EnrollmentViewSet, CourseViewSet, CourseSectionViewSet, SemesterRegistrationViewSet,
     AttendanceViewSet, LeaveViewSet, ResultViewSet,
     FeeViewSet, TimetableViewSet, NotificationViewSet,
     RevaluationRequestViewSet, TransferRequestViewSet, NoDuesViewSet,
@@ -14,6 +14,7 @@ from .views.placements import AIPlacementViewSet
 router = DefaultRouter()
 router.register(r'departments', DepartmentViewSet)
 router.register(r'programs', ProgramViewSet)
+router.register(r'batches', BatchViewSet, basename='batch')
 router.register(r'enrollment', EnrollmentViewSet, basename='enrollment')
 router.register(r'courses', CourseViewSet)
 router.register(r'course-sections', CourseSectionViewSet)

@@ -2,10 +2,29 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAPI } from '@/lib/api';
 
+interface Department {
+  id: number;
+  name: string;
+  code?: string;
+  description?: string;
+}
+
+interface Program {
+  id: number;
+  name: string;
+  code?: string;
+  department?: number;
+  department_name?: string;
+  duration_years?: number;
+  description?: string;
+}
+
 export default function AdminAdmissionsDashboard() {
   const [activeTab, setActiveTab] = useState<'review' | 'offline' | 'allocation'>('review');
   const [applications, setApplications] = useState<any[]>([]);
   const [interviewers, setInterviewers] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Application List State
@@ -37,7 +56,31 @@ export default function AdminAdmissionsDashboard() {
   useEffect(() => {
     fetchApplications();
     fetchInterviewers();
+    fetchDepartments();
+    fetchPrograms();
   }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const data = await fetchAPI('/academics/departments/');
+      if (data) {
+        setDepartments(data);
+      }
+    } catch (e) {
+      
+    }
+  };
+
+  const fetchPrograms = async () => {
+    try {
+      const data = await fetchAPI('/academics/programs/');
+      if (data) {
+        setPrograms(data);
+      }
+    } catch (e) {
+      
+    }
+  };
 
   const fetchInterviewers = async () => {
     try {
@@ -391,22 +434,50 @@ export default function AdminAdmissionsDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm mb-1 text-gray-700">Department</label>
-                  <select required value={allocDept} onChange={e=>setAllocDept(e.target.value)} className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-600">
+                  <select
+                    required
+                    value={allocDept}
+                    onChange={e => {
+                      setAllocDept(e.target.value);
+                      setAllocProgram('');
+                    }}
+                    className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-600"
+                  >
                     <option value="">-- Select --</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Mechanical">Mechanical</option>
-                    <option value="Business">Business</option>
-                    <option value="Law">Law</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm mb-1 text-gray-700">Program</label>
-                  <select required value={allocProgram} onChange={e=>setAllocProgram(e.target.value)} className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-600">
+                  <select
+                    required
+                    value={allocProgram}
+                    onChange={e => {
+                      const progName = e.target.value;
+                      setAllocProgram(progName);
+                      const prog = programs.find(p => p.name === progName);
+                      if (prog && !allocDept) {
+                        const dept = departments.find(d => d.id === prog.department);
+                        if (dept) setAllocDept(dept.name);
+                      }
+                    }}
+                    className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-600"
+                  >
                     <option value="">-- Select --</option>
-                    <option value="B.Tech CSE">B.Tech CSE</option>
-                    <option value="B.Tech Mechanical">B.Tech Mechanical</option>
-                    <option value="MBA">MBA</option>
-                    <option value="LLB">LLB</option>
+                    {(() => {
+                      const filtered = allocDept
+                        ? programs.filter(p => {
+                            const selectedDept = departments.find(d => d.name === allocDept);
+                            return selectedDept ? p.department === selectedDept.id : p.department_name === allocDept;
+                          })
+                        : programs;
+                      const list = filtered.length > 0 ? filtered : programs;
+                      return list.map((p) => (
+                        <option key={p.id} value={p.name}>{p.name}</option>
+                      ));
+                    })()}
                   </select>
                 </div>
               </div>

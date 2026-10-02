@@ -45,3 +45,18 @@ class CourseSection(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.course.code} - {self.academic_term.term_name}"
+
+class Batch(SoftDeleteModel):
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='batches')
+    start_year = models.IntegerField()
+    end_year = models.IntegerField()
+    section = models.CharField(max_length=10, blank=True, default='')
+    is_current = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ('program', 'start_year', 'end_year', 'section')
+        ordering = ['-start_year']
+    
+    def __str__(self):
+        section_str = f' {self.section}' if self.section else ''
+        return f'{self.program.code} {self.start_year}-{self.end_year}{section_str}'

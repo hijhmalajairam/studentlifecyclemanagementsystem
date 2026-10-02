@@ -225,7 +225,25 @@ export default function ProspectiveDashboard() {
                 </div>
               )}
 
-              <p className="text-teal-100 text-sm mt-4">Your role has been upgraded to <strong>Student</strong>. Refresh the page to access your Student Dashboard.</p>
+              <div className="mt-6">
+                <button 
+                  onClick={() => {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                      try {
+                        const user = JSON.parse(storedUser);
+                        user.role = 'STUDENT';
+                        localStorage.setItem('user', JSON.stringify(user));
+                        window.location.href = '/dashboard/student';
+                      } catch (e) {}
+                    }
+                  }}
+                  className="bg-white text-teal-600 px-6 py-3 rounded-lg font-bold shadow-md hover:bg-slate-50 transition-colors flex items-center gap-2"
+                >
+                  Go to Student Portal 
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+              </div>
             </div>
           )}
         </div>
