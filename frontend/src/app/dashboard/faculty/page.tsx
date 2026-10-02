@@ -1,198 +1,198 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
-import '../admin/dashboard-theme.css'; // Reuse theme
+import FacultySidebar from './components/FacultySidebar';
+import TopBar from '../admin/components/TopBar';
 import MyTimetable from './components/MyTimetable';
 import MyClasses from './components/MyClasses';
-import InternshipManager from './components/InternshipManager';
-import FacultyOpportunities from './components/FacultyOpportunities';
+import AdmissionsTab from '../admin/components/AdmissionsTab';
+import FacultyProfileSection from './components/FacultyProfileSection';
+import InterviewPool from './components/InterviewPool';
+import FacultyAttendanceTab from './components/FacultyAttendanceTab';
+import FacultyGradingTab from './components/FacultyGradingTab';
+import FacultyMentoringTab from './components/FacultyMentoringTab';
+import FacultyFeedbackTab from './components/FacultyFeedbackTab';
 
 export default function FacultyDashboard() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [facultyProfile, setFacultyProfile] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState('my_dashboard');
-  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('overview');
+  const [darkMode, setDarkMode] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [activeRole, setActiveRole] = useState('Faculty');
 
-  const [internalAssessments, setInternalAssessments] = useState<any[]>([]);
-  const [disciplinaryCases, setDisciplinaryCases] = useState<any[]>([]);
-  const [courseGradingSchemes, setCourseGradingSchemes] = useState<any[]>([]);
-  const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
-  
-  // Grading Scheme State
-  const [gradingSchemeForm, setGradingSchemeForm] = useState({ mean: '', stdDev: '' });
+  // Admissions State
+  const [applications, setApplications] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [showOfflineForm, setShowOfflineForm] = useState(false);
+  const [offlineForm, setOfflineForm] = useState({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', previous_school_name: '', previous_marks_percentage: '' });
+  const [interviewDates, setInterviewDates] = useState<Record<number, string>>({});
+  const [allocationForms, setAllocationForms] = useState<Record<number, any>>({});
+  const [feeVerifications, setFeeVerifications] = useState<Record<number, string>>({});
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        setCurrentUser(u);
-        fetchAPI(`/academics/faculty-profiles/?user=${u.id}`)
-          .then(data => {
-            if (data && data.length > 0) {
-              setFacultyProfile(data[0]);
-            }
-          })
-          .catch(console.error)
-          .finally(() => setLoading(false));
-      } catch (e) {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
+    setIsMounted(true);
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      router.push('/login');
+      return;
     }
+    const user = JSON.parse(storedUser);
+    setCurrentUser(user);
+
+    // Set initial active role
+    const roles = user.additional_roles || [];
+    if (roles.includes('DEAN')) setActiveRole('Dean');
+    else if (roles.includes('INTERVIEWER')) setActiveRole('Interviewer');
+    else setActiveRole('Faculty');
+
+    fetchAPI('/academics/faculty/my_profile/')
+      .then(data => setFacultyProfile(data))
+      .catch(err => console.error(err));
+
+    fetchAdmissionsData();
   }, []);
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-slate-400">Loading...</div>;
-  }
-
-  const additionalRoles = currentUser?.all_roles || [];
-  const isHOD = additionalRoles.some((r: string) => r.startsWith('HOD_'));
-  const isPlacement = additionalRoles.includes('PLACEMENT_DIRECTOR');
-  const isWarden = additionalRoles.includes('CHIEF_WARDEN') || additionalRoles.includes('HOSTEL_WARDEN');
-  const isCOE = additionalRoles.includes('CONTROLLER_OF_EXAMINATIONS');
-
-  const sidebarSections = [
-    {
-      group: 'Base',
-      items: [
-        { id: 'my_dashboard', label: 'My Dashboard', icon: '⊞' },
-        { id: 'my_timetable', label: 'My Timetable', icon: '📅' },
-        { id: 'my_classes', label: 'My Classes', icon: '🧑‍🏫' },
-      ]
+  const fetchAdmissionsData = async () => {
+    try {
+      const [apps, depts, progs] = await Promise.all([
+        fetchAPI('/admission/applications/'),
+        fetchAPI('/academics/departments/'),
+        fetchAPI('/academics/programs/')
+      ]);
+      setApplications(apps || []);
+      setDepartments(depts || []);
+      setPrograms(progs || []);
+    } catch (err) {
+      console.error(err);
     }
-  ];
+  };
 
-  
-  sidebarSections.push({
-    group: 'Internships',
-    items: [
-      { id: 'internship_manager', label: 'Internship Manager', icon: '🏢' },
-      { id: 'faculty_opportunities', label: 'My Opportunities', icon: '🧑‍🏫' },
-    ]
-  });
+  const updateStatus = async (id: number, status: string) => {
+    try {
+      const application = await fetchAPI(`/admission/applications/${id}/`, { 
+        method: 'PATCH', 
+        body: JSON.stringify({ status }) 
+      });
+      setApplications(apps => apps.map(app => app.id === id ? application : app));
+    } catch (err) {
+      alert("Failed to update status");
+    }
+  };
 
-  if (isHOD) {
-    sidebarSections.push({
-      group: 'Department',
-      items: [
-        { id: 'department_overview', label: 'Department Overview', icon: '🏢' },
-      ]
-    });
-  }
-  if (isPlacement) {
-    sidebarSections.push({
-      group: 'Placement',
-      items: [
-        { id: 'placement_cell', label: 'Placement Cell', icon: '💼' },
-      ]
-    });
-  }
-  if (isWarden) {
-    sidebarSections.push({
-      group: 'Hostel',
-      items: [
-        { id: 'hostel_management', label: 'Hostel Management', icon: '🏠' },
-      ]
-    });
-  }
-  if (isCOE) {
-    sidebarSections.push({
-      group: 'Exams',
-      items: [
-        { id: 'exam_cell', label: 'Exam Cell', icon: '📝' },
-      ]
-    });
-  }
+  const scheduleInterview = async (id: number) => {
+    const interview_date = interviewDates[id];
+    if (!interview_date) return alert('Choose an interview date and time first.');
+    try {
+      const application = await fetchAPI(`/admission/applications/${id}/`, { method: 'PATCH', body: JSON.stringify({ status: 'INTERVIEW_SCHEDULED', interview_date }) });
+      setApplications(apps => apps.map(app => app.id === id ? application : app));
+    } catch { alert('Failed to schedule interview'); }
+  };
 
-  return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex overflow-hidden theme-transition font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex flex-col shrink-0 transition-all duration-300 border-r border-[var(--sidebar-border)] shadow-xl relative z-20">
-        <div className="px-4 py-6 border-b border-[var(--sidebar-border)] flex items-center justify-between">
-          <div>
-            <h1 className="text-sm font-black tracking-tight text-[var(--text-primary)]">Veritas Grove</h1>
-            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-0.5">Faculty Portal</p>
-          </div>
-        </div>
+  const allocateSeat = async (id: number) => {
+    const form = allocationForms[id];
+    if (!form?.allocated_program) return alert('Please select a program.');
+    try {
+      await fetchAPI('/admission/allocations/', { method: 'POST', body: JSON.stringify({ application: id, ...form }) });
+      fetchAdmissionsData();
+    } catch (error: any) { alert('Seat allocation failed: ' + (error.message || error)); }
+  };
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 custom-scrollbar">
-          {sidebarSections.map(section => (
-            <div key={section.group}>
-              <p className="px-3 mb-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
-                {section.group}
-              </p>
-              <div className="space-y-1">
-                {section.items.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-xs font-bold ${
-                      activeSection === item.id
-                        ? 'bg-gradient-to-r from-[var(--primary-gradient-start)] to-[var(--primary-gradient-end)] text-white shadow-lg shadow-blue-500/30 translate-x-1'
-                        : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] hover:translate-x-1'
-                    }`}
-                  >
-                    <span className={`text-base mr-3 ${activeSection === item.id ? 'opacity-100' : 'opacity-70'}`}>{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
+  const verifyFeePayment = async (appId: number) => {
+    if (feeVerifications[appId]?.toLowerCase() !== 'yes') {
+      return alert("Please type 'yes' to confirm fee payment.");
+    }
+    try {
+      await fetchAPI(`/admission/applications/${appId}/pay_fees/`, { method: 'POST' });
+      alert("Fee payment verified. Student enrolled!");
+      fetchAdmissionsData();
+    } catch {
+      alert("Failed to verify fee payment.");
+    }
+  };
 
-        <div className="px-5 py-4 border-t border-[var(--sidebar-border)] bg-[var(--bg-primary)]">
-          <button
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              window.location.href = '/login';
-            }}
-            className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-xs font-bold text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all duration-300"
-          >
-            <span className="mr-2">🚪</span>
-            Secure Logout
-          </button>
-        </div>
-      </aside>
+  const createOfflineApplication = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      await fetchAPI('/admission/applications/create_offline/', {
+        method: 'POST', body: JSON.stringify({
+          user: { username: offlineForm.username, email: offlineForm.email, password: offlineForm.password, first_name: offlineForm.first_name, last_name: offlineForm.last_name, phone: offlineForm.phone },
+          profile: { phone: offlineForm.phone },
+          application: { previous_school_name: offlineForm.previous_school_name, previous_marks_percentage: offlineForm.previous_marks_percentage || null },
+        }),
+      });
+      setOfflineForm({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', previous_school_name: '', previous_marks_percentage: '' });
+      setShowOfflineForm(false); fetchAdmissionsData(); alert('Offline application created.');
+    } catch { alert('Could not create the offline application. Check that username and email are unique.'); }
+  };
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar equivalent (simplified) */}
-        <header className="bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Faculty Dashboard</h2>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm font-bold text-slate-800">{currentUser?.first_name} {currentUser?.last_name}</p>
-              <p className="text-xs text-slate-500">{facultyProfile?.designation || 'Faculty Member'}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
-              {currentUser?.first_name?.[0] || 'F'}
-            </div>
-          </div>
-        </header>
+  const verifyDocument = async (appId: number, docId: number, status: string) => {
+    try {
+      await fetchAPI(`/admission/documents/${docId}/`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      setApplications(apps => apps.map(app => {
+        if (app.id === appId) {
+          return { ...app, documents: app.documents.map((d: any) => d.id === docId ? { ...d, status } : d) };
+        }
+        return app;
+      }));
+    } catch { alert("Failed to update doc"); }
+  };
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-          <div className="max-w-7xl mx-auto space-y-8">
-            
-            {/* Welcome Header */}
-            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none text-9xl">🎓</div>
+  const approveScholarship = async (appId: number, scholarshipId: number, concession: number) => {
+    try {
+      await fetchAPI(`/admission/scholarships/${scholarshipId}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'APPROVED', concession_percentage: concession })
+      });
+      setApplications(apps => apps.map(app => {
+        if (app.id === appId) {
+          return { ...app, scholarship: { ...app.scholarship, status: 'APPROVED', concession_percentage: concession } };
+        }
+        return app;
+      }));
+    } catch { alert("Failed to approve scholarship"); }
+  };
+
+  if (!isMounted || !currentUser) return null;
+
+  const additionalRoles = currentUser.additional_roles || [];
+  const isDean = additionalRoles.includes('DEAN');
+  const isInterviewer = additionalRoles.includes('INTERVIEWER');
+
+  // Handle role switch => navigate to the right default tab
+  const handleRoleSwitch = (role: string) => {
+    setActiveRole(role);
+    if (role === 'Dean') {
+      setActiveSection('admissions');
+    } else if (role === 'Interviewer') {
+      setActiveSection('interviews');
+    } else {
+      setActiveSection('overview');
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'overview':
+        return (
+          <div className="space-y-8">
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none text-8xl">🎓</div>
               <div className="relative z-10">
                 <h1 className="text-3xl font-black text-slate-900 mb-2">
-                  Welcome back, Prof. {currentUser?.last_name || currentUser?.first_name}!
+                  Welcome back, {facultyProfile?.designation || 'Prof.'} {currentUser.last_name || currentUser.first_name}!
                 </h1>
                 <p className="text-slate-500 font-medium mb-6">
                   {facultyProfile?.department_name || 'Department'} • {facultyProfile?.designation || 'Faculty'}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className="px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold shadow-sm">
-                    {currentUser?.role || 'FACULTY'}
+                    {currentUser.role || 'FACULTY'}
                   </span>
                   {additionalRoles.map((role: string) => (
                     <span key={role} className="px-3 py-1.5 bg-cyan-50 text-cyan-600 border border-cyan-100 rounded-lg text-xs font-bold shadow-sm">
@@ -203,55 +203,197 @@ export default function FacultyDashboard() {
               </div>
             </div>
 
-            {/* Content Section */}
-            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px]">
-              {activeSection === 'my_timetable' && <MyTimetable />}
-              {activeSection === 'my_classes' && <MyClasses />}
-              {activeSection === 'internship_manager' && <InternshipManager />}
-              {activeSection === 'faculty_opportunities' && <FacultyOpportunities />}
-              {activeSection === 'my_dashboard' && (
-                <div className="text-center py-20">
-                  <div className="text-6xl mb-4 opacity-50">⊞</div>
-                  <h3 className="text-2xl font-bold text-slate-800 mb-2">Dashboard Overview</h3>
-                  <p className="text-slate-400">Select an item from the sidebar to view your teaching materials.</p>
-                </div>
-              )}
-              {/* Fallback for HOD/Placement tabs for now */}
-              {!['my_timetable', 'my_classes', 'my_dashboard', 'internship_manager', 'faculty_opportunities'].includes(activeSection) && (
-                <div className="text-center py-20">
-                  <div className="text-6xl mb-4 opacity-50">
-                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="h-11 w-11 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg">📚</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">My Classes</p>
+                    <p className="text-xl font-black text-slate-800">2 Active</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label}
-                  </h3>
-                  <p className="text-slate-400">
-                    This advanced module is being built out now.
-                  </p>
                 </div>
-              )}
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="h-11 w-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">👥</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Mentees</p>
+                    <p className="text-xl font-black text-slate-800">5 Students</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-lg">⭐</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Rating</p>
+                    <p className="text-xl font-black text-slate-800">4.45/5.0</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="h-11 w-11 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 text-lg">✅</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Attendance Avg.</p>
+                    <p className="text-xl font-black text-slate-800">91.2%</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Quick Actions */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Quick Actions</h3>
+              <div className="grid gap-3 md:grid-cols-4">
+                <button onClick={() => setActiveSection('my_classes')} className="p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition text-left">
+                  <p className="text-sm font-bold text-slate-800">📖 Mark Attendance</p>
+                  <p className="text-xs text-slate-400 mt-1">Open class list</p>
+                </button>
+                <button onClick={() => setActiveSection('grading')} className="p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition text-left">
+                  <p className="text-sm font-bold text-slate-800">📝 Grade Entry</p>
+                  <p className="text-xs text-slate-400 mt-1">Submit student grades</p>
+                </button>
+                <button onClick={() => setActiveSection('mentoring')} className="p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition text-left">
+                  <p className="text-sm font-bold text-slate-800">🎯 Mentoring</p>
+                  <p className="text-xs text-slate-400 mt-1">Check mentee progress</p>
+                </button>
+                <button onClick={() => setActiveSection('feedback')} className="p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition text-left">
+                  <p className="text-sm font-bold text-slate-800">⭐ Feedback</p>
+                  <p className="text-xs text-slate-400 mt-1">View student feedback</p>
+                </button>
+              </div>
+            </div>
+
+            {/* Upcoming Schedule */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-5 bg-slate-50 border-b border-slate-200">
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Today&apos;s Schedule</h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {[
+                  { time: '09:00 - 10:00', course: 'MATH101 - Calculus I', room: 'Room 301, Block A', type: 'Lecture' },
+                  { time: '11:00 - 12:00', course: 'MATH201 - Linear Algebra', room: 'Room 204, Block B', type: 'Lecture' },
+                  { time: '14:00 - 15:00', course: 'MATH101 - Calculus I', room: 'Lab 102, Block C', type: 'Tutorial' },
+                  { time: '15:30 - 16:30', course: 'Office Hours', room: 'Faculty Office, Rm 412', type: 'Office Hours' },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center px-5 py-4 hover:bg-slate-50/50 transition">
+                    <div className="w-28 shrink-0">
+                      <p className="text-sm font-bold text-blue-600">{s.time}</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-800">{s.course}</p>
+                      <p className="text-xs text-slate-400">{s.room}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                      s.type === 'Lecture' ? 'bg-blue-50 text-blue-600 border border-blue-200' :
+                      s.type === 'Tutorial' ? 'bg-purple-50 text-purple-600 border border-purple-200' :
+                      'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    }`}>{s.type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      case 'my_timetable':
+        return <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200"><MyTimetable /></div>;
+      case 'my_classes':
+        return <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200"><MyClasses /></div>;
+      case 'attendance':
+        return <FacultyAttendanceTab />;
+      case 'grading':
+        return <FacultyGradingTab />;
+      case 'mentoring':
+        return <FacultyMentoringTab />;
+      case 'feedback':
+        return <FacultyFeedbackTab />;
+      case 'profile':
+        return <FacultyProfileSection profile={facultyProfile} user={currentUser} />;
+      case 'admissions':
+        if (isDean || isInterviewer) {
+          return (
+            <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
+              <AdmissionsTab
+                isAdmin={true}
+                applications={applications}
+                departments={departments}
+                programs={programs}
+                offlineForm={offlineForm}
+                setOfflineForm={setOfflineForm}
+                showOfflineForm={showOfflineForm}
+                setShowOfflineForm={setShowOfflineForm}
+                interviewDates={interviewDates}
+                setInterviewDates={setInterviewDates}
+                allocationForms={allocationForms}
+                setAllocationForms={setAllocationForms}
+                feeVerifications={feeVerifications}
+                setFeeVerifications={setFeeVerifications}
+                updateStatus={updateStatus}
+                expandedRow={expandedRow}
+                setExpandedRow={setExpandedRow}
+                scheduleInterview={scheduleInterview}
+                allocateSeat={allocateSeat}
+                verifyFeePayment={verifyFeePayment}
+                createOfflineApplication={createOfflineApplication}
+                verifyDocument={verifyDocument}
+                approveScholarship={approveScholarship}
+              />
+            </div>
+          );
+        }
+        return <div>Access Denied</div>;
+      case 'interviews':
+        if (isInterviewer) {
+          return <InterviewPool />;
+        }
+        return <div>Access Denied</div>;
+      default:
+        return (
+          <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center">
+            <h2 className="text-xl font-bold text-slate-700 mb-2">Section Under Construction</h2>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fa] text-slate-800 flex overflow-hidden theme-transition font-sans">
+      <FacultySidebar activeSection={activeSection} setActiveSection={setActiveSection} user={currentUser} isDean={isDean} isInterviewer={isInterviewer} />
+      
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar 
+          user={currentUser} 
+          isAdmin={false}
+          facultyProfile={facultyProfile} 
+          darkMode={darkMode} 
+          setDarkMode={setDarkMode}
+          activeRole={activeRole}
+          setActiveRole={handleRoleSwitch}
+        />
+
+        {/* Dynamic Breadcrumbs */}
+        <div className="bg-white border-b border-slate-200 px-8 py-3 flex justify-between items-center z-10 shrink-0">
+          <div className="flex items-center text-xs font-bold text-slate-500">
+            <span className="hover:text-blue-600 cursor-pointer transition" onClick={() => setActiveSection('overview')}>Home</span>
+            <span className="mx-2 text-slate-300">/</span>
+            <span className="hover:text-blue-600 cursor-pointer transition">Faculty</span>
+            <span className="mx-2 text-slate-300">/</span>
+            <span className="text-slate-800 capitalize">{activeSection.replace(/_/g, ' ')}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm">
+              AY 2025-26
+            </span>
+          </div>
+        </div>
+
+        <main className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+          <div className="max-w-6xl mx-auto pb-12">
+            {renderContent()}
           </div>
         </main>
       </div>
-      
-      {/* Evidence Preview Modal */}
-      {previewEvidence && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-              <h3 className="text-sm font-bold text-slate-200">Evidence Document</h3>
-              <button onClick={() => setPreviewEvidence(null)} className="text-slate-400 hover:text-white p-1">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-950/50 p-4">
-              <iframe src={previewEvidence.startsWith('http') ? previewEvidence : `http://localhost:8000${previewEvidence}`} className="w-full h-full rounded-xl border border-slate-800 bg-white" title="Evidence Preview" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

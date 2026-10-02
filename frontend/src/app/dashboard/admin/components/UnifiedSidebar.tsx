@@ -6,6 +6,8 @@ interface SidebarProps {
   setActiveSection: (section: string) => void;
   user: any;
   isAdmin: boolean;
+  isHOD?: boolean;
+  isTransport?: boolean;
   facultyProfile?: any;
 }
 
@@ -25,6 +27,7 @@ const sidebarSections = [
       { id: 'timetable', label: 'Timetable', icon: '📅' },
       { id: 'students', label: 'Students', icon: '🎓' },
       { id: 'grade_entry', label: 'Grade Entry', icon: '✏️' },
+        { id: 'internships', label: 'Internships', icon: '💼' },
     ]
   },
   {
@@ -33,6 +36,7 @@ const sidebarSections = [
       { id: 'staffing', label: 'Staffing & Roles', icon: '👥' },
       { id: 'leaves', label: 'Leave Requests', icon: '🗓' },
       { id: 'fees', label: 'Fee Management', icon: '💳' },
+        { id: 'discipline', label: 'Discipline Cases', icon: '⚖️' },
       { id: 'transfers', label: 'Transfers / Exit', icon: '🚪' },
       { id: 'revaluations', label: 'Revaluations', icon: '📝' },
     ]
@@ -60,8 +64,25 @@ const sidebarSections = [
   },
 ];
 
-export default function UnifiedSidebar({ activeSection, setActiveSection, user, isAdmin, facultyProfile }: SidebarProps) {
+export default function UnifiedSidebar({ activeSection, setActiveSection, user, isAdmin, isHOD, isTransport, facultyProfile }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+
+  const filteredSections = sidebarSections.map(section => {
+    return {
+      ...section,
+      items: section.items.filter(item => {
+        if (isAdmin) return true;
+        if (isHOD) {
+          return ['overview', 'academics', 'timetable', 'students', 'grade_entry', 'leaves', 'transfers', 'revaluations', 'faculty', 'discipline', 'internships'].includes(item.id);
+        }
+        if (isTransport) {
+          return ['overview', 'transport', 'students'].includes(item.id);
+        }
+        // Normal faculty
+        return ['overview', 'academics', 'timetable', 'students', 'grade_entry'].includes(item.id);
+      })
+    };
+  }).filter(section => section.items.length > 0);
 
   return (
     <aside className={`${collapsed ? 'w-16' : 'w-64'} bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex flex-col shrink-0 transition-all duration-300 border-r border-[var(--sidebar-border)] shadow-xl relative z-20`}>
@@ -102,7 +123,7 @@ export default function UnifiedSidebar({ activeSection, setActiveSection, user, 
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 custom-scrollbar">
-        {sidebarSections.map(section => (
+        {filteredSections.map(section => (
           <div key={section.group}>
             {!collapsed && (
               <p className="px-3 mb-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">

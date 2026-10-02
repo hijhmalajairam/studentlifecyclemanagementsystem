@@ -18,7 +18,10 @@ export default function AdmissionsTab({
   feeVerifications,
   setFeeVerifications,
   verifyFeePayment,
-  showOfflineForm
+  showOfflineForm,
+  scheduleInterview,
+  interviewDates,
+  setInterviewDates
 }: any) {
   return (
     <div className="space-y-8">
@@ -68,7 +71,111 @@ export default function AdmissionsTab({
         </form>
       )}
 
-      {/* Applications Table */}
+      
+      {/* New Applications (Pending Review) Table */}
+      <div>
+        <h3 className="font-bold text-lg text-[var(--text-primary)] mb-4 flex items-center">
+          <FileText className="w-5 h-5 mr-2 text-indigo-500" />
+          New Applications (Pending Review)
+        </h3>
+        <div className="bg-[var(--card-bg)]/90 backdrop-blur-xl border border-[var(--sidebar-border)] rounded-3xl shadow-xl overflow-hidden relative mb-8">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="min-w-full text-left">
+              <thead className="bg-[var(--sidebar-hover)]/80 border-b border-[var(--sidebar-border)]">
+                <tr>
+                  <th className="px-8 py-5 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Details</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Applicant</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Program</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--sidebar-border)]">
+                {applications.filter((a: any) => a.status === 'SUBMITTED' || a.status === 'INTERVIEW_SCHEDULED').length === 0 ? (
+                  <tr><td colSpan={5} className="px-8 py-24 text-center text-[var(--text-tertiary)] font-bold text-sm bg-[var(--bg-primary)]/50">No new applications at this time.</td></tr>
+                ) : applications.filter((a: any) => a.status === 'SUBMITTED' || a.status === 'INTERVIEW_SCHEDULED').map((app: any) => (
+                  <React.Fragment key={app.id}>
+                    <tr className="hover:bg-[var(--sidebar-hover)] transition-colors group">
+                      <td className="px-8 py-5">
+                        <button onClick={() => setExpandedRow(expandedRow === app.id ? null : app.id)} className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-indigo-500 hover:shadow-md transition-all shadow-sm">
+                          {expandedRow === app.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-black shadow-md shrink-0">
+                            {(app.profile_details?.first_name?.[0] || 'A').toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-[var(--text-primary)]">{app.profile_details?.first_name} {app.profile_details?.last_name}</div>
+                            <div className="text-xs text-[var(--text-secondary)]">{app.application_number}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-sm font-medium text-[var(--text-secondary)]">
+                        {programs.find((p: any) => p.id === app.program)?.name || 'N/A'}
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${app.status === 'SUBMITTED' ? 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/20' : 'bg-blue-500/10 text-blue-600 border border-blue-500/20'}`}>
+                          {app.status === 'SUBMITTED' ? 'Pending Review' : 'Interview Scheduled'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                         <div className="flex items-center justify-end space-x-2">
+                           {app.status === 'SUBMITTED' && (
+                             <>
+                               <input 
+                                 type="datetime-local" 
+                                 className="text-xs px-2 py-1.5 border border-[var(--input-border)] rounded-md bg-[var(--input-bg)] text-[var(--text-primary)] outline-none"
+                                 value={interviewDates?.[app.id] || ''}
+                                 onChange={e => setInterviewDates((prev: any) => ({ ...prev, [app.id]: e.target.value }))}
+                               />
+                               <button onClick={() => scheduleInterview(app.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors">
+                                 Schedule Interview
+                               </button>
+                             </>
+                           )}
+                           <button onClick={() => updateStatus(app.id, 'SELECTED')} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors">
+                             Approve & Select
+                           </button>
+                           <button onClick={() => updateStatus(app.id, 'REJECTED')} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors">
+                             Reject
+                           </button>
+                         </div>
+                      </td>
+                    </tr>
+                    {expandedRow === app.id && (
+                      <tr className="bg-[var(--sidebar-hover)]">
+                        <td colSpan={5} className="px-8 py-8">
+                          <div className="grid md:grid-cols-2 gap-8 bg-[var(--card-bg)] p-6 rounded-2xl border border-[var(--sidebar-border)] shadow-sm">
+                            <div>
+                              <h4 className="text-xs font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-4">Academic History</h4>
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm"><span className="text-[var(--text-secondary)]">10th Grade:</span><span className="font-medium text-[var(--text-primary)]">{app.tenth_percentage}% ({app.tenth_board})</span></div>
+                                <div className="flex justify-between text-sm"><span className="text-[var(--text-secondary)]">12th Grade:</span><span className="font-medium text-[var(--text-primary)]">{app.twelfth_percentage}% ({app.twelfth_board})</span></div>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-4">Personal Details</h4>
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm"><span className="text-[var(--text-secondary)]">Phone:</span><span className="font-medium text-[var(--text-primary)]">{app.profile_details?.phone || 'N/A'}</span></div>
+                                <div className="flex justify-between text-sm"><span className="text-[var(--text-secondary)]">Nationality:</span><span className="font-medium text-[var(--text-primary)]">{app.profile_details?.nationality || 'N/A'}</span></div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Applications Table (Processed) */}
+
       <div className="bg-[var(--card-bg)]/90 backdrop-blur-xl border border-[var(--sidebar-border)] rounded-3xl shadow-xl overflow-hidden relative">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="min-w-full text-left">
@@ -214,19 +321,18 @@ export default function AdmissionsTab({
                               Contact: <strong className="text-[var(--text-secondary)]">{app.profile_details?.email}</strong> · <strong className="text-[var(--text-secondary)]">{app.profile_details?.phone || 'No phone'}</strong>
                             </p>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_department || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', allocated_batch: '' }), allocated_department: e.target.value } }))} 
                                 className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]">
                                 <option value="">Select Department</option>
-                                {departments.map((d: any) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                                {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                               </select>
                               <select disabled={!isAdmin} value={allocationForms[app.id]?.allocated_program || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', allocated_batch: '' }), allocated_program: e.target.value } }))} 
                                 className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)]">
                                 <option value="">Select Program</option>
-                                {programs.filter((p: any) => !allocationForms[app.id]?.allocated_department || p.department_name === allocationForms[app.id].allocated_department || departments.find((d: any) => d.name === allocationForms[app.id].allocated_department)?.id === p.department).map((p: any) => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                {programs.filter((p: any) => !allocationForms[app.id]?.allocated_department || p.department === Number(allocationForms[app.id].allocated_department)).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
                               </select>
-                              <input disabled={!isAdmin} placeholder="Batch (e.g. 2024-2028)" value={allocationForms[app.id]?.allocated_batch || ''} onChange={e => setAllocationForms((prev: any) => ({ ...prev, [app.id]: { ...(prev[app.id] || { allocated_department: '', allocated_program: '', allocated_batch: '' }), allocated_batch: e.target.value } }))} 
-                                className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 text-[var(--text-primary)] placeholder-[var(--text-tertiary)]" />
+
                             </div>
                             
                             <button onClick={() => allocateSeat(app.id)} disabled={!isAdmin || app.status !== 'SELECTED'} 
@@ -237,8 +343,8 @@ export default function AdmissionsTab({
                             {app.seat_allocation && (
                               <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col shadow-inner mt-4">
                                 <p className="text-[9px] text-emerald-500 font-black uppercase tracking-widest mb-1.5 flex items-center"><CheckCircle className="w-3 h-3 mr-1" /> Seat Successfully Allocated</p>
-                                <p className="text-sm font-black text-[var(--text-primary)]">{app.seat_allocation.allocated_program}</p>
-                                <p className="text-xs font-bold text-[var(--text-secondary)]">{app.seat_allocation.allocated_department} — {app.seat_allocation.allocated_batch}</p>
+                                <p className="text-sm font-black text-[var(--text-primary)]">{app.seat_allocation.allocated_program_name || app.seat_allocation.allocated_program}</p>
+                                <p className="text-xs font-bold text-[var(--text-secondary)]">{app.seat_allocation.allocated_department_name || 'Department'} — Automatically Assigned Batch</p>
                               </div>
                             )}
                           </div>
@@ -253,29 +359,45 @@ export default function AdmissionsTab({
                               {!isAdmin && <span className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-tertiary)] px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded flex items-center"><Lock className="w-3 h-3 mr-1.5" /> Restricted</span>}
                             </div>
                             
-                            {app.status === 'FEE_PENDING' || app.status === 'ENROLLED' ? (
+                            {app.status === 'SELECTED' || app.status === 'FEE_PENDING' || app.status === 'ENROLLED' ? (
                               <div className="space-y-4">
                                 <p className="text-xs font-medium text-[var(--text-secondary)]">Verify payment documents and manually approve to generate the student enrollment profile.</p>
-                                <div className="flex gap-3">
-                                  <input 
-                                    placeholder="Type 'yes' to verify" 
-                                    className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-50 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] shadow-sm"
-                                    value={feeVerifications[app.id] || ''}
-                                    onChange={e => setFeeVerifications((prev: any) => ({ ...prev, [app.id]: e.target.value }))}
-                                    disabled={!isAdmin || app.status === 'ENROLLED'}
-                                  />
-                                  <button 
-                                    onClick={() => verifyFeePayment(app.id)} 
-                                    className={`px-6 rounded-xl text-xs font-black tracking-widest uppercase transition-all shadow-sm ${app.status === 'ENROLLED' ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 cursor-default' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/30'}`}
-                                    disabled={!isAdmin || app.status === 'ENROLLED' || feeVerifications[app.id]?.toLowerCase() !== 'yes'}
-                                  >
-                                    {app.status === 'ENROLLED' ? 'Enrolled' : 'Verify'}
-                                  </button>
-                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                    <label className={`flex-1 flex items-center p-4 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl shadow-sm transition-all ${(!isAdmin || app.status === 'ENROLLED' || !app.seat_allocation) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-emerald-500/50'}`}>
+                                      <input 
+                                        type="checkbox"
+                                        className="w-5 h-5 rounded border-[var(--input-border)] text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 bg-[var(--bg-primary)] disabled:cursor-not-allowed cursor-pointer"
+                                        checked={app.status === 'ENROLLED' || feeVerifications[app.id] === 'yes'}
+                                        onChange={e => setFeeVerifications((prev: any) => ({ ...prev, [app.id]: e.target.checked ? 'yes' : '' }))}
+                                        disabled={!isAdmin || app.status === 'ENROLLED' || !app.seat_allocation}
+                                      />
+                                      <span className="ml-3 text-sm font-bold text-[var(--text-primary)]">
+                                        I confirm fees are paid and verified {(!app.seat_allocation) && '(Allocate seat first)'}
+                                      </span>
+                                    </label>
+                                    <button 
+                                      onClick={() => verifyFeePayment(app.id)} 
+                                      className={`px-8 py-4 rounded-xl text-xs font-black tracking-widest uppercase transition-all shadow-sm w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 disabled:shadow-none ${app.status === 'ENROLLED' ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 cursor-default' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/30'}`}
+                                      disabled={!isAdmin || app.status === 'ENROLLED' || feeVerifications[app.id] !== 'yes' || !app.seat_allocation}
+                                    >
+                                      {app.status === 'ENROLLED' ? 'Enrolled' : 'Verify'}
+                                    </button>
+                                  </div>
                                 {app.enrollment_number && (
-                                  <div className="mt-4 bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between shadow-inner">
-                                    <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest flex items-center mb-1 sm:mb-0"><CheckCircle className="w-4 h-4 mr-1.5" /> Official Enrollment No.</span>
-                                    <span className="text-2xl font-black text-emerald-500 font-mono tracking-tighter">{app.enrollment_number}</span>
+                                  <div className="mt-4 space-y-3">
+                                    <div className="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between shadow-inner">
+                                      <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest flex items-center mb-1 sm:mb-0"><CheckCircle className="w-4 h-4 mr-1.5" /> Official Enrollment No.</span>
+                                      <span className="text-2xl font-black text-emerald-500 font-mono tracking-tighter">{app.enrollment_number}</span>
+                                    </div>
+                                    {app.scholarship && app.scholarship.status === 'APPROVED' && (
+                                      <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 shadow-inner">
+                                        <p className="text-[10px] text-amber-600 font-black uppercase tracking-widest flex items-center mb-2">🎓 Scholarship Awarded</p>
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                          <p className="text-sm font-bold text-[var(--text-primary)]">{app.scholarship.reason}</p>
+                                          <span className="text-lg font-black text-amber-500">{app.scholarship.concession_percentage}% Off</span>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>

@@ -13,7 +13,7 @@ export default function FacultyTab({ isAdmin, departments }: { isAdmin: boolean,
   const [editForm, setEditForm] = useState<any>({});
   
   const [isAdding, setIsAdding] = useState(false);
-  const [newFacultyForm, setNewFacultyForm] = useState({ username: '', email: '', first_name: '', last_name: '', phone: '', password: 'faculty123' });
+  const [newFacultyForm, setNewFacultyForm] = useState({ username: '', email: '', first_name: '', last_name: '', phone: '', password: '' });
 
   const designations = ['Assistant Professor', 'Associate Professor', 'Professor', 'Lecturer', 'Guest Faculty', 'Dean'];
   const employmentTypes = ['Permanent', 'Contract', 'Guest', 'Adjunct'];
@@ -122,7 +122,7 @@ export default function FacultyTab({ isAdmin, departments }: { isAdmin: boolean,
             <input type="text" placeholder="First Name" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.first_name} onChange={e => setNewFacultyForm({...newFacultyForm, first_name: e.target.value})} />
             <input type="text" placeholder="Last Name" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.last_name} onChange={e => setNewFacultyForm({...newFacultyForm, last_name: e.target.value})} />
             <input type="text" placeholder="Phone" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.phone} onChange={e => setNewFacultyForm({...newFacultyForm, phone: e.target.value})} />
-            <input type="text" placeholder="Default Password" disabled className="p-3 border border-slate-200 bg-slate-50 text-slate-500 rounded-xl" value={newFacultyForm.password} />
+            <input type="text" placeholder="Password" className="p-3 border border-slate-300 rounded-xl" value={newFacultyForm.password} onChange={e => setNewFacultyForm({...newFacultyForm, password: e.target.value})} />
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100">Cancel</button>

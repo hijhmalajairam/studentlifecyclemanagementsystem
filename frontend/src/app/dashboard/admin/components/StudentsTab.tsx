@@ -10,7 +10,7 @@ interface StudentsTabProps {
 
 export default function StudentsTab({ enrollments, applications, expandedRow, setExpandedRow }: StudentsTabProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState({ username: '', email: '', first_name: '', last_name: '', phone: '', password: 'student123' });
+  const [formData, setFormData] = useState({ username: '', email: '', first_name: '', last_name: '', phone: '', password: '' });
 
   const handleAdd = async () => {
     try {
@@ -39,7 +39,7 @@ export default function StudentsTab({ enrollments, applications, expandedRow, se
             <input type="text" placeholder="First Name" className="p-3 border border-slate-300 rounded-xl" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
             <input type="text" placeholder="Last Name" className="p-3 border border-slate-300 rounded-xl" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
             <input type="text" placeholder="Phone" className="p-3 border border-slate-300 rounded-xl" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-            <input type="text" placeholder="Default Password" disabled className="p-3 border border-slate-200 bg-slate-50 text-slate-500 rounded-xl" value={formData.password} />
+            <input type="text" placeholder="Password" className="p-3 border border-slate-300 rounded-xl" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
