@@ -11,9 +11,18 @@ class FacultyProfileViewSet(viewsets.ModelViewSet):
     serializer_class = FacultyProfileSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'my_profile']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
+
+    @action(detail=False, methods=['get'])
+    def my_profile(self, request):
+        try:
+            profile, _ = FacultyProfile.objects.get_or_create(user=request.user)
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         qs = super().get_queryset()
