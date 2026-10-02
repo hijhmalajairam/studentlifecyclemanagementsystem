@@ -33,7 +33,7 @@ class FeeAdmin(admin.ModelAdmin):
 
 @admin.register(Timetable)
 class TimetableAdmin(admin.ModelAdmin):
-    list_display = ('course', 'faculty', 'day', 'start_time', 'end_time', 'room')
+    list_display = ('course_section', 'faculty', 'day', 'start_time', 'end_time', 'room')
     list_filter = ('day',)
 
 
@@ -60,7 +60,7 @@ class NoDuesAdmin(admin.ModelAdmin):
     list_display = ('enrollment', 'library_cleared', 'hostel_cleared', 'fees_cleared', 'department_cleared', 'all_cleared')
     list_filter = ('all_cleared',)
 
-from .models import DisciplinaryCase, Internship
+from .models import DisciplinaryCase, Internship, FacultyProfile
 
 @admin.register(DisciplinaryCase)
 class DisciplinaryCaseAdmin(admin.ModelAdmin):
@@ -71,3 +71,10 @@ class DisciplinaryCaseAdmin(admin.ModelAdmin):
 class InternshipAdmin(admin.ModelAdmin):
     list_display = ('enrollment', 'company_name', 'role', 'status')
     list_filter = ('status',)
+
+@admin.register(FacultyProfile)
+class FacultyProfileAdmin(admin.ModelAdmin):
+    list_display = ('faculty_id', 'user', 'department', 'designation', 'admin_role', 'employment_type', 'status')
+    list_filter = ('designation', 'admin_role', 'department', 'employment_type', 'status')
+    search_fields = ('faculty_id', 'user__first_name', 'user__last_name', 'specialization')
+

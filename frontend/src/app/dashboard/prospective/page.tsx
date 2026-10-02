@@ -1,111 +1,105 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+const fetchProfile = async () => {
+  const res = await fetch('http://localhost:8000/api/admission/profiles/my_profile/', { credentials: 'include' });
+  if (res.status === 401 || res.status === 403) throw new Error('Unauthorized');
+  if (!res.ok) throw new Error('Failed to fetch profile');
+  return res.json();
+};
+
+const fetchApplications = async () => {
+  const res = await fetch('http://localhost:8000/api/admission/applications/my_applications/', { credentials: 'include' });
+  if (!res.ok) throw new Error('Failed to fetch applications');
+  return res.json();
+};
 
 export default function ProspectiveDashboard() {
   const router = useRouter();
-  const [profile, setProfile] = useState<any>(null);
-  const [application, setApplication] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Document upload state
   const [docName, setDocName] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [payingFees, setPayingFees] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
 
-  const fetchData = async () => {
-    try {
-      // Fetch Profile
-      const profRes = await fetch('http://localhost:8000/api/admission/profiles/my_profile/', {
-        credentials: 'include'
+  const { data: apps, isLoading: appsLoading } = useQuery({
+    queryKey: ['applications'],
+    queryFn: fetchApplications,
+    enabled: !!profile,
+  });
+
+  if (profileError) {
+    router.push('/login');
+    return null;
+  }
+
+  const application = apps && apps.length > 0 ? apps[0] : null;
+
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch('http://localhost:8000/api/admission/documents/', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
       });
-      if (profRes.status === 401 || profRes.status === 403) {
-        router.push('/login');
-        return;
-      }
-      if (profRes.ok) {
-        setProfile(await profRes.json());
-      }
-
-      // Fetch Applications
-      const appRes = await fetch('http://localhost:8000/api/admission/applications/my_applications/', {
-        credentials: 'include'
-      });
-      if (appRes.ok) {
-        const apps = await appRes.json();
-        if (apps.length > 0) {
-          setApplication(apps[0]); // User's active application
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      setDocName('');
+      setDocFile(null);
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+    },
+    onError: () => {
+      alert('Upload failed');
     }
-  };
+  });
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const payFeesMutation = useMutation({
+    mutationFn: async (appId: number) => {
+      const res = await fetch(`http://localhost:8000/api/admission/applications/${appId}/pay_fees/`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Payment failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+    },
+    onError: () => {
+      alert('Failed to process fee payment.');
+    }
+  });
+
+  const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!docFile || !application) return;
-    setUploading(true);
-
     const formData = new FormData();
     formData.append('application', application.id);
     formData.append('document_name', docName);
     formData.append('file', docFile);
-
-    try {
-      const res = await fetch('http://localhost:8000/api/admission/documents/', {
-        credentials: 'include',
-        method: 'POST',
-        body: formData
-      });
-      
-      if (res.ok) {
-        setDocName('');
-        setDocFile(null);
-        fetchData(); // refresh data
-      } else {
-        alert('Upload failed');
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
-    }
+    uploadMutation.mutate(formData);
   };
 
-  const handlePayFees = async () => {
-    if (!application) return;
-    setPayingFees(true);
-    try {
-      const res = await fetch(`http://localhost:8000/api/admission/applications/${application.id}/pay_fees/`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (res.ok) {
-        fetchData(); // Refresh to get ENROLLED status and enrollment_number
-      } else {
-        alert('Failed to process fee payment.');
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPayingFees(false);
-    }
-  };
-
-  if (loading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  if (profileLoading || appsLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   const STATUS_STEPS = ['DRAFT', 'SUBMITTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'FEE_PENDING', 'ENROLLED'];
   const currentStepIndex = application ? STATUS_STEPS.indexOf(application.status) : 0;
 
-  // If no application exists, show the Welcome screen instead of redirecting
   if (!application) {
     return (
       <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center p-6">
@@ -146,7 +140,7 @@ export default function ProspectiveDashboard() {
         {/* Header */}
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {profile?.username || 'Student'}!</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {profile?.user?.first_name || profile?.user?.username || 'Student'}!</h1>
             <p className="text-gray-500 mt-1">Application No: {application?.application_number || 'N/A'}</p>
           </div>
         </div>
@@ -188,11 +182,11 @@ export default function ProspectiveDashboard() {
                 You have been allocated to <strong>{application.seat_allocation?.allocated_program}</strong> in the <strong>{application.seat_allocation?.allocated_department}</strong> department. 
               </p>
               <button 
-                onClick={handlePayFees} 
-                disabled={payingFees}
+                onClick={() => payFeesMutation.mutate(application.id)} 
+                disabled={payFeesMutation.isPending}
                 className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm disabled:opacity-50"
               >
-                {payingFees ? 'Processing...' : 'Pay Fees Now'}
+                {payFeesMutation.isPending ? 'Processing...' : 'Pay Fees Now'}
               </button>
             </div>
           )}
@@ -247,8 +241,8 @@ export default function ProspectiveDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">File (PDF/Image)</label>
                 <input type="file" required onChange={e => setDocFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm" />
               </div>
-              <button disabled={uploading} type="submit" className="w-full px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition flex justify-center items-center">
-                {uploading ? 'Uploading...' : 'Upload Document'}
+              <button disabled={uploadMutation.isPending} type="submit" className="w-full px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition flex justify-center items-center">
+                {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
               </button>
             </form>
           </div>

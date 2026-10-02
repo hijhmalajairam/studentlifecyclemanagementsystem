@@ -4,7 +4,7 @@ import AuthGuard from '@/app/components/AuthGuard';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard allowedRoles={['STUDENT', 'PROSPECTIVE_STUDENT']}>
+    <AuthGuard allowedRoles={['STUDENT']}>
       {children}
     </AuthGuard>
   );

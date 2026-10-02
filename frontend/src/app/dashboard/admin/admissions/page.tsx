@@ -47,7 +47,7 @@ export default function AdminAdmissionsDashboard() {
         setInterviewers(await res.json());
       }
     } catch (e) {
-      console.error(e);
+      
     }
   };
 
@@ -60,7 +60,7 @@ export default function AdminAdmissionsDashboard() {
         setApplications(await res.json());
       }
     } catch (e) {
-      console.error(e);
+      
     } finally {
       setLoading(false);
     }
@@ -154,7 +154,7 @@ export default function AdminAdmissionsDashboard() {
         fetchApplications();
       }
     } catch (err) {
-      console.error(err);
+      
     }
   };
 

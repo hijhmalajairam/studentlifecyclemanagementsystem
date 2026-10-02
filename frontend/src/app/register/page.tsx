@@ -14,6 +14,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState('PROSPECTIVE_STUDENT');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ export default function Register() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username, email, password, first_name: firstName, last_name: lastName, role: 'PROSPECTIVE_STUDENT'
+          username, email, password, first_name: firstName, last_name: lastName, role
         }),
       });
       const userData = await userRes.json();
@@ -34,8 +35,13 @@ export default function Register() {
 
       if (userData.user) localStorage.setItem('user', JSON.stringify(userData.user));
 
-      // Redirect directly to the program selection / apply page
-      router.push('/dashboard/prospective/apply');
+      if (role === 'PROSPECTIVE_STUDENT') {
+        router.push('/dashboard/prospective/apply');
+      } else if (role === 'FACULTY') {
+        router.push('/dashboard/faculty');
+      } else {
+        router.push('/dashboard');
+      }
 
     } catch (err: any) {
       setError(err.message);
@@ -96,6 +102,13 @@ export default function Register() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="••••••••" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Register As *</label>
+                <select value={role} onChange={e => setRole(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none">
+                  <option value="PROSPECTIVE_STUDENT">Student (Prospective)</option>
+                  <option value="FACULTY">Faculty</option>
+                </select>
               </div>
             </div>
 

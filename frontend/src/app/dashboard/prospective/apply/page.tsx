@@ -67,7 +67,7 @@ function ApplicationFormContent() {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        
         setLoading(false);
       });
   }, [selectedProgram, router]);
