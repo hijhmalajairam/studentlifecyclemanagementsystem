@@ -183,10 +183,10 @@ export default function StudentDashboard() {
           <div className="space-y-6">
             <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center rounded-xl shadow-sm">
               <h2 className="font-bold text-slate-800 text-lg">My Enrolled Courses</h2>
-              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-md">{courses.length} Courses</span>
+              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-md">{courses?.length || 0} Courses</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((c: any, index: number) => (
+              {(courses || []).map((c: any, index: number) => (
                 <div key={c.id || index} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
                   <div className={`h-2 ${index % 3 === 0 ? 'bg-blue-500' : index % 3 === 1 ? 'bg-emerald-500' : 'bg-purple-500'}`}></div>
                   <div className="p-5 flex-1">
@@ -213,7 +213,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
               ))}
-              {courses.length === 0 && (
+              {(!courses || courses.length === 0) && (
                 <div className="col-span-full p-8 text-center text-slate-500 bg-white rounded-xl border border-slate-200">
                   No courses enrolled for the current semester.
                 </div>

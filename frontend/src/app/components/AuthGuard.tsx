@@ -25,7 +25,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
           // Update local storage so Navbar stays synced
           localStorage.setItem('user', JSON.stringify(user));
 
-          if (allowedRoles && allowedRoles.length > 0) {
+          if (allowedRoles && allowedRoles?.length > 0) {
             const allRoles = user.all_roles || [user.role];
             const hasRole = allowedRoles.some(r => allRoles.includes(r)) || (allowedRoles.includes('ADMIN') && user.is_staff);
             if (!hasRole) {
