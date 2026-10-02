@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer, FacultyDetailSerializer
 from admission.models import ApplicantProfile, AdmissionApplication, SeatAllocation
+from .permissions import IsAdminOrDean
 from academics.models import Enrollment, StudentProfile, FacultyProfile, Department
 
 
@@ -105,11 +106,11 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 class InterviewersListView(generics.ListAPIView):
     queryset = User.objects.filter(role='INTERVIEWER')
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsAdminOrDean,)
 
 
 class SystemMappingView(APIView):
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsAdminOrDean,)
 
     def get(self, request):
         stats = {
@@ -236,13 +237,13 @@ class SystemMappingView(APIView):
 class FacultyListView(generics.ListAPIView):
     queryset = User.objects.filter(role='FACULTY')
     serializer_class = FacultyDetailSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsAdminOrDean,)
     filter_backends = [filters.SearchFilter]
     search_fields = ['first_name', 'last_name', 'email']
 
 
 class UpdateUserRolesView(APIView):
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsAdminOrDean,)
 
     def patch(self, request, pk):
         try:
