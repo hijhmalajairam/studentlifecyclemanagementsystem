@@ -1,23 +1,15 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
-import InternshipManager from './components/InternshipManager';
+import '../admin/dashboard-theme.css'; // Reuse theme
+import MyTimetable from './components/MyTimetable';
+import MyClasses from './components/MyClasses';
+
 export default function FacultyDashboard() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [registrations, setRegistrations] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [attendanceDate, setAttendanceDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [attendanceData, setAttendanceData] = useState<{[key: number]: string}>({});
-  const [activeTab, setActiveTab] = useState('attendance');
-  
-  // Timetable state
-  const [timetable, setTimetable] = useState<any[]>([]);
-
-  // Internship state
-  const [internships, setInternships] = useState<any[]>([]);
-
-  // Grade entry state
-  const [gradeEntries, setGradeEntries] = useState<{[key: number]: {marks: string, grade: string}}>({});
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [facultyProfile, setFacultyProfile] = useState<any>(null);
+  const [activeSection, setActiveSection] = useState('my_dashboard');
   const [loading, setLoading] = useState(true);
 
   const [internalAssessments, setInternalAssessments] = useState<any[]>([]);
@@ -29,925 +21,206 @@ export default function FacultyDashboard() {
   const [gradingSchemeForm, setGradingSchemeForm] = useState({ mean: '', stdDev: '' });
 
   useEffect(() => {
-    Promise.all([
-      fetchAPI('/academics/courses/'),
-      fetchAPI('/academics/registrations/'),
-      fetchAPI('/academics/timetable/my_timetable/').catch(() => []),
-      fetchAPI('/academics/internships/').catch(() => []),
-      fetchAPI('/academics/internal-assessments/').catch(() => []),
-      fetchAPI('/academics/disciplinary-cases/').catch(() => []),
-      fetchAPI('/academics/course-grading-schemes/').catch(() => [])
-    ]).then(([courseData, regData, ttData, intData, iaData, dcData, cgsData]) => {
-      setCourses(courseData);
-      setRegistrations(regData);
-      setTimetable(ttData);
-      setInternships(intData);
-      setInternalAssessments(iaData);
-      setDisciplinaryCases(dcData);
-      setCourseGradingSchemes(cgsData);
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        setCurrentUser(u);
+        fetchAPI(`/academics/faculty-profiles/?user=${u.id}`)
+          .then(data => {
+            if (data && data.length > 0) {
+              setFacultyProfile(data[0]);
+            }
+          })
+          .catch(console.error)
+          .finally(() => setLoading(false));
+      } catch (e) {
+        setLoading(false);
+      }
+    } else {
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }
   }, []);
 
-  const getStudentsForCourse = (courseId: number) => {
-    return registrations.filter(r => r.courses.includes(courseId)).map(r => r.enrollment);
-  };
-
-  const handleAttendanceChange = (enrollmentId: number, status: string) => {
-    setAttendanceData(prev => ({ ...prev, [enrollmentId]: status }));
-  };
-
-  const submitAttendance = async () => {
-    if (!selectedCourse) return;
-    const studentsPayload = Object.keys(attendanceData).map(enrId => ({
-      enrollment_id: parseInt(enrId),
-      status: attendanceData[parseInt(enrId)]
-    }));
-    try {
-      await fetchAPI('/academics/attendance/bulk_mark/', {
-        method: 'POST',
-        body: JSON.stringify({ course_id: selectedCourse.id, date: attendanceDate, students: studentsPayload })
-      });
-      alert('Attendance saved successfully!');
-      setAttendanceData({});
-    } catch { alert('Failed to save attendance'); }
-  };
-
-  const handleGradeChange = (enrollmentId: number, field: string, value: string) => {
-    setGradeEntries(prev => ({
-      ...prev,
-      [enrollmentId]: { ...prev[enrollmentId], [field]: value }
-    }));
-  };
-
-  const autoFillGrades = () => {
-    if (!selectedCourse) return;
-    const students = getStudentsForCourse(selectedCourse.id);
-    const newEntries: {[key: number]: {marks: string, grade: string}} = {};
-    
-    students.forEach((enrId: number, index: number) => {
-      if (index === 0) {
-        // Force an 'F' for the first student for backlog testing
-        newEntries[enrId] = { marks: '35', grade: 'F' };
-      } else {
-        const marks = Math.floor(Math.random() * 50) + 50; // 50 to 99
-        let grade = 'P';
-        if (marks >= 90) grade = 'O';
-        else if (marks >= 80) grade = 'A+';
-        else if (marks >= 70) grade = 'A';
-        else if (marks >= 60) grade = 'B+';
-        else if (marks >= 50) grade = 'B';
-        newEntries[enrId] = { marks: marks.toString(), grade };
-      }
-    });
-    setGradeEntries(newEntries);
-  };
-
-  const submitGrades = async () => {
-    if (!selectedCourse) return;
-    let count = 0;
-    for (const [enrId, entry] of Object.entries(gradeEntries)) {
-      if (!entry.marks || !entry.grade) continue;
-      try {
-        await fetchAPI('/academics/results/', {
-          method: 'POST',
-          body: JSON.stringify({
-            enrollment: parseInt(enrId),
-            course: selectedCourse.id,
-            marks_obtained: parseFloat(entry.marks),
-            grade: entry.grade,
-            is_backlog: false,
-            is_revaluation: false
-          })
-        });
-        count++;
-      } catch { /* skip duplicates */ }
-    }
-    alert(`Grades submitted for ${count} students!`);
-    setGradeEntries({});
-  };
-
-  const processSemester = async () => {
-    if(!selectedCourse) return;
-    const semesterStr = prompt("Enter semester to process (e.g. 1):");
-    if(!semesterStr) return;
-    const enrId = prompt("Enter Enrollment ID to process (just the number):");
-    if(!enrId) return;
-    const isSummer = confirm("Is this for a Summer Term?");
-    try {
-      await fetchAPI('/academics/results/process_semester/', {
-        method: 'POST',
-        body: JSON.stringify({ semester: parseInt(semesterStr), enrollment_id: parseInt(enrId), is_summer_term: isSummer })
-      });
-      alert('Semester processed successfully!');
-    } catch(err: any) {
-      alert('Failed to process semester: ' + (err.message || 'Error'));
-    }
-  };
-
-  const processRevaluation = async () => {
-    const revalId = prompt("Enter Revaluation Request ID to process:");
-    if(!revalId) return;
-    const newMarks = prompt("Enter new marks obtained (or leave empty if unchanged):");
-    const newGrade = prompt("Enter new grade (e.g. A, F):");
-    if(!newGrade) return;
-    
-    try {
-      await fetchAPI(`/academics/revaluations/${revalId}/process_revaluation/`, {
-        method: 'POST',
-        body: JSON.stringify({ new_marks: parseFloat(newMarks || '0'), new_grade: newGrade })
-      });
-      alert('Revaluation processed successfully!');
-    } catch(err: any) {
-      alert('Failed to process revaluation: ' + (err.message || 'Error'));
-    }
-  };
-
-  // Module 7 State
-  const [assessmentForm, setAssessmentForm] = useState<any>({ title: 'MID_1', enrollment_id: '', max_marks: 100, marks_obtained: 0, weightage: 10, status: 'EVALUATED' });
-  const [disciplineForm, setDisciplineForm] = useState({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
-  const [disciplineFile, setDisciplineFile] = useState<File | null>(null);
-  const [previewEvidence, setPreviewEvidence] = useState<string | null>(null);
-
-  const submitAssessment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCourse) return;
-    try {
-      await fetchAPI('/academics/internal-assessments/', {
-        method: 'POST',
-        body: JSON.stringify({
-          course: selectedCourse.id,
-          enrollment: parseInt(assessmentForm.enrollment_id),
-          title: assessmentForm.title,
-          max_marks: assessmentForm.max_marks,
-          marks_obtained: assessmentForm.marks_obtained,
-          weightage: assessmentForm.weightage,
-          status: assessmentForm.status
-        })
-      });
-      alert('Internal assessment recorded!');
-      setAssessmentForm((prev: any) => ({ ...prev, title: 'MID_1', enrollment_id: '', marks_obtained: 0 }));
-      fetchAPI('/academics/internal-assessments/').then(setInternalAssessments).catch(()=>{});
-    } catch { alert('Failed to record internal assessment'); }
-  };
-
-  const fillDummyAssessments = async () => {
-    if (!selectedCourse) return;
-    const students = getStudentsForCourse(selectedCourse.id);
-    if (students.length === 0) return alert('No students to fill');
-    
-    if (!confirm('This will create dummy scores for all assessments (Mid 1, Mid 2, Lab 1, Lab 2, Compre) for all students. Existing assessments for this course will be cleared first! Continue?')) return;
-
-    // Clear existing to prevent duplicates > 100
-    const existing = internalAssessments.filter(ia => ia.course === selectedCourse.id);
-    for (const ia of existing) {
-      try { await fetchAPI(`/academics/internal-assessments/${ia.id}/`, { method: 'DELETE' }); } catch(e){}
-    }
-
-    const assessmentsToFill = [
-      { title: 'MID_1', max: 20, weight: 20 },
-      { title: 'MID_2', max: 20, weight: 20 },
-      { title: 'LAB_1', max: 5, weight: 5 },
-      { title: 'LAB_2', max: 5, weight: 5 },
-      { title: 'COMPRE', max: 50, weight: 50 }
-    ];
-
-    let successCount = 0;
-    for (const enrId of students) {
-      for (const ass of assessmentsToFill) {
-        try {
-          await fetchAPI('/academics/internal-assessments/', {
-            method: 'POST',
-            body: JSON.stringify({
-              course: selectedCourse.id,
-              enrollment: enrId,
-              title: ass.title,
-              max_marks: ass.max,
-              marks_obtained: Math.floor(Math.random() * (ass.max - (ass.max * 0.3) + 1)) + (ass.max * 0.3),
-              weightage: ass.weight,
-              status: 'EVALUATED'
-            })
-          });
-          successCount++;
-        } catch (e) {
-          console.error(`Failed to create dummy ${ass.title} for enr`, enrId);
-        }
-      }
-    }
-    
-    alert(`Filled ${successCount} dummy assessments across ${students.length} students.`);
-    fetchAPI('/academics/internal-assessments/').then(setInternalAssessments).catch(()=>{});
-  };
-
-  const calculateCurve = () => {
-    if (!selectedCourse) return;
-    const students = getStudentsForCourse(selectedCourse.id);
-    let totalMarks = 0;
-    let marksList: number[] = [];
-    
-    students.forEach((enrId: number) => {
-      const studentAss = internalAssessments.filter(ia => ia.course === selectedCourse.id && ia.enrollment === enrId);
-      // Ensure we only count each type once
-      const uniqueAss = new Map();
-      studentAss.forEach(ia => uniqueAss.set(ia.title, ia));
-      
-      const studentTotal = Array.from(uniqueAss.values()).reduce((sum, ia) => 
-        sum + ((parseFloat(ia.marks_obtained || 0) / parseFloat(ia.max_marks || 100)) * ia.weightage), 0);
-        
-      marksList.push(studentTotal);
-      totalMarks += studentTotal;
-    });
-
-    if (students.length === 0) return;
-    const mean = totalMarks / students.length;
-    const variance = marksList.reduce((sum, m) => sum + Math.pow(m - mean, 2), 0) / students.length;
-    const stdDev = Math.sqrt(variance);
-
-    setGradingSchemeForm({
-      mean: mean.toFixed(2),
-      stdDev: stdDev.toFixed(2)
-    });
-  };
-
-  const finalizeGrading = async () => {
-    if (!selectedCourse) return;
-    if (!gradingSchemeForm.mean || !gradingSchemeForm.stdDev) {
-      alert('Please calculate or enter Mean and Std Dev first.');
-      return;
-    }
-    
-    const scheme = courseGradingSchemes.find(s => s.course === selectedCourse.id);
-    if (!confirm('Submit this grading curve for Admin review? You cannot change it once submitted.')) return;
-
-    try {
-      if (scheme) {
-        await fetchAPI(`/academics/course-grading-schemes/${scheme.id}/finalize/`, {
-          method: 'POST',
-          body: JSON.stringify({ mean: parseFloat(gradingSchemeForm.mean), std_dev: parseFloat(gradingSchemeForm.stdDev) })
-        });
-      } else {
-        await fetchAPI('/academics/course-grading-schemes/', {
-          method: 'POST',
-          body: JSON.stringify({ course: selectedCourse.id, mean: parseFloat(gradingSchemeForm.mean), std_dev: parseFloat(gradingSchemeForm.stdDev), status: 'FINALIZED' })
-        });
-      }
-      fetchAPI('/academics/course-grading-schemes/').then(setCourseGradingSchemes).catch(()=>{});
-      alert('Curve submitted for admin review!');
-    } catch (err: any) { alert('Failed to submit grading scheme: ' + (err.message || 'Error')); }
-  };
-
-  const submitDiscipline = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCourse) return;
-
-    const fd = new FormData();
-    fd.append('course', selectedCourse.id.toString());
-    fd.append('enrollment', disciplineForm.enrollment_id);
-    fd.append('title', disciplineForm.title);
-    fd.append('description', disciplineForm.description);
-    fd.append('assessment_type', disciplineForm.assessment_type);
-    fd.append('date_of_incident', disciplineForm.date_of_incident);
-    if (disciplineFile) {
-      fd.append('evidence_file', disciplineFile);
-    }
-
-    try {
-      await fetchAPI('/academics/disciplinary-cases/', {
-        method: 'POST',
-        body: fd
-      });
-      alert('Malpractice incident reported to the committee.');
-      setDisciplineForm({ enrollment_id: '', title: '', description: '', assessment_type: 'ASSIGNMENT', date_of_incident: new Date().toISOString().split('T')[0] });
-      setDisciplineFile(null);
-      fetchAPI('/academics/disciplinary-cases/').then(setDisciplinaryCases).catch(()=>{});
-    } catch { alert('Failed to report incident'); }
-  };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex justify-center items-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
-          <p className="text-slate-400">Loading faculty portal…</p>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-slate-400">Loading...</div>;
   }
 
-  const gradeOptions = ['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'];
-  const dayOrder = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  const dayNames: Record<string, string> = { MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday', SAT: 'Saturday' };
+  const additionalRoles = currentUser?.all_roles || [];
+  const isHOD = additionalRoles.some((r: string) => r.startsWith('HOD_'));
+  const isPlacement = additionalRoles.includes('PLACEMENT_DIRECTOR');
+  const isWarden = additionalRoles.includes('CHIEF_WARDEN') || additionalRoles.includes('HOSTEL_WARDEN');
+  const isCOE = additionalRoles.includes('CONTROLLER_OF_EXAMINATIONS');
 
+  const sidebarSections = [
+    {
+      group: 'Base',
+      items: [
+        { id: 'my_dashboard', label: 'My Dashboard', icon: '⊞' },
+        { id: 'my_timetable', label: 'My Timetable', icon: '📅' },
+        { id: 'my_classes', label: 'My Classes', icon: '🧑‍🏫' },
+      ]
+    }
+  ];
+
+  if (isHOD) {
+    sidebarSections.push({
+      group: 'Department',
+      items: [
+        { id: 'department_overview', label: 'Department Overview', icon: '🏢' },
+      ]
+    });
+  }
+  if (isPlacement) {
+    sidebarSections.push({
+      group: 'Placement',
+      items: [
+        { id: 'placement_cell', label: 'Placement Cell', icon: '💼' },
+      ]
+    });
+  }
+  if (isWarden) {
+    sidebarSections.push({
+      group: 'Hostel',
+      items: [
+        { id: 'hostel_management', label: 'Hostel Management', icon: '🏠' },
+      ]
+    });
+  }
+  if (isCOE) {
+    sidebarSections.push({
+      group: 'Exams',
+      items: [
+        { id: 'exam_cell', label: 'Exam Cell', icon: '📝' },
+      ]
+    });
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
-      <div className="relative">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-emerald-600/8 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex overflow-hidden theme-transition font-sans">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex flex-col shrink-0 transition-all duration-300 border-r border-[var(--sidebar-border)] shadow-xl relative z-20">
+        <div className="px-4 py-6 border-b border-[var(--sidebar-border)] flex items-center justify-between">
+          <div>
+            <h1 className="text-sm font-black tracking-tight text-[var(--text-primary)]">Veritas Grove</h1>
+            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-0.5">Faculty Portal</p>
+          </div>
+        </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
-          <div className="mb-8 flex justify-between items-end">
-            <div>
-              <h1 className="text-3xl font-extrabold text-white tracking-tight">
-                📚 Faculty Panel
-              </h1>
-              <p className="text-slate-400 mt-1">
-                Manage your schedule, mark attendance and submit exam grades.
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 custom-scrollbar">
+          {sidebarSections.map(section => (
+            <div key={section.group}>
+              <p className="px-3 mb-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
+                {section.group}
               </p>
+              <div className="space-y-1">
+                {section.items.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-xs font-bold ${
+                      activeSection === item.id
+                        ? 'bg-gradient-to-r from-[var(--primary-gradient-start)] to-[var(--primary-gradient-end)] text-white shadow-lg shadow-blue-500/30 translate-x-1'
+                        : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] hover:translate-x-1'
+                    }`}
+                  >
+                    <span className={`text-base mr-3 ${activeSection === item.id ? 'opacity-100' : 'opacity-70'}`}>{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex space-x-2 bg-slate-800/40 p-1.5 rounded-xl border border-slate-700/50">
-              <button onClick={() => setActiveTab('attendance')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'attendance' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Attendance
-              </button>
-              <button onClick={() => setActiveTab('assessments')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'assessments' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Internal Assessments
-              </button>
-              <button onClick={() => setActiveTab('grades')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'grades' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Grades
-              </button>
-              <button onClick={() => setActiveTab('courses')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'courses' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                My Courses
-              </button>
-              <button onClick={() => setActiveTab('timetable')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'timetable' ? 'bg-emerald-600/20 text-emerald-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Timetable
-              </button>
-              <button onClick={() => setActiveTab('discipline')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'discipline' ? 'bg-rose-600/20 text-rose-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Report Malpractice
-              </button>
-              <button onClick={() => setActiveTab('internships')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'internships' ? 'bg-blue-600/20 text-blue-400 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-                Internships
-              </button>
+          ))}
+        </nav>
+
+        <div className="px-5 py-4 border-t border-[var(--sidebar-border)] bg-[var(--bg-primary)]">
+          <button
+            onClick={() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              window.location.href = '/login';
+            }}
+            className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-xs font-bold text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all duration-300"
+          >
+            <span className="mr-2">🚪</span>
+            Secure Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Topbar equivalent (simplified) */}
+        <header className="bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Faculty Dashboard</h2>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-sm font-bold text-slate-800">{currentUser?.first_name} {currentUser?.last_name}</p>
+              <p className="text-xs text-slate-500">{facultyProfile?.designation || 'Faculty Member'}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+              {currentUser?.first_name?.[0] || 'F'}
             </div>
           </div>
+        </header>
 
-          {activeTab === 'courses' ? (
-            <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
-              <h2 className="text-xl font-bold text-white mb-6">Courses I Teach</h2>
-              <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
-                <table className="min-w-full divide-y divide-slate-700/50">
-                  <thead className="bg-slate-800/80">
-                    <tr>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Course Code</th>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Course Name</th>
-                      <th className="px-8 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Semester</th>
-                      <th className="px-8 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Credits</th>
-                      <th className="px-8 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {(() => {
-                      const myCourseIds = Array.from(new Set(timetable.map(slot => slot.course)));
-                      const myCoursesList = courses.filter(c => myCourseIds.includes(c.id));
-                      if (myCoursesList.length === 0) {
-                        return <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-500">No courses assigned yet.</td></tr>;
-                      }
-                      return myCoursesList.map(c => (
-                        <tr key={c.id} className="hover:bg-slate-800/30 transition">
-                          <td className="px-8 py-4 text-sm font-bold font-mono text-emerald-400">{c.code}</td>
-                          <td className="px-8 py-4 text-sm text-slate-200 font-medium">{c.name}</td>
-                          <td className="px-8 py-4 text-sm text-center text-slate-400">Sem {c.semester}</td>
-                          <td className="px-8 py-4 text-sm text-center text-slate-400">{c.credits}</td>
-                          <td className="px-8 py-4 text-center">
-                            <button
-                              onClick={() => {
-                                setSelectedCourse(c);
-                                setAttendanceData({});
-                                setGradeEntries({});
-                                setActiveTab('attendance');
-                              }}
-                              className="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold transition"
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      ));
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : activeTab === 'timetable' ? (
-            <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
-              <h2 className="text-xl font-bold text-white mb-6">My Weekly Schedule</h2>
-              {timetable.length > 0 ? (
-                <div className="space-y-4">
-                  {dayOrder.filter(d => timetable.some(t => t.day === d)).map(day => (
-                    <div key={day}>
-                      <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-2">{dayNames[day]}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {timetable.filter(t => t.day === day).map((slot: any) => (
-                          <div key={slot.id} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
-                            <p className="font-bold text-white">{slot.course_code}</p>
-                            <p className="text-xs text-slate-400">{slot.course_name}</p>
-                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-700/50">
-                              <span className="text-sm text-cyan-400 font-mono">{slot.start_time?.slice(0,5)} - {slot.end_time?.slice(0,5)}</span>
-                              {slot.room && <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">🏛 {slot.room}</span>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+          <div className="max-w-7xl mx-auto space-y-8">
+            
+            {/* Welcome Header */}
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none text-9xl">🎓</div>
+              <div className="relative z-10">
+                <h1 className="text-3xl font-black text-slate-900 mb-2">
+                  Welcome back, Prof. {currentUser?.last_name || currentUser?.first_name}!
+                </h1>
+                <p className="text-slate-500 font-medium mb-6">
+                  {facultyProfile?.department_name || 'Department'} • {facultyProfile?.designation || 'Faculty'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold shadow-sm">
+                    {currentUser?.role || 'FACULTY'}
+                  </span>
+                  {additionalRoles.map((role: string) => (
+                    <span key={role} className="px-3 py-1.5 bg-cyan-50 text-cyan-600 border border-cyan-100 rounded-lg text-xs font-bold shadow-sm">
+                      {role.replace(/_/g, ' ')}
+                    </span>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-10 bg-slate-900/30 rounded-2xl border border-slate-800/50">
-                  <p className="text-slate-400">No classes assigned to you.</p>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl min-h-[400px]">
+              {activeSection === 'my_timetable' && <MyTimetable />}
+              {activeSection === 'my_classes' && <MyClasses />}
+              {activeSection === 'my_dashboard' && (
+                <div className="text-center py-20">
+                  <div className="text-6xl mb-4 opacity-50">⊞</div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-2">Dashboard Overview</h3>
+                  <p className="text-slate-400">Select an item from the sidebar to view your teaching materials.</p>
+                </div>
+              )}
+              {/* Fallback for HOD/Placement tabs for now */}
+              {!['my_timetable', 'my_classes', 'my_dashboard'].includes(activeSection) && (
+                <div className="text-center py-20">
+                  <div className="text-6xl mb-4 opacity-50">
+                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.icon}
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                    {sidebarSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label}
+                  </h3>
+                  <p className="text-slate-400">
+                    This advanced module is being built out now.
+                  </p>
                 </div>
               )}
             </div>
-          ) : activeTab === 'internships' ? (
-            <InternshipManager />
-          ) : (
-            <>
-              {/* Course Selector */}
-              <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 mb-8">
-                <div className="flex flex-col md:flex-row gap-4 items-end">
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Course</label>
-                    <select
-                      className="w-full bg-slate-800 border border-slate-600 text-slate-200 p-3.5 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                      onChange={e => {
-                        const cId = parseInt(e.target.value);
-                        setSelectedCourse(courses.find(c => c.id === cId) || null);
-                        setAttendanceData({});
-                        setGradeEntries({});
-                      }}
-                    >
-                      <option value="">-- Choose a Course --</option>
-                      {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name} (Sem {c.semester})</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
 
-              {/* Content */}
-              {selectedCourse ? (
-                <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
-                  
-                  {activeTab === 'attendance' && (
-                    <>
-                      <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-white">Attendance — {selectedCourse.code}</h2>
-                        <input type="date" className="bg-slate-800 border border-slate-600 text-slate-200 p-2.5 rounded-xl outline-none focus:border-emerald-500"
-                          style={{ colorScheme: 'dark' }}
-                          value={attendanceDate} onChange={e => setAttendanceDate(e.target.value)} />
-                      </div>
-
-                      <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
-                        <table className="min-w-full divide-y divide-slate-700/50">
-                          <thead className="bg-slate-800/80">
-                            <tr>
-                              <th className="px-8 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Enrollment ID</th>
-                              <th className="px-8 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-700/30">
-                            {getStudentsForCourse(selectedCourse.id).length === 0 ? (
-                              <tr><td colSpan={2} className="px-8 py-12 text-center text-slate-500">No students registered.</td></tr>
-                            ) : getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
-                              <tr key={enrId} className="hover:bg-slate-800/30 transition">
-                                <td className="px-8 py-4 text-sm font-bold font-mono text-slate-300">ENR-{enrId}</td>
-                                <td className="px-8 py-4 text-right">
-                                  <div className="inline-flex items-center space-x-2 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
-                                    <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${attendanceData[enrId] === 'PRESENT' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-slate-500 hover:text-slate-300 border border-transparent'}`}>
-                                      <input type="radio" className="hidden" name={`att-${enrId}`} value="PRESENT" checked={attendanceData[enrId] === 'PRESENT'} onChange={() => handleAttendanceChange(enrId, 'PRESENT')} />
-                                      Present
-                                    </label>
-                                    <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${attendanceData[enrId] === 'ABSENT' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'text-slate-500 hover:text-slate-300 border border-transparent'}`}>
-                                      <input type="radio" className="hidden" name={`att-${enrId}`} value="ABSENT" checked={attendanceData[enrId] === 'ABSENT'} onChange={() => handleAttendanceChange(enrId, 'ABSENT')} />
-                                      Absent
-                                    </label>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="mt-6 flex justify-end">
-                        <button onClick={submitAttendance} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
-                          Save Attendance
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {activeTab === 'grades' && (
-                    <>
-                      <h2 className="text-xl font-bold text-white mb-6">Grade Entry — {selectedCourse.code}</h2>
-                      
-                      <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden mb-6">
-                        
-                        {(() => {
-                          const scheme = courseGradingSchemes.find(s => s.course === selectedCourse.id);
-                          const isFinalizedOrApproved = scheme && (scheme.status === 'FINALIZED' || scheme.status === 'APPROVED');
-                          return (
-                            <div className="bg-slate-800/80 px-6 py-4 flex flex-wrap items-center justify-between border-b border-slate-700/50">
-                              <div className="flex items-center space-x-6">
-                                <div className="flex items-center space-x-2">
-                                  <h3 className="font-bold text-slate-300 text-sm mr-2">Relative Grading:</h3>
-                                  <span className="text-xs font-bold text-slate-500 uppercase">Mean</span>
-                                  <input type="number" step="0.01" className="w-20 bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded-lg text-sm outline-none focus:border-emerald-500"
-                                    value={gradingSchemeForm.mean || scheme?.mean || ''}
-                                    onChange={e => setGradingSchemeForm({...gradingSchemeForm, mean: e.target.value})} 
-                                    disabled={isFinalizedOrApproved} />
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs font-bold text-slate-500 uppercase">StdDev</span>
-                                  <input type="number" step="0.01" className="w-20 bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded-lg text-sm outline-none focus:border-emerald-500"
-                                    value={gradingSchemeForm.stdDev || scheme?.std_dev || ''}
-                                    onChange={e => setGradingSchemeForm({...gradingSchemeForm, stdDev: e.target.value})} 
-                                    disabled={isFinalizedOrApproved} />
-                                </div>
-                                
-                                {scheme && (
-                                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                    scheme.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' :
-                                    scheme.status === 'FINALIZED' ? 'bg-blue-500/20 text-blue-400' :
-                                    scheme.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-slate-700 text-slate-300'
-                                  }`}>
-                                    {scheme.status.replace('_', ' ')}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {!isFinalizedOrApproved && (
-                                <div className="flex items-center space-x-3">
-                                  <button onClick={calculateCurve} className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                    Auto-Calculate
-                                  </button>
-                                  <button onClick={finalizeGrading} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                    Request Admin Review
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-
-                        <table className="min-w-full divide-y divide-slate-700/50">
-                          <thead className="bg-slate-800/40">
-                            <tr>
-                              <th className="px-8 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-1/3">Enrollment ID</th>
-                              <th className="px-8 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider w-1/3">Total Marks</th>
-                              <th className="px-8 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider w-1/3">Relative Grade</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-700/30">
-                            {getStudentsForCourse(selectedCourse.id).length === 0 ? (
-                              <tr><td colSpan={3} className="px-8 py-12 text-center text-slate-500">No students registered.</td></tr>
-                            ) : getStudentsForCourse(selectedCourse.id).map((enrId: number) => {
-                              const hasMalpractice = disciplinaryCases.some(c => c.enrollment === enrId && c.course === selectedCourse.id && c.status !== 'RESOLVED');
-                              
-                              const studentAss = internalAssessments.filter(ia => ia.course === selectedCourse.id && ia.enrollment === enrId);
-                              
-                              // Ensure we only sum unique assessment types for display in case of dirty data
-                              const uniqueAss = new Map();
-                              studentAss.forEach(ia => uniqueAss.set(ia.title, ia));
-                              const totalMarks = Array.from(uniqueAss.values()).reduce((sum, ia) => 
-                                sum + ((parseFloat(ia.marks_obtained || 0) / parseFloat(ia.max_marks || 100)) * ia.weightage), 0);
-                              
-                              // Calculate relative grade if mean/stdDev is available
-                              let relativeGrade = '--';
-                              const scheme = courseGradingSchemes.find(s => s.course === selectedCourse.id);
-                              const mean = parseFloat(gradingSchemeForm.mean || scheme?.mean || '0');
-                              const stdDev = parseFloat(gradingSchemeForm.stdDev || scheme?.std_dev || '0');
-                              if (mean > 0 && stdDev > 0) {
-                                if (totalMarks >= mean + 1.5 * stdDev) relativeGrade = 'O';
-                                else if (totalMarks >= mean + 0.5 * stdDev) relativeGrade = 'A+';
-                                else if (totalMarks >= mean - 0.5 * stdDev) relativeGrade = 'A';
-                                else if (totalMarks >= mean - 1.0 * stdDev) relativeGrade = 'B+';
-                                else if (totalMarks >= mean - 1.5 * stdDev) relativeGrade = 'B';
-                                else relativeGrade = 'C';
-                              }
-
-                              const isExpanded = expandedStudent === enrId;
-
-                              return (
-                              <React.Fragment key={enrId}>
-                                <tr 
-                                  onClick={() => setExpandedStudent(isExpanded ? null : enrId)}
-                                  className={`cursor-pointer transition ${hasMalpractice ? 'bg-red-900/20 hover:bg-red-900/30' : 'hover:bg-slate-800/50'}`}>
-                                  <td className="px-8 py-4 text-sm font-bold font-mono text-slate-300 flex items-center">
-                                    <span className="mr-3 text-slate-500">{isExpanded ? '▼' : '▶'}</span>
-                                    ENR-{enrId}
-                                    {hasMalpractice && (
-                                      <span className="ml-3 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider" title="Active malpractice incident reported for this course">
-                                        ⚠️ Malpractice
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-8 py-4 text-center text-emerald-400 font-bold">
-                                    {totalMarks.toFixed(2)}
-                                  </td>
-                                  <td className="px-8 py-4 text-right">
-                                    <span className={`px-3 py-1.5 rounded-lg font-bold text-sm ${relativeGrade !== '--' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`}>
-                                      {relativeGrade}
-                                    </span>
-                                  </td>
-                                </tr>
-                                
-                                {isExpanded && (
-                                  <tr className="bg-slate-900/80">
-                                    <td colSpan={3} className="px-14 py-6 border-b border-slate-700/50">
-                                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Assessment Breakdown</h4>
-                                      <div className="grid grid-cols-5 gap-4">
-                                        {['MID_1', 'MID_2', 'LAB_1', 'LAB_2', 'COMPRE'].map(type => {
-                                          const ass = studentAss.find(a => a.title === type);
-                                          return (
-                                            <div key={type} className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{type.replace('_', ' ')}</div>
-                                              {ass ? (
-                                                <div className="text-sm font-medium text-slate-300">
-                                                  {ass.marks_obtained} <span className="text-slate-500 text-xs">/ {ass.max_marks}</span>
-                                                </div>
-                                              ) : (
-                                                <div className="text-sm font-medium text-slate-600">--</div>
-                                              )}
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )}
-                              </React.Fragment>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <button onClick={processSemester} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 py-3 rounded-xl font-medium transition-all">
-                          Process Semester Results (Admin Only)
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {activeTab === 'assessments' && (
-                    <>
-                      <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-white">Internal Assessments — {selectedCourse.code}</h2>
-                        <button onClick={fillDummyAssessments} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm font-bold transition">
-                          🧪 Fill Dummy Data
-                        </button>
-                      </div>
-                      
-                      <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
-                        <table className="min-w-full divide-y divide-slate-700/50">
-                          <thead className="bg-slate-800/80">
-                            <tr>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Student</th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Assessment</th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Marks (Obt / Max)</th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Weightage</th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                              <th className="px-4 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-700/30">
-                            
-                            {/* Inline Form Row */}
-                            <tr className="bg-slate-800/40 border-b border-emerald-900/50">
-                              <td className="px-4 py-3">
-                                <select className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-emerald-500"
-                                  value={assessmentForm.enrollment_id} onChange={e => setAssessmentForm({ ...assessmentForm, enrollment_id: e.target.value })}>
-                                  <option value="">-- Select Student --</option>
-                                  {getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
-                                    <option key={enrId} value={enrId}>ENR-{enrId}</option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-4 py-3">
-                                <select className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-emerald-500"
-                                  value={assessmentForm.title} onChange={e => setAssessmentForm({ ...assessmentForm, title: e.target.value })}>
-                                  <option value="MID_1">Mid 1</option>
-                                  <option value="MID_2">Mid 2</option>
-                                  <option value="LAB_1">Lab 1</option>
-                                  <option value="LAB_2">Lab 2</option>
-                                  <option value="COMPRE">Compre</option>
-                                </select>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center justify-center space-x-2 text-slate-400">
-                                  <input type="number" min="0" placeholder="0" className="w-16 bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm text-center outline-none focus:border-emerald-500"
-                                    value={assessmentForm.marks_obtained} onChange={e => setAssessmentForm({ ...assessmentForm, marks_obtained: e.target.value === '' ? '' : parseFloat(e.target.value) })} />
-                                  <span>/</span>
-                                  <input type="number" min="1" placeholder="100" className="w-16 bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm text-center outline-none focus:border-emerald-500"
-                                    value={assessmentForm.max_marks} onChange={e => setAssessmentForm({ ...assessmentForm, max_marks: e.target.value === '' ? '' : parseInt(e.target.value) })} />
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <div className="inline-flex items-center space-x-1">
-                                  <input type="number" min="1" max="100" className="w-16 bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm text-center outline-none focus:border-emerald-500"
-                                    value={assessmentForm.weightage} onChange={e => setAssessmentForm({ ...assessmentForm, weightage: e.target.value === '' ? '' : parseInt(e.target.value) })} />
-                                  <span className="text-slate-400 text-sm">%</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <select className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-2 rounded-lg text-sm outline-none focus:border-emerald-500"
-                                  value={assessmentForm.status} onChange={e => setAssessmentForm({ ...assessmentForm, status: e.target.value })}>
-                                  <option value="PENDING">Pending</option>
-                                  <option value="EVALUATED">Evaluated</option>
-                                  <option value="FLAGGED_MALPRACTICE">Malpractice</option>
-                                </select>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <button onClick={submitAssessment} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap">
-                                  Add
-                                </button>
-                              </td>
-                            </tr>
-                            
-                            {/* Display Rows */}
-                            {internalAssessments.filter(ia => ia.course === selectedCourse.id).length === 0 ? (
-                              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500 text-sm">No assessments recorded for this course.</td></tr>
-                            ) : internalAssessments.filter(ia => ia.course === selectedCourse.id).map((ia) => (
-                              <tr key={ia.id} className="hover:bg-slate-800/30 transition">
-                                <td className="px-4 py-3 text-sm font-bold font-mono text-slate-300">ENR-{ia.enrollment}</td>
-                                <td className="px-4 py-3 text-sm text-slate-300">{ia.title.replace('_', ' ')}</td>
-                                <td className="px-4 py-3 text-sm text-center text-emerald-400 font-medium">
-                                  {ia.marks_obtained} <span className="text-slate-500">/ {ia.max_marks}</span>
-                                </td>
-                                <td className="px-4 py-3 text-sm text-center text-slate-400">{ia.weightage}%</td>
-                                <td className="px-4 py-3">
-                                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
-                                    ia.status === 'EVALUATED' ? 'bg-emerald-500/20 text-emerald-400' :
-                                    ia.status === 'FLAGGED_MALPRACTICE' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-yellow-500/20 text-yellow-400'
-                                  }`}>{ia.status.replace('_', ' ')}</span>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <span className="text-slate-600 text-xs">--</span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      
-                      {assessmentForm.enrollment_id && disciplinaryCases.some(c => c.enrollment.toString() === assessmentForm.enrollment_id && c.course === selectedCourse.id && c.status !== 'RESOLVED') && (
-                        <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
-                          <p className="text-red-400 text-sm font-semibold">
-                            ⚠️ Note: The currently selected student (ENR-{assessmentForm.enrollment_id}) has an active malpractice incident reported for this course.
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {activeTab === 'discipline' && (
-                    <>
-                      <h2 className="text-xl font-bold text-rose-400 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        Report Disciplinary Incident — {selectedCourse.code}
-                      </h2>
-                      <p className="text-rose-300/80 text-sm mb-6">Submitting a report will automatically put the student on Disciplinary Hold and forward the case to the Disciplinary Committee for review.</p>
-                      
-                      <div className="bg-slate-900/50 rounded-2xl border border-rose-900/50 overflow-hidden">
-                        <table className="min-w-full divide-y divide-rose-900/30">
-                          <thead className="bg-rose-950/40">
-                            <tr>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Student ID</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Assessment</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Date</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Reason / Description</th>
-                              <th className="px-3 py-3 text-left text-xs font-bold text-rose-400 uppercase tracking-wider">Status</th>
-                              <th className="px-3 py-3 text-right text-xs font-bold text-rose-400 uppercase tracking-wider">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-rose-900/20">
-                            {/* Inline Form Row */}
-                            <tr className="bg-rose-950/20 border-b border-rose-900/50">
-                              <td className="px-3 py-3 align-top">
-                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.enrollment_id} onChange={e => setDisciplineForm({ ...disciplineForm, enrollment_id: e.target.value })}>
-                                  <option value="">-- Choose --</option>
-                                  {getStudentsForCourse(selectedCourse.id).map((enrId: number) => (
-                                    <option key={enrId} value={enrId}>ENR-{enrId}</option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-3 py-3 align-top">
-                                <select required className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.assessment_type} onChange={e => setDisciplineForm({ ...disciplineForm, assessment_type: e.target.value })}>
-                                  <option value="ASSIGNMENT">Assignment</option>
-                                  <option value="INTERNAL_EXAM">Internal Exam</option>
-                                  <option value="PROJECT">Project</option>
-                                  <option value="SEMESTER_EXAM">Semester Exam</option>
-                                  <option value="OTHER">Other</option>
-                                </select>
-                              </td>
-                              <td className="px-3 py-3 align-top">
-                                <input type="date" required style={{ colorScheme: 'dark' }} className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.date_of_incident} onChange={e => setDisciplineForm({ ...disciplineForm, date_of_incident: e.target.value })} />
-                              </td>
-                              <td className="px-3 py-3 align-top space-y-1">
-                                <input type="text" required placeholder="Title (e.g. Plagiarism)" className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.title} onChange={e => setDisciplineForm({ ...disciplineForm, title: e.target.value })} />
-                                <input type="text" required placeholder="Description..." className="w-full bg-slate-900 border border-slate-600 text-slate-200 p-1.5 rounded text-xs outline-none focus:border-rose-500"
-                                  value={disciplineForm.description} onChange={e => setDisciplineForm({ ...disciplineForm, description: e.target.value })} />
-                                <input id="evidence-upload" type="file" accept=".zip,.pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                  className="w-full text-slate-400 text-[9px] file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-rose-900/40 file:text-rose-400 file:font-semibold hover:file:bg-rose-900/60 file:cursor-pointer file:transition mt-1"
-                                  onChange={e => setDisciplineFile(e.target.files ? e.target.files[0] : null)} />
-                                {disciplineFile && (
-                                  <div className="text-[9px] font-medium text-emerald-400 mt-0.5 flex items-center justify-between">
-                                    <div className="flex items-center">
-                                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                      Selected: {disciplineFile.name}
-                                    </div>
-                                    <button 
-                                      onClick={() => {
-                                        setDisciplineFile(null);
-                                        const input = document.getElementById('evidence-upload') as HTMLInputElement;
-                                        if (input) input.value = '';
-                                      }}
-                                      className="text-rose-400 hover:text-rose-300 p-0.5 rounded-full hover:bg-rose-900/50 transition"
-                                      title="Remove file"
-                                    >
-                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-3 py-3 align-top">
-                                <span className="text-xs text-slate-500 italic">Pending Submit</span>
-                              </td>
-                              <td className="px-3 py-3 align-top text-right">
-                                <button onClick={submitDiscipline} className="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded text-xs font-bold transition whitespace-nowrap shadow-sm shadow-rose-900/20">
-                                  Report
-                                </button>
-                              </td>
-                            </tr>
-                            
-                            {/* Display Rows */}
-                            {disciplinaryCases.filter(dc => dc.course === selectedCourse.id).length === 0 ? (
-                              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500 text-sm">No malpractice incidents reported for this course.</td></tr>
-                            ) : disciplinaryCases.filter(dc => dc.course === selectedCourse.id).map(dc => (
-                              <tr key={dc.id} className="hover:bg-slate-800/20 transition border-b border-rose-900/20 last:border-0">
-                                <td className="px-3 py-3 text-sm font-bold font-mono text-slate-300 align-top">
-                                  ENR-{dc.enrollment}
-                                  <div className="text-[9px] font-mono text-slate-500 mt-0.5">#{dc.case_number}</div>
-                                </td>
-                                <td className="px-3 py-3 align-top">
-                                  <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">{dc.assessment_type.replace('_', ' ')}</div>
-                                </td>
-                                <td className="px-3 py-3 align-top">
-                                  <div className="text-xs text-slate-400">{new Date(dc.date_of_incident).toLocaleDateString()}</div>
-                                </td>
-                                <td className="px-3 py-3 align-top">
-                                  <p className="text-xs font-bold text-rose-300">{dc.title}</p>
-                                  <p className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] truncate" title={dc.description}>{dc.description}</p>
-                                  {dc.evidence_file && (
-                                    <button onClick={() => setPreviewEvidence(dc.evidence_file)} className="text-[9px] font-bold text-blue-400 hover:underline mt-1 inline-block">View Evidence</button>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 align-top">
-                                  <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${
-                                    dc.status === 'REPORTED' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                    dc.status === 'UNDER_INVESTIGATION' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                    dc.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                                    'bg-slate-800 text-slate-400'
-                                  }`}>
-                                    {dc.status.replace('_', ' ')}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-3 align-top text-right">
-                                  <button className="text-xs font-medium text-slate-500 hover:text-white transition">View</button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="h-64 flex flex-col items-center justify-center text-slate-500 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/20">
-                  <svg className="w-16 h-16 mb-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                  </svg>
-                  <p className="text-lg font-medium">Select a course above to get started</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+          </div>
+        </main>
       </div>
       
       {/* Evidence Preview Modal */}
