@@ -116,7 +116,47 @@ class TransferRequestViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
+    @action(detail=True, methods=['post'])
+    def issue_certificate(self, request, pk=None):
+        transfer_request = self.get_object()
 
+        no_dues = NoDues.objects.filter(
+            enrollment=transfer_request.enrollment
+        ).first()
+
+        if not no_dues or not no_dues.all_cleared:
+            return Response(
+                {
+                    'detail': 'Certificate cannot be issued until all no-dues requirements are cleared.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        certificate_type = request.data.get('certificate_type')
+
+        if certificate_type not in ['TC', 'MIGRATION']:
+            return Response(
+                {
+                    'detail': 'certificate_type must be TC or MIGRATION.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        import uuid
+
+        transfer_request.certificate_type = certificate_type
+        transfer_request.certificate_number = (
+            f"{certificate_type}-{timezone.now().year}-{uuid.uuid4().hex[:6].upper()}"
+        )
+        transfer_request.certificate_issued = True
+        transfer_request.certificate_issued_date = timezone.now().date()
+
+        transfer_request.save()
+
+        return Response(
+            self.get_serializer(transfer_request).data,
+            status=status.HTTP_200_OK
+        )
 class NoDuesViewSet(viewsets.ModelViewSet):
     queryset = NoDues.objects.select_related('enrollment').all()
     serializer_class = NoDuesSerializer
