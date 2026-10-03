@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/admission/', include('admission.urls')),
     path('api/academics/', include('academics.urls')),
+    path('api/ai/', include('chatbot_app.urls')),
 ]
 
 if settings.DEBUG:

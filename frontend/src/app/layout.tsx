@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import AIChatbot from "./components/AIChatbot";
 import QueryProvider from "@/providers/QueryProvider";
 
 const inter = Inter({
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <QueryProvider>
           <Navbar />
           <main className="flex-1">{children}</main>
+          <AIChatbot />
         </QueryProvider>
       </body>
     </html>

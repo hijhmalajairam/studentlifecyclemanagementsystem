@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'alumni',
     'users',
     'django_filters',
+    'chatbot_app',
 ]
 
 MIDDLEWARE = [
