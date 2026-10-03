@@ -61,7 +61,7 @@ class ChatView(APIView):
             system_prompt = f"You are a helpful AI Assistant for Veritas Grove University. You are talking to a {role} named {name}. Keep responses concise, friendly, and professional. Help them navigate the university ERP system."
             
             completion = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": message}
@@ -73,4 +73,4 @@ class ChatView(APIView):
             response_text = completion.choices[0].message.content
             return Response({"response": response_text})
         except Exception as e:
-            return Response({"response": f"Error connecting to AI: {str(e)}"}, status=500)
+            return Response({"response": f"Error connecting to AI: {str(e)}"}, status=200)
