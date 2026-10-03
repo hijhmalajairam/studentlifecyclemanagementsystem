@@ -43,6 +43,12 @@ export default function AIChatbot() {
     }
   };
 
+  const handleReset = () => {
+    setMessages([
+      { role: 'ai', content: 'Hi there! I am your Veritas Grove AI Assistant. How can I help you today?' }
+    ]);
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -68,9 +74,18 @@ export default function AIChatbot() {
               <p className="text-xs text-indigo-200">Online</p>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-indigo-200 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
+          <div className="flex space-x-3 items-center">
+            <button 
+              onClick={handleReset} 
+              className="text-indigo-200 hover:text-white transition-colors text-xs border border-indigo-400/50 hover:bg-indigo-500/50 px-2 py-1 rounded"
+              title="New Chat"
+            >
+              New Chat
+            </button>
+            <button onClick={() => setIsOpen(false)} className="text-indigo-200 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Messages Area */}
