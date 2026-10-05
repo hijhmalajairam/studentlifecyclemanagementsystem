@@ -50,92 +50,120 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Left Pane - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-800 to-purple-900">
-        {/* Background Image with 50% transparency */}
-        <div 
-          className="absolute inset-0 z-0 opacity-50 bg-cover bg-center bg-no-repeat "
-          style={{ backgroundImage: "url('/journey-bg.png')" }}
-        ></div>
-        {/* Additional shade gradient on top as requested */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-indigo-900/80 to-transparent"></div>
-        <div className="relative z-10 flex flex-col justify-center items-center text-center p-12 w-full text-white">
-          <h1 className="text-5xl font-extrabold tracking-tight mb-6">Start Your Journey</h1>
-          <p className="text-xl font-light text-indigo-100 max-w-md">
-            Join thousands of bright minds shaping the future. Your first step towards excellence begins here.
-          </p>
+    <div 
+      className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
+      suppressHydrationWarning
+      style={{
+        background: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)'
+      }}
+    >
+      {/* Decorative blurred background circles */}
+      <div className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-blue-300 rounded-full mix-blend-multiply filter blur-[150px] opacity-30"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-cyan-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-20"></div>
+
+      <div className="z-10 flex flex-col items-center w-full max-w-sm px-6">
+        
+        {/* Avatar */}
+        <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mb-5 shadow-lg border border-slate-200">
+          <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
         </div>
-      </div>
+        
+        <h2 className="text-2xl font-semibold text-slate-900 mb-1 tracking-wide">
+          Create an Account
+        </h2>
+        <p className="text-slate-500 text-xs mb-6">Join Veritas Grove University</p>
 
-      {/* Right Pane - Form */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-8 sm:p-12 lg:p-24 bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)] z-20 rounded-l-3xl -ml-6 border-l border-gray-100">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Create an Account</h2>
-            <p className="text-gray-500">
-              Let's start with your basic details.
-            </p>
-          </div>
-
+        <form className="w-full space-y-3" onSubmit={handleSubmit} suppressHydrationWarning>
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2.5 rounded-lg text-sm text-center">
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                  <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="John" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                  <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="Doe" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
-                <input type="text" required value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="johndoe123" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} suppressHydrationWarning className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="john@example.com" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="••••••••" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Register As *</label>
-                <select value={role} onChange={e => setRole(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none">
-                  <option value="PROSPECTIVE_STUDENT">Student (Prospective)</option>
-                  <option value="FACULTY">Faculty</option>
-                </select>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input 
+              type="text" 
+              placeholder="First Name" 
+              className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
+              value={firstName} 
+              onChange={(e: any) => setFirstName(e.target.value)} 
+              required 
+            />
+            <input 
+              type="text" 
+              placeholder="Last Name" 
+              className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
+              value={lastName} 
+              onChange={(e: any) => setLastName(e.target.value)} 
+              required 
+            />
+          </div>
 
-            <div className="flex items-center justify-between pt-6">
-              <Link href="/login" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                Already have an account? Log in
-              </Link>
-              
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="ml-auto px-8 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-indigo-200 transition-all disabled:opacity-70 flex items-center"
-              >
-                {loading ? (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                ) : 'Continue'}
-              </button>
-            </div>
-          </form>
+          <input 
+            type="text" 
+            placeholder="Username" 
+            className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
+            value={username} 
+            onChange={(e: any) => setUsername(e.target.value)} 
+            required 
+          />
+
+          <input 
+            type="email" 
+            placeholder="Email Address" 
+            className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
+            value={email} 
+            onChange={(e: any) => setEmail(e.target.value)} 
+            required 
+          />
+
+          <input 
+            type="password" 
+            placeholder="Password" 
+            className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition placeholder-slate-400 shadow-sm"
+            value={password} 
+            onChange={(e: any) => setPassword(e.target.value)} 
+            required 
+          />
+
+          <select 
+            className="w-full bg-white border border-slate-300 rounded-lg text-slate-900 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition shadow-sm appearance-none"
+            value={role} 
+            onChange={(e: any) => setRole(e.target.value)}
+          >
+            <option value="PROSPECTIVE_STUDENT">Student (Prospective)</option>
+            <option value="FACULTY">Faculty Member</option>
+          </select>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg px-4 py-3.5 mt-2 transition flex justify-center items-center shadow-md shadow-blue-500/20 disabled:opacity-70"
+          >
+            {loading ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            ) : 'Create Account'}
+          </button>
+        </form>
+
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <Link href="/login" className="text-blue-600 hover:text-blue-700 text-sm transition font-medium underline underline-offset-4 decoration-blue-200 hover:decoration-blue-600">
+            Already have an account? Log in
+          </Link>
         </div>
+      </div>
+      
+      {/* Decorative circles */}
+      <div className="absolute bottom-6 right-8 flex items-center space-x-4 text-slate-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" />
+        </svg>
       </div>
     </div>
   );
 }
-
