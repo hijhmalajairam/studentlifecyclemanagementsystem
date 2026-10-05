@@ -309,7 +309,7 @@ export default function StudentInternshipPortal({ enrollment }: { enrollment: an
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Stipend (/month)</label>
-              <input required type="number" min="0" value={formData.stipend} onChange={e => setFormData({...formData, stipend: parseFloat(e.target.value)})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-emerald-500" />
+              <input required type="number" min="0" value={formData.stipend || ''} onChange={e => setFormData({...formData, stipend: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-emerald-500" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Work Mode</label>
