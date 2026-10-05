@@ -188,6 +188,8 @@ export default function StudentInternshipPortal({ enrollment }: { enrollment: an
     setActionLoading(false);
   };
 
+  const activeStates = ['DRAFT', 'SUBMITTED', 'PENDING', 'CHANGES_REQUIRED', 'RESUBMITTED', 'APPROVED', 'ASSIGNED', 'ACTIVE'];
+  const hasActiveInternship = myInternships.some(int => activeStates.includes(int.status));
 
   return (
     <div className="space-y-6">
@@ -275,6 +277,15 @@ export default function StudentInternshipPortal({ enrollment }: { enrollment: an
       )}
 
       {activeTab === 'find' && (
+        hasActiveInternship ? (
+          <div className="bg-slate-50/50 border border-slate-200 rounded-3xl p-10 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900">You already have an internship</h3>
+            <p className="text-slate-500 max-w-md mx-auto">You cannot apply for or submit another internship. Please check your 'My Applications' tab for your current internship status.</p>
+          </div>
+        ) : (
         <form onSubmit={submitFoundInternship} className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 space-y-6">
           <h3 className="text-xl font-bold text-slate-900 mb-2">Submit Found Internship</h3>
           <p className="text-sm text-slate-500 mb-6">Found an internship independently? Submit the details and supporting documents here for faculty review.</p>
@@ -325,12 +336,21 @@ export default function StudentInternshipPortal({ enrollment }: { enrollment: an
 
           <button type="submit" disabled={actionLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-emerald-200">Submit Application</button>
         </form>
+        )
       )}
 
       {activeTab === 'opportunities' && (
         <div className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Faculty Provided Opportunities</h3>
-          {loading ? <p className="text-slate-500 text-center py-10">Loading...</p> : (
+          {hasActiveInternship ? (
+            <div className="text-center py-10 space-y-4">
+              <div className="mx-auto w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              </div>
+              <h4 className="text-xl font-bold text-slate-900">You already have an internship</h4>
+              <p className="text-slate-500 max-w-md mx-auto">You cannot apply for another internship. Please check your 'My Applications' tab for your current internship status.</p>
+            </div>
+          ) : loading ? <p className="text-slate-500 text-center py-10">Loading...</p> : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {opportunities.filter(o => o.is_active).map(opp => (
                 <div key={opp.id} className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-500/50 transition cursor-pointer" onClick={() => setSelectedOpp(opp)}>
