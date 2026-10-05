@@ -335,12 +335,6 @@ class InternshipViewSet(viewsets.ModelViewSet):
             target_user = get_target_user(self.request.user)
             enrollment = Enrollment.objects.get(user=target_user)
 
-            # Mutual Exclusion Check
-            active_states = ['DRAFT', 'SUBMITTED', 'PENDING', 'CHANGES_REQUIRED', 'RESUBMITTED', 'APPROVED', 'ASSIGNED', 'ACTIVE']
-            if Internship.objects.filter(enrollment=enrollment, status__in=active_states).exists():
-                from rest_framework.exceptions import ValidationError
-                raise ValidationError({"detail": "You already have an active or pending internship. You cannot apply for or submit another."})
-
             internship = serializer.save(enrollment=enrollment, status='DRAFT')
             InternshipAuditLog.objects.create(
                 internship=internship,
@@ -365,11 +359,6 @@ class InternshipViewSet(viewsets.ModelViewSet):
             enrollment = Enrollment.objects.get(enrollment_number=enrollment_number)
         except Enrollment.DoesNotExist:
             return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
-            
-        # Mutual Exclusion Check
-        active_states = ['DRAFT', 'SUBMITTED', 'PENDING', 'CHANGES_REQUIRED', 'RESUBMITTED', 'APPROVED', 'ASSIGNED', 'ACTIVE']
-        if Internship.objects.filter(enrollment=enrollment, status__in=active_states).exists():
-            return Response({"detail": "This student already has an internship and cannot be assigned another internship."}, status=status.HTTP_400_BAD_REQUEST)
             
         company_id = request.data.get('company_id')
         try:
