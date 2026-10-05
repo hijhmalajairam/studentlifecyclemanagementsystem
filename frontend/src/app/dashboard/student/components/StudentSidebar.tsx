@@ -111,6 +111,11 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
           {!collapsed && <span>AI Placement Prep</span>}
         </div>
 
+        <div className={navItemClass('internships')} onClick={() => setActiveSection('internships')}>
+          <FileText size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Internships</span>}
+        </div>
+
       </div>
 
       <div className="p-4 bg-[#23254c] mt-auto flex items-center space-x-3 border-t border-[#343663]">

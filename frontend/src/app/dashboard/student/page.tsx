@@ -13,6 +13,7 @@ import ProfileSection from './components/ProfileSection';
 import AttendanceTable from './components/AttendanceTable';
 import GradeList from './components/GradeList';
 import TimetableView from './components/TimetableView';
+import StudentInternshipPortal from './components/StudentInternshipPortal';
 import AcademicDashboard from './components/AcademicDashboard';
 import RegistrationView from './components/RegistrationView';
 import StudentOverviewTab from './components/StudentOverviewTab';
@@ -110,6 +111,9 @@ export default function StudentDashboard() {
         
       case 'placement_prep':
         return <PlacementPrepTab />;
+        
+      case 'internships':
+        return <StudentInternshipPortal enrollment={studentProfile?.enrollments?.[0]} />;
         
       case 'contact_details':
         return <ContactDetails profile={studentProfile} onUpdate={() => refetchProfile()} />;
