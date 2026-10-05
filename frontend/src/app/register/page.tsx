@@ -53,11 +53,6 @@ export default function Register() {
     <div className="flex min-h-screen bg-gray-50">
       {/* Left Pane - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-800 to-purple-900">
-        {/* Background Image with 50% transparency */}
-        <div 
-          className="absolute inset-0 z-0 opacity-50 bg-cover bg-center bg-no-repeat "
-          style={{ backgroundImage: "url('/journey-bg.png')" }}
-        ></div>
         {/* Additional shade gradient on top as requested */}
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-indigo-900/80 to-transparent"></div>
         <div className="relative z-10 flex flex-col justify-center items-center text-center p-12 w-full text-white">
