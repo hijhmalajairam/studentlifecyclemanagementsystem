@@ -325,7 +325,6 @@ export default function StudentInternshipPortal({ enrollment }: { enrollment: an
 
           <button type="submit" disabled={actionLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-emerald-200">Submit Application</button>
         </form>
-        )
       )}
 
       {activeTab === 'opportunities' && (
