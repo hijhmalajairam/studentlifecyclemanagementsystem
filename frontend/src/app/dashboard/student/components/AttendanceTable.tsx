@@ -10,16 +10,23 @@ export default function AttendanceTable({ attendanceRecords }: { attendanceRecor
   
   attendanceArray.forEach((record: any) => {
     const code = record.course?.code || record.course_code;
-    const name = record.course?.name || record.course_name;
+    const name = record.course?.name || record.course_name || code;
     if (!code) return;
 
     if (!courseStats[code]) {
       courseStats[code] = { code, name, present: 0, total: 0 };
     }
     
-    courseStats[code].total += 1;
-    if (record.status === 'PRESENT') {
-      courseStats[code].present += 1;
+    // If backend sent already-aggregated stats
+    if (record.total !== undefined && record.present !== undefined) {
+      courseStats[code].total += Number(record.total);
+      courseStats[code].present += Number(record.present);
+    } else {
+      // If raw daily attendance logs were provided
+      courseStats[code].total += 1;
+      if (record.status === 'PRESENT') {
+        courseStats[code].present += 1;
+      }
     }
   });
 

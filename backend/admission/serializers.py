@@ -35,10 +35,19 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class ScholarshipSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    application_number = serializers.CharField(source='application.application_number', read_only=True)
+
     class Meta:
         model = Scholarship
         fields = '__all__'
         read_only_fields = ('application',)
+
+    def get_student_name(self, obj):
+        if obj.application and obj.application.profile and obj.application.profile.user:
+            user = obj.application.profile.user
+            return f"{user.first_name} {user.last_name}".strip() or user.username
+        return ""
 
 
 class SeatAllocationSerializer(serializers.ModelSerializer):

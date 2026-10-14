@@ -25,6 +25,7 @@ import FeesTab from './components/FeesTab';
 import TimetableTab from './components/TimetableTab';
 import TransfersTab from './components/TransfersTab';
 import RevaluationsTab from './components/RevaluationsTab';
+import AISettingsTab from './components/AISettingsTab';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,7 +34,7 @@ export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([]);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [interviewDates, setInterviewDates] = useState<{ [key: number]: string }>({});
-  const [allocationForms, setAllocationForms] = useState<{ [key: number]: { allocated_department: string; allocated_program: string; allocated_batch: string } }>({});
+  const [allocationForms, setAllocationForms] = useState<{ [key: number]: { allocated_department?: string; allocated_program?: string; allocated_batch?: string; start_year?: string; end_year?: string } }>({});
   const [feeVerifications, setFeeVerifications] = useState<{ [key: number]: string }>({});
   const [showOfflineForm, setShowOfflineForm] = useState(false);
   const [offlineForm, setOfflineForm] = useState({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', previous_school_name: '', previous_marks_percentage: '' });
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [revaluations, setRevaluations] = useState<any[]>([]);
 
-  const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '' });
+  const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '', amount: '', due_date: '', scholarship_discount: '' });
   const [ttForm, setTtForm] = useState({ course: '', day: 'MON', start_time: '09:00', end_time: '10:00', room: '' });
   const [gradeEntries, setGradeEntries] = useState<{ [key: number]: { marks: string, grade: string } }>({});
 
@@ -292,17 +293,21 @@ export default function AdminDashboard() {
   const createFee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload: any = {
+        enrollment: parseInt(feeForm.enrollment),
+        semester: parseInt(feeForm.semester),
+        amount: parseFloat(feeForm.amount),
+        due_date: feeForm.due_date
+      };
+      if (feeForm.scholarship_discount) {
+        payload.scholarship_discount = parseFloat(feeForm.scholarship_discount);
+      }
       await fetchAPI('/academics/fees/', {
         method: 'POST',
-        body: JSON.stringify({
-          enrollment: parseInt(feeForm.enrollment),
-          semester: parseInt(feeForm.semester),
-          amount: parseFloat(feeForm.amount),
-          due_date: feeForm.due_date
-        })
+        body: JSON.stringify(payload)
       });
       alert('Fee created!');
-      setFeeForm({ enrollment: '', semester: '', amount: '', due_date: '' });
+      setFeeForm({ enrollment: '', semester: '', amount: '', due_date: '', scholarship_discount: '' });
       refreshData();
     } catch { alert('Failed to create fee'); }
   };
@@ -532,6 +537,11 @@ export default function AdminDashboard() {
             {/* ─── ALUMNI TAB ─── */}
             {activeTab === 'alumni' && (
               <AlumniTab />
+            )}
+
+            {/* ─── AI SETTINGS TAB ─── */}
+            {activeTab === 'ai_settings' && (
+              <AISettingsTab />
             )}
           </div>
         </main>

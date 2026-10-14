@@ -206,21 +206,69 @@ class ScholarshipViewSet(viewsets.ModelViewSet):
     serializer_class = ScholarshipSerializer
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action in ['create', 'my_scholarship']:
             return [permissions.IsAuthenticated()]
         if self.action in ['partial_update', 'update']:
             return [IsAdminRole()]
         return [permissions.IsAuthenticated()]
 
+    def get_queryset(self):
+        if self.request.user.is_authenticated and self.request.user.role in ['ADMIN', 'INTERVIEWER']:
+            return Scholarship.objects.all()
+        if self.request.user.is_authenticated:
+            return Scholarship.objects.filter(application__profile__user=self.request.user)
+        return Scholarship.objects.none()
+
+    @action(detail=False, methods=['get'])
+    def my_scholarship(self, request):
+        try:
+            profile = ApplicantProfile.objects.filter(user=request.user).first()
+            if not profile:
+                return Response({"detail": "No applicant profile found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            application = AdmissionApplication.objects.filter(profile=profile).first()
+            if not application:
+                return Response({"detail": "No application found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            if hasattr(application, 'scholarship') and application.scholarship:
+                return Response(self.get_serializer(application.scholarship).data)
+            
+            return Response({"detail": "No scholarship record found for this student."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     def perform_create(self, serializer):
         application_id = self.request.data.get('application')
-        application = AdmissionApplication.objects.get(id=application_id, profile__user=self.request.user)
-        # Guard: all documents must be VERIFIED before applying for scholarship
-        pending_docs = application.documents.exclude(status='VERIFIED')
-        if application.documents.count() == 0:
-            raise serializers.ValidationError({"detail": "Please upload and get your documents verified before applying for a scholarship."})
-        if pending_docs.exists():
-            raise serializers.ValidationError({"detail": "All your documents must be verified before you can apply for a scholarship."})
+        if application_id:
+            try:
+                application = AdmissionApplication.objects.get(id=application_id, profile__user=self.request.user)
+            except AdmissionApplication.DoesNotExist:
+                raise serializers.ValidationError({"detail": "Application not found or unauthorized."})
+        else:
+            profile = ApplicantProfile.objects.filter(user=self.request.user).first()
+            if not profile:
+                raise serializers.ValidationError({"detail": "No applicant profile found for this user."})
+            application = AdmissionApplication.objects.filter(profile=profile).first()
+            if not application:
+                raise serializers.ValidationError({"detail": "No admission application found."})
+
+        # If user is already an ENROLLED student, allow applying for scholarship/financial aid grant
+        # If still in prospective stage, ensure documents are uploaded/verified
+        if application.status != 'ENROLLED':
+            pending_docs = application.documents.exclude(status='VERIFIED')
+            if application.documents.count() == 0:
+                raise serializers.ValidationError({"detail": "Please upload and get your documents verified before applying for a scholarship."})
+            if pending_docs.exists():
+                raise serializers.ValidationError({"detail": "All your documents must be verified before you can apply for a scholarship."})
+
+        existing = Scholarship.objects.filter(application=application).first()
+        if existing:
+            existing.reason = serializer.validated_data.get('reason', existing.reason)
+            existing.status = 'APPLIED'
+            existing.save()
+            serializer.instance = existing
+            return
+
         serializer.save(application=application)
 
 

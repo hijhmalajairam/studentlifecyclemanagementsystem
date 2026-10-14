@@ -35,6 +35,7 @@ router.register(r'student-profiles', StudentProfileViewSet, basename='student-pr
 router.register(r'placements', AIPlacementViewSet, basename='placements')
 router.register(r'companies', CompanyViewSet)
 router.register(r'faculty-opportunities', FacultyInternshipOpportunityViewSet)
+router.register(r'internship-opportunities', FacultyInternshipOpportunityViewSet, basename='internship-opportunities')
 router.register(r'internship-documents', InternshipDocumentViewSet)
 router.register(r'internship-windows', InternshipWindowViewSet)
 router.register(r'internal-assessments', InternalAssessmentViewSet)

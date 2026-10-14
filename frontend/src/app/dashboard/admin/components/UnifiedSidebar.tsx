@@ -63,6 +63,12 @@ const sidebarSections = [
       { id: 'faculty', label: 'Faculty Directory', icon: <GraduationCap size={18} /> },
     ]
   },
+  {
+    group: 'System',
+    items: [
+      { id: 'ai_settings', label: 'AI Configuration', icon: <Settings size={18} /> },
+    ]
+  },
 ];
 
 export default function UnifiedSidebar({ activeSection, setActiveSection, user, isAdmin, isHOD, isTransport, facultyProfile }: SidebarProps) {

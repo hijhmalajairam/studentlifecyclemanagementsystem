@@ -26,6 +26,7 @@ import MyCoursesView from './components/MyCoursesView';
 import HallTicketView from './components/HallTicketView';
 import MobilePortalView from './components/MobilePortalView';
 import NoticeBoardView from './components/NoticeBoardView';
+import StudentFeesTab from './components/StudentFeesTab';
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -103,8 +104,11 @@ export default function StudentDashboard() {
       case 'my_registration':
         return <RegistrationView courses={courses} />;
         
+      case 'fees_billing':
+        return <StudentFeesTab user={user} enrollment={enrollment} />;
+
       case 'financial_aid':
-        return <FinancialAidTab />;
+        return <FinancialAidTab user={user} enrollment={enrollment} onNavigate={(tab) => setActiveSection(tab)} />;
         
       case 'grievance':
         return <GrievanceTab />;

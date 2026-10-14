@@ -8,10 +8,15 @@ export default function AISettingsTab() {
   const [newKey, setNewKey] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [currentKey, setCurrentKey] = useState<string | null>(null);
+
   const fetchKeyHistory = async () => {
     try {
       const data = await fetchAPI('/ai/config/');
-      if (Array.isArray(data)) {
+      if (data?.history && Array.isArray(data.history)) {
+        setKeyHistory(data.history);
+        setCurrentKey(data.current_key);
+      } else if (Array.isArray(data)) {
         setKeyHistory(data);
       } else {
         setKeyHistory([]);
@@ -33,7 +38,7 @@ export default function AISettingsTab() {
     try {
       await fetchAPI('/ai/config/', {
         method: 'POST',
-        body: JSON.stringify({ groq_api_key: newKey }),
+        body: JSON.stringify({ api_key: newKey }),
       });
       alert('Groq API Key updated successfully!');
       setNewKey('');
@@ -93,8 +98,8 @@ export default function AISettingsTab() {
                 {keyHistory.map((item) => (
                   <tr key={item.id} className="hover:bg-[var(--bg-secondary)]">
                     <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{item.id}</td>
-                    <td className="px-4 py-3">
-                      {item.groq_api_key.substring(0, 4)}...{item.groq_api_key.substring(item.groq_api_key.length - 4)}
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {item.masked_key || (item.groq_api_key ? `${item.groq_api_key.substring(0, 4)}...${item.groq_api_key.slice(-4)}` : '••••••••')}
                     </td>
                     <td className="px-4 py-3">{item.updated_by}</td>
                     <td className="px-4 py-3">{new Date(item.updated_at).toLocaleString()}</td>

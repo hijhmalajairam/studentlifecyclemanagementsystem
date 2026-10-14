@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Calendar, BookOpen, UserCheck, User, FileText, ClipboardList, BookMarked, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Calendar, BookOpen, UserCheck, User, FileText, ClipboardList, BookMarked, Smartphone, CreditCard } from 'lucide-react';
 
 type SidebarProps = {
   activeSection: string;
@@ -93,6 +93,11 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
         </div>
 
         {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Services</div>}
+
+        <div className={navItemClass('fees_billing')} onClick={() => setActiveSection('fees_billing')}>
+          <CreditCard size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Fees & Billing</span>}
+        </div>
 
         <div className={navItemClass('financial_aid')} onClick={() => setActiveSection('financial_aid')}>
           <FileText size={18} className={collapsed ? 'mx-auto' : ''} />

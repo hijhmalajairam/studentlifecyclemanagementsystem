@@ -40,6 +40,24 @@ class FeeViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
+    def perform_create(self, serializer):
+        enrollment = serializer.validated_data.get('enrollment')
+        discount = serializer.validated_data.get('scholarship_discount')
+
+        if not discount and enrollment and enrollment.user:
+            try:
+                from admission.models import AdmissionApplication
+                app = AdmissionApplication.objects.filter(
+                    profile__user=enrollment.user,
+                    scholarship__status='APPROVED'
+                ).select_related('scholarship').first()
+                if app and hasattr(app, 'scholarship') and app.scholarship and app.scholarship.status == 'APPROVED':
+                    discount = app.scholarship.concession_percentage
+            except Exception:
+                pass
+
+        serializer.save(scholarship_discount=discount if discount else 0.00)
+
     @action(detail=False, methods=['get'])
     def my_fees(self, request):
         try:
@@ -59,6 +77,16 @@ class FeeViewSet(viewsets.ModelViewSet):
         fee.status = 'PAID'
         fee.paid_date = timezone.now().date()
         fee.save()
+
+        # Cross-module integration: Auto-clear fees on NoDues if all fees paid
+        unpaid = Fee.objects.filter(enrollment=fee.enrollment).exclude(status='PAID').exists()
+        if not unpaid:
+            no_dues, _ = NoDues.objects.get_or_create(enrollment=fee.enrollment)
+            no_dues.fees_cleared = True
+            if no_dues.library_cleared and no_dues.hostel_cleared and no_dues.department_cleared:
+                no_dues.all_cleared = True
+            no_dues.save()
+
         Notification.objects.create(
             user=fee.enrollment.user,
             title=f'Semester {fee.semester} Fee Paid',
