@@ -93,11 +93,11 @@ export default function FinancialAidTab({ user, enrollment, onNavigate }: Financ
     try {
       setLoading(true);
       const [schData, feeData] = await Promise.all([
-        fetchAPI('/admission/scholarships/my_scholarship/'),
-        fetchAPI('/academics/fees/my_fees/')
+        fetchAPI('/admission/scholarships/my_scholarship/').catch(() => null),
+        fetchAPI('/academics/fees/my_fees/').catch(() => [])
       ]);
 
-      if (schData && !schData.detail) {
+      if (schData && !schData.detail && schData.id) {
         setScholarship(schData);
       } else {
         setScholarship(null);

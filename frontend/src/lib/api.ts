@@ -45,5 +45,6 @@ export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
   // If response is empty, don't try to parse JSON
   if (response.status === 204) return null;
   
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 };

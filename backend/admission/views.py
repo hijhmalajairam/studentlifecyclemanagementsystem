@@ -224,18 +224,18 @@ class ScholarshipViewSet(viewsets.ModelViewSet):
         try:
             profile = ApplicantProfile.objects.filter(user=request.user).first()
             if not profile:
-                return Response({"detail": "No applicant profile found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({}, status=status.HTTP_200_OK)
             
             application = AdmissionApplication.objects.filter(profile=profile).first()
             if not application:
-                return Response({"detail": "No application found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({}, status=status.HTTP_200_OK)
             
             if hasattr(application, 'scholarship') and application.scholarship:
                 return Response(self.get_serializer(application.scholarship).data)
             
-            return Response({"detail": "No scholarship record found for this student."}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({}, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({}, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         application_id = self.request.data.get('application')
