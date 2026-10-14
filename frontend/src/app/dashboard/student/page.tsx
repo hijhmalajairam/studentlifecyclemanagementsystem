@@ -93,7 +93,7 @@ export default function StudentDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <StudentOverviewTab />;
+        return <StudentOverviewTab attendance={attendance} />;
 
       case 'timetable':
         return <TimetableView timetable={timetable} />;

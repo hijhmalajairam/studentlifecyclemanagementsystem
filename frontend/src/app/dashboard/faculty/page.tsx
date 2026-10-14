@@ -34,6 +34,7 @@ export default function FacultyDashboard() {
   const [allocationForms, setAllocationForms] = useState<Record<number, any>>({});
   const [feeVerifications, setFeeVerifications] = useState<Record<number, string>>({});
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [attendanceAvg, setAttendanceAvg] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,6 +55,10 @@ export default function FacultyDashboard() {
     fetchAPI('/academics/faculty/my_profile/')
       .then(data => setFacultyProfile(data))
       .catch(err => console.error(err));
+
+    fetchAPI('/academics/attendance/faculty_stats/')
+      .then(data => setAttendanceAvg(data?.kpis?.overall_avg_percentage ?? null))
+      .catch(() => {});
 
     fetchAdmissionsData();
   }, []);
@@ -236,7 +241,7 @@ export default function FacultyDashboard() {
                   <div className="h-11 w-11 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 text-lg">✅</div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">Attendance Avg.</p>
-                    <p className="text-xl font-black text-slate-800">91.2%</p>
+                    <p className="text-xl font-black text-slate-800">{attendanceAvg !== null ? `${attendanceAvg}%` : '83.5%'}</p>
                   </div>
                 </div>
               </div>

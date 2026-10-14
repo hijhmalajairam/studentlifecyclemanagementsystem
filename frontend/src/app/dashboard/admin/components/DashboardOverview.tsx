@@ -1,6 +1,8 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, FileText, CreditCard, Building2, Bell, BarChart3, Calendar, CheckCircle2 } from 'lucide-react';
+import { fetchAPI } from '@/lib/api';
 
 interface OverviewProps {
   enrollments: any[];
@@ -15,6 +17,18 @@ interface OverviewProps {
 }
 
 export default function DashboardOverview({ enrollments, applications, programs, departments, courses, leaves, fees, isAdmin, facultyProfile }: OverviewProps) {
+  const [liveAvgAttendance, setLiveAvgAttendance] = useState<number>(84);
+
+  useEffect(() => {
+    fetchAPI('/academics/attendance/faculty_stats/')
+      .then(data => {
+        if (data?.kpis?.overall_avg_percentage) {
+          setLiveAvgAttendance(Math.round(data.kpis.overall_avg_percentage));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const pendingApps = applications.filter(a => a.status === 'SUBMITTED' || a.status === 'INTERVIEW_PASSED').length;
   const pendingFees = applications.filter(a => a.status === 'FEE_PENDING').length;
   const pendingLeaves = leaves.filter(l => l.status === 'PENDING').length;
@@ -46,7 +60,7 @@ export default function DashboardOverview({ enrollments, applications, programs,
   ];
   const demoColors = ['#3b82f6', '#ec4899', '#8b5cf6'];
 
-  const avgAttendance = 78;
+  const avgAttendance = liveAvgAttendance;
   const pieData = [
     { name: 'Present', value: avgAttendance },
     { name: 'Absent', value: 100 - avgAttendance }

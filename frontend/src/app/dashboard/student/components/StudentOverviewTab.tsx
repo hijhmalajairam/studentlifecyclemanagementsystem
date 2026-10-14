@@ -8,10 +8,30 @@ type UpcomingCourse = {
   grade: number; // 0 - 10 scale
 };
 
-export default function StudentOverviewTab() {
-  // Bunk Budget state (local/mock)
-  const [totalClasses, setTotalClasses] = useState<number>(120);
-  const [attendedClasses, setAttendedClasses] = useState<number>(96);
+export default function StudentOverviewTab({ attendance }: { attendance?: any[] }) {
+  // Aggregate real attendance
+  const realTotal = useMemo(() => {
+    if (!attendance || !Array.isArray(attendance)) return 100;
+    const sum = attendance.reduce((acc, c) => acc + (c.total || 0), 0);
+    return sum > 0 ? sum : 100;
+  }, [attendance]);
+
+  const realAttended = useMemo(() => {
+    if (!attendance || !Array.isArray(attendance)) return 85;
+    const sum = attendance.reduce((acc, c) => acc + (c.present || 0), 0);
+    return sum > 0 ? sum : 85;
+  }, [attendance]);
+
+  // Bunk Budget state (initialized with real data)
+  const [totalClasses, setTotalClasses] = useState<number>(realTotal);
+  const [attendedClasses, setAttendedClasses] = useState<number>(realAttended);
+
+  React.useEffect(() => {
+    if (realTotal > 0 && realAttended >= 0) {
+      setTotalClasses(realTotal);
+      setAttendedClasses(realAttended);
+    }
+  }, [realTotal, realAttended]);
 
   const attendancePercent = useMemo(() => {
     if (totalClasses === 0) return 100;
@@ -24,6 +44,13 @@ export default function StudentOverviewTab() {
     const val = Math.floor(raw);
     return val >= 0 ? val : 0;
   }, [attendedClasses, totalClasses]);
+
+  const requiredClasses = useMemo(() => {
+    // If < 75%, find min k such that (attended + k) / (total + k) >= 0.75
+    if (attendancePercent >= 75) return 0;
+    const raw = (0.75 * totalClasses - attendedClasses) / 0.25;
+    return Math.ceil(Math.max(0, raw));
+  }, [attendedClasses, totalClasses, attendancePercent]);
 
   // What-If GPA Simulator state
   const [currentCGPA, setCurrentCGPA] = useState<number>(7.6); // on 10 scale
@@ -97,45 +124,80 @@ export default function StudentOverviewTab() {
               />
             </div>
 
-            <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
-              <div>
-                <div className="font-medium text-slate-800 dark:text-slate-100">You can miss</div>
-                <div className="text-2xl font-bold text-blue-800 dark:text-blue-300">{allowedMisses} more</div>
-              </div>
-
-              <div className="text-right">
-                <div className="text-sm text-slate-500">Classes so you remain ≥75%</div>
-                <div className="text-xs text-slate-400">Total: {totalClasses} • Attended: {attendedClasses}</div>
-              </div>
-            </div>
-
-            {/* Controls for demo */}
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-slate-600 w-36">Total Classes</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={totalClasses}
-                  onChange={(e) => setTotalClasses(Math.max(1, Number(e.target.value)))}
-                  className="w-full md:w-40 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-slate-600 w-36">Attended</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={totalClasses}
-                  value={attendedClasses}
-                  onChange={(e) => setAttendedClasses(Math.min(totalClasses, Math.max(0, Number(e.target.value))))}
-                  className="w-full md:w-40 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800"
-                />
+            <div className="mt-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+              {attendancePercent >= 75 ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Safe Buffer</span>
+                    <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
+                      {allowedMisses} {allowedMisses === 1 ? 'class' : 'classes'}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">You can safely miss without dropping below 75%</p>
+                  </div>
+                  <div className="text-3xl">🛡️</div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-red-600 uppercase tracking-wide flex items-center gap-1">
+                      ⚠️ Critical Shortage
+                    </span>
+                    <div className="text-2xl font-black text-red-600 mt-0.5">
+                      Must Attend {requiredClasses} {requiredClasses === 1 ? 'Class' : 'Classes'}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">Consecutive attendance required to reach 75% eligibility</p>
+                  </div>
+                  <div className="text-3xl">🚨</div>
+                </div>
+              )}
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-400">
+                <span>Total Classes: <b>{totalClasses}</b></span>
+                <span>Attended: <b>{attendedClasses}</b></span>
+                <span>Absent: <b>{Math.max(0, totalClasses - attendedClasses)}</b></span>
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-slate-500">Note: This is a demo-local calculator. Integrate with attendance service for real data.</div>
+            {/* What-If Future Simulator */}
+            <div className="mt-4 p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Simulate Future Classes</span>
+                {(totalClasses !== realTotal || attendedClasses !== realAttended) && (
+                  <button
+                    onClick={() => {
+                      setTotalClasses(realTotal);
+                      setAttendedClasses(realAttended);
+                    }}
+                    className="text-[11px] font-bold text-blue-600 hover:underline"
+                  >
+                    Reset to Actual
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Total Classes</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={totalClasses}
+                    onChange={(e) => setTotalClasses(Math.max(1, Number(e.target.value)))}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Attended Classes</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={totalClasses}
+                    value={attendedClasses}
+                    onChange={(e) => setAttendedClasses(Math.min(totalClasses, Math.max(0, Number(e.target.value))))}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

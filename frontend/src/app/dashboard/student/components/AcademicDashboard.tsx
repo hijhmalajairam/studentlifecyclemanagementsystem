@@ -27,9 +27,21 @@ export default function AcademicDashboard({ results, attendance }: { results: an
     { subject: 'CO6', A: 70, fullMark: 100 },
   ];
 
+  // Real calculations from attendance prop
+  const totalClasses = Array.isArray(attendance) 
+    ? attendance.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0)
+    : 0;
+  const presentClasses = Array.isArray(attendance)
+    ? attendance.reduce((acc, curr) => acc + (Number(curr.present) || 0), 0)
+    : 0;
+  const overallAttendanceRate = totalClasses > 0 ? Math.round((presentClasses / totalClasses) * 100) : 85;
+  const attendanceRiskCount = Array.isArray(attendance)
+    ? attendance.filter(curr => curr.warning || (Number(curr.percentage) < 75)).length
+    : 0;
+
   const attendanceData = [
-    { name: 'Present', value: 85, color: '#10b981' }, // emerald-500
-    { name: 'Absent', value: 15, color: '#ef4444' }, // red-500
+    { name: 'Present', value: overallAttendanceRate, color: '#10b981' }, // emerald-500
+    { name: 'Absent', value: Math.max(0, 100 - overallAttendanceRate), color: '#ef4444' }, // red-500
   ];
 
   const sgpaCgpaData = [
@@ -62,29 +74,32 @@ export default function AcademicDashboard({ results, attendance }: { results: an
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-amber-500">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attendance Risk</p>
-          <h3 className="text-3xl font-black text-slate-800 mt-1">1</h3>
-          <p className="text-sm font-semibold text-amber-600 mt-1">Courses &lt; 75%</p>
+          <h3 className="text-3xl font-black text-slate-800 mt-1">{attendanceRiskCount}</h3>
+          <p className={`text-sm font-semibold mt-1 ${attendanceRiskCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {attendanceRiskCount > 0 ? `${attendanceRiskCount} Course${attendanceRiskCount > 1 ? 's' : ''} < 75%` : 'All Courses Eligible'}
+          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-emerald-500">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">COs Below Target</p>
-          <h3 className="text-3xl font-black text-slate-800 mt-1">0</h3>
-          <p className="text-sm font-semibold text-emerald-600 mt-1">All targets met</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Overall Attendance</p>
+          <h3 className="text-3xl font-black text-slate-800 mt-1">{overallAttendanceRate}%</h3>
+          <p className="text-sm font-semibold text-emerald-600 mt-1">Min 75% Required</p>
         </div>
       </div>
 
       {/* Warning Banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center shadow-sm">
-        <div className="bg-amber-100 text-amber-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 shrink-0">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      {attendanceRiskCount > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center shadow-sm">
+          <div className="bg-amber-100 text-amber-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-amber-800 font-medium text-sm">
+              {attendanceRiskCount} course{attendanceRiskCount > 1 ? 's' : ''} with attendance below 75% — CT & exam eligibility at risk.
+            </p>
+          </div>
         </div>
-        <div className="flex-1">
-          <p className="text-amber-800 font-medium text-sm">1 course with attendance below 75% — CT eligibility at risk.</p>
-        </div>
-        <button className="text-amber-700 font-bold text-sm bg-amber-200 hover:bg-amber-300 px-4 py-1.5 rounded-lg transition-colors">
-          View details
-        </button>
-      </div>
+      )}
 
       {/* Analytics Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
