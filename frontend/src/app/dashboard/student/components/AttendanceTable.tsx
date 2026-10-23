@@ -296,7 +296,15 @@ export default function AttendanceTable({ attendanceRecords }: { attendanceRecor
                   >
                     <div>
                       <p className="text-sm font-bold text-slate-800">{log.course_code} - {log.course_name}</p>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">{log.date}</p>
+                      <div className="flex items-center space-x-2 text-xs text-slate-400 mt-0.5">
+                        <span className="font-mono">{log.date}</span>
+                        {log.marked_by && (
+                          <>
+                            <span>•</span>
+                            <span className="text-slate-500 font-medium">Instructor: {log.marked_by}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${

@@ -16,6 +16,9 @@ interface FacultyCourse {
   course_name: string;
   credits: number;
   semester: number;
+  department_code?: string;
+  department_name?: string;
+  instructors?: string[];
   enrolled_students: number;
   total_sessions: number;
   avg_percentage: number;
@@ -45,12 +48,27 @@ interface AtRiskStudent {
   status: 'CRITICAL' | 'WARNING';
 }
 
+interface DepartmentFaculty {
+  faculty_id: number;
+  faculty_name: string;
+  username: string;
+  designation: string;
+  admin_role: string;
+  courses_taught: string[];
+  sessions_conducted: number;
+  avg_attendance: number;
+}
+
 export default function FacultyAttendanceTab() {
   const [loading, setLoading] = useState(true);
+  const [scope, setScope] = useState<'personal' | 'department' | 'university'>('personal');
   const [kpis, setKpis] = useState<FacultyKPIs | null>(null);
   const [courses, setCourses] = useState<FacultyCourse[]>([]);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [atRiskStudents, setAtRiskStudents] = useState<AtRiskStudent[]>([]);
+  const [deptFaculty, setDeptFaculty] = useState<DepartmentFaculty[]>([]);
+  const [departments, setDepartments] = useState<{id: number; code: string; name: string}[]>([]);
+  const [selectedDept, setSelectedDept] = useState<string>('');
 
   // Attendance marking modal state
   const [isMarkingOpen, setIsMarkingOpen] = useState(false);
@@ -61,15 +79,22 @@ export default function FacultyAttendanceTab() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+  const [sendingWarning, setSendingWarning] = useState<number | null>(null);
 
-  const loadFacultyStats = async () => {
+  const loadFacultyStats = async (deptFilter?: string) => {
     try {
       setLoading(true);
-      const data = await fetchAPI('/academics/attendance/faculty_stats/');
+      const url = deptFilter
+        ? `/academics/attendance/faculty_stats/?department=${deptFilter}`
+        : '/academics/attendance/faculty_stats/';
+      const data = await fetchAPI(url);
+      setScope(data.scope || 'personal');
       setKpis(data.kpis);
       setCourses(data.courses || []);
       setRecentSessions(data.recent_sessions || []);
       setAtRiskStudents(data.at_risk_students || []);
+      setDeptFaculty(data.department_faculty || []);
+      if (data.departments) setDepartments(data.departments);
     } catch (err) {
       console.error('Failed to load faculty attendance stats', err);
     } finally {
@@ -80,6 +105,11 @@ export default function FacultyAttendanceTab() {
   useEffect(() => {
     loadFacultyStats();
   }, []);
+
+  const handleDeptFilter = (deptCode: string) => {
+    setSelectedDept(deptCode);
+    loadFacultyStats(deptCode || undefined);
+  };
 
   const openMarkingModal = async (course: FacultyCourse) => {
     setSelectedCourse(course);
@@ -144,7 +174,7 @@ export default function FacultyAttendanceTab() {
 
       alert(`Attendance saved for ${payload.length} students on ${markingDate}!`);
       setIsMarkingOpen(false);
-      loadFacultyStats();
+      loadFacultyStats(selectedDept || undefined);
     } catch (err) {
       alert('Failed to save attendance. Please try again.');
     } finally {
@@ -152,10 +182,29 @@ export default function FacultyAttendanceTab() {
     }
   };
 
-  const handleNotifyStudent = (student: AtRiskStudent) => {
-    setContactSuccess(`Formal Attendance Shortage Warning dispatched to ${student.student_name} (${student.percentage}% in ${student.course_code}).`);
-    setTimeout(() => setContactSuccess(null), 4000);
+  const handleNotifyStudent = async (student: AtRiskStudent) => {
+    setSendingWarning(student.enrollment_id);
+    try {
+      await fetchAPI('/academics/attendance/send_warning/', {
+        method: 'POST',
+        body: JSON.stringify({
+          enrollment_id: student.enrollment_id,
+          course_code: student.course_code,
+          course_name: student.course_name,
+          percentage: student.percentage
+        })
+      });
+      setContactSuccess(`Official attendance warning sent to ${student.student_name} (${student.percentage}% in ${student.course_code}).`);
+      setTimeout(() => setContactSuccess(null), 5000);
+    } catch {
+      alert('Failed to send warning notification.');
+    } finally {
+      setSendingWarning(null);
+    }
   };
+
+  const scopeLabel = scope === 'university' ? 'University-Wide' : scope === 'department' ? 'Department Overview' : 'My Classes';
+  const scopeIcon = scope === 'university' ? '🏛️' : scope === 'department' ? '🏢' : '📚';
 
   if (loading) {
     return (
@@ -177,18 +226,50 @@ export default function FacultyAttendanceTab() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Faculty Attendance Hub</h2>
-          <p className="text-sm text-slate-500 mt-1">Live monitoring, class session logs, and automated eligibility warnings</p>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              {scopeIcon} {scope === 'department' ? 'Department Attendance Hub' : scope === 'university' ? 'University Attendance Dashboard' : 'Faculty Attendance Hub'}
+            </h2>
+            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+              scope === 'university' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+              scope === 'department' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+              'bg-blue-50 text-blue-700 border-blue-200'
+            }`}>
+              {scopeLabel}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 mt-1">
+            {scope === 'department'
+              ? 'All courses & faculty in your department — lecture conduction audit & at-risk monitoring'
+              : scope === 'university'
+              ? 'University-wide attendance compliance across all departments'
+              : 'Live monitoring, class session logs, and automated eligibility warnings'}
+          </p>
         </div>
-        {courses.length > 0 && (
-          <button
-            onClick={() => openMarkingModal(courses[0])}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition"
-          >
-            <span>📝</span>
-            <span>Take Attendance</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-3">
+          {/* Department Filter (Admin only) */}
+          {scope === 'university' && departments.length > 0 && (
+            <select
+              value={selectedDept}
+              onChange={e => handleDeptFilter(e.target.value)}
+              className="border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All Departments</option>
+              {departments.map(d => (
+                <option key={d.code} value={d.code}>{d.name}</option>
+              ))}
+            </select>
+          )}
+          {courses.length > 0 && scope !== 'university' && (
+            <button
+              onClick={() => openMarkingModal(courses[0])}
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition"
+            >
+              <span>📝</span>
+              <span>Take Attendance</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {contactSuccess && (
@@ -211,7 +292,9 @@ export default function FacultyAttendanceTab() {
           <p className={`text-2xl font-black mt-2 ${(kpis?.overall_avg_percentage || 0) >= 80 ? 'text-emerald-600' : (kpis?.overall_avg_percentage || 0) >= 75 ? 'text-amber-600' : 'text-red-600'}`}>
             {kpis?.overall_avg_percentage ?? 0}%
           </p>
-          <p className="text-xs text-slate-400 mt-1 font-medium">Across all your classes</p>
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            {scope === 'department' ? 'Across department courses' : scope === 'university' ? 'University-wide average' : 'Across all your classes'}
+          </p>
         </div>
 
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
@@ -233,7 +316,9 @@ export default function FacultyAttendanceTab() {
           <p className="text-2xl font-black text-slate-800 mt-2">
             {kpis?.total_students_enrolled ?? 0}
           </p>
-          <p className="text-xs text-slate-400 mt-1 font-medium">Under your direct instruction</p>
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            {scope === 'department' ? 'In department programs' : scope === 'university' ? 'Total university enrollment' : 'Under your direct instruction'}
+          </p>
         </div>
 
         <div className={`p-5 rounded-2xl border shadow-sm ${(kpis?.total_at_risk_students || 0) > 0 ? 'bg-red-50/50 border-red-200' : 'bg-white border-slate-200'}`}>
@@ -248,9 +333,84 @@ export default function FacultyAttendanceTab() {
         </div>
       </div>
 
+      {/* HOD Department Faculty Conduction Table */}
+      {scope === 'department' && deptFaculty.length > 0 && (
+        <div className="bg-white border border-indigo-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-5 bg-indigo-50/70 border-b border-indigo-200 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-indigo-500 text-lg">👨‍🏫</span>
+              <h3 className="text-sm font-bold text-indigo-800 uppercase tracking-wider">
+                Department Faculty — Lecture Conduction Audit
+              </h3>
+            </div>
+            <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
+              {deptFaculty.length} Faculty Members
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead>
+                <tr className="bg-indigo-50/20 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left">Faculty Member</th>
+                  <th className="px-5 py-3 text-left">Designation</th>
+                  <th className="px-5 py-3 text-left">Courses Assigned</th>
+                  <th className="px-5 py-3 text-center">Sessions Conducted</th>
+                  <th className="px-5 py-3 text-right">Avg. Attendance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {deptFaculty.map((f) => (
+                  <tr key={f.faculty_id} className="hover:bg-indigo-50/20 transition">
+                    <td className="px-5 py-4">
+                      <p className="text-sm font-bold text-slate-800">{f.faculty_name}</p>
+                      <p className="text-xs text-slate-400">{f.username}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-xs font-semibold text-slate-600">{f.designation}</span>
+                      {f.admin_role !== 'None' && (
+                        <span className="ml-2 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200">
+                          {f.admin_role}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {f.courses_taught.length > 0 ? f.courses_taught.map(c => (
+                          <span key={c} className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                            {c}
+                          </span>
+                        )) : (
+                          <span className="text-xs text-slate-400 italic">No courses assigned</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className={`text-sm font-black ${f.sessions_conducted > 0 ? 'text-slate-800' : 'text-slate-300'}`}>
+                        {f.sessions_conducted}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <span className={`text-sm font-black ${
+                        f.avg_attendance >= 80 ? 'text-emerald-600' :
+                        f.avg_attendance >= 75 ? 'text-amber-600' :
+                        f.avg_attendance > 0 ? 'text-red-600' : 'text-slate-300'
+                      }`}>
+                        {f.avg_attendance > 0 ? `${f.avg_attendance}%` : '—'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Courses Overview Grid */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Your Assigned Courses</h3>
+        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+          {scope === 'department' ? 'Department Courses' : scope === 'university' ? 'All Courses' : 'Your Assigned Courses'}
+        </h3>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {courses.map(course => (
             <div key={course.course_id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-blue-300 transition flex flex-col justify-between">
@@ -264,6 +424,11 @@ export default function FacultyAttendanceTab() {
                   </span>
                 </div>
                 <h4 className="text-base font-bold text-slate-800 mt-2">{course.course_name}</h4>
+                
+                {/* Show instructor names for HOD/Admin scope */}
+                {(scope === 'department' || scope === 'university') && course.instructors && course.instructors.length > 0 && (
+                  <p className="text-xs text-slate-400 mt-1">Instructor: {course.instructors.join(', ')}</p>
+                )}
                 
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-xs font-medium">
@@ -291,12 +456,14 @@ export default function FacultyAttendanceTab() {
                 </div>
               </div>
 
-              <button
-                onClick={() => openMarkingModal(course)}
-                className="mt-5 w-full bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-700 border border-slate-200 hover:border-blue-200 font-bold py-2 rounded-xl text-xs transition flex items-center justify-center space-x-1"
-              >
-                <span>📝 Mark Attendance</span>
-              </button>
+              {scope === 'personal' && (
+                <button
+                  onClick={() => openMarkingModal(course)}
+                  className="mt-5 w-full bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-700 border border-slate-200 hover:border-blue-200 font-bold py-2 rounded-xl text-xs transition flex items-center justify-center space-x-1"
+                >
+                  <span>📝 Mark Attendance</span>
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -308,7 +475,7 @@ export default function FacultyAttendanceTab() {
           <div className="flex items-center space-x-2">
             <span className="text-red-500 text-lg">⚠️</span>
             <h3 className="text-sm font-bold text-red-800 uppercase tracking-wider">
-              Low Attendance Alerts (&lt;75% Mandatory Threshold)
+              {scope === 'department' ? 'Department Attendance Alerts' : scope === 'university' ? 'University Debar Watchlist' : 'Low Attendance Alerts'} (&lt;75% Mandatory Threshold)
             </h3>
           </div>
           <span className="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
@@ -360,9 +527,10 @@ export default function FacultyAttendanceTab() {
                     <td className="px-5 py-4 text-right">
                       <button
                         onClick={() => handleNotifyStudent(s)}
-                        className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition"
+                        disabled={sendingWarning === s.enrollment_id}
+                        className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition disabled:opacity-50"
                       >
-                        Send Notice
+                        {sendingWarning === s.enrollment_id ? 'Sending...' : 'Send Notice'}
                       </button>
                     </td>
                   </tr>

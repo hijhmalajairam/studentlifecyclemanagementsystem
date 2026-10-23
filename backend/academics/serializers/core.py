@@ -26,6 +26,9 @@ class AcademicTermSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CourseSerializer(serializers.ModelSerializer):
+    department_code = serializers.CharField(source='department.code', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+
     class Meta:
         model = Course
         fields = '__all__'

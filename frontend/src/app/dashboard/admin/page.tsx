@@ -116,8 +116,12 @@ export default function AdminDashboard() {
 
   // Apply RBAC Filters
   const visibleDepartments = departments;
-  const visiblePrograms = programs;
-  const visibleCourses = courses; 
+  const visiblePrograms = (isHOD && myDepartmentId && !isTrueAdmin)
+    ? programs.filter((p: any) => p.department === myDepartmentId || p.department_id === myDepartmentId)
+    : programs;
+  const visibleCourses = (isHOD && myDepartmentId && !isTrueAdmin)
+    ? courses.filter((c: any) => c.department === myDepartmentId || c.department_id === myDepartmentId)
+    : courses;
   const visibleApplications = isAdmin ? applications : []; // Admissions processed by admin
   const hasWriteAccess = isAdmin || isHOD;
   const visibleTimetable = timetable;

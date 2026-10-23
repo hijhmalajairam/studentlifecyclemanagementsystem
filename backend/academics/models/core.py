@@ -21,6 +21,7 @@ class Program(SoftDeleteModel):
         return f"{self.name} ({self.department.code})"
 
 class Course(SoftDeleteModel):
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
     code = models.CharField(max_length=15, unique=True)
     name = models.CharField(max_length=255)
     credits = models.IntegerField(default=3)
