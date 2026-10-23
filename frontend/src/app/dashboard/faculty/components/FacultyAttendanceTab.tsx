@@ -16,6 +16,10 @@ interface FacultyCourse {
   course_name: string;
   credits: number;
   semester: number;
+  academic_year?: string;
+  semester_label?: string;
+  class_label?: string;
+  section?: string;
   department_code?: string;
   department_name?: string;
   instructors?: string[];
@@ -419,15 +423,31 @@ export default function FacultyAttendanceTab() {
                   <span className="bg-blue-50 text-blue-700 text-xs font-black px-2.5 py-1 rounded-lg">
                     {course.course_code}
                   </span>
-                  <span className="text-xs font-semibold text-slate-400">
-                    Sem {course.semester} • {course.credits} Credits
+                  <span className="text-xs font-semibold text-slate-500">
+                    {course.class_label || `${course.academic_year || '1st Year'} • Sem ${course.semester} • Section A`}
                   </span>
                 </div>
                 <h4 className="text-base font-bold text-slate-800 mt-2">{course.course_name}</h4>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                    {course.academic_year || '1st Year'}
+                  </span>
+                  <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                    Sem {course.semester}
+                  </span>
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                    Section A
+                  </span>
+                  {course.department_code && (
+                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                      Dept: {course.department_code}
+                    </span>
+                  )}
+                </div>
                 
                 {/* Show instructor names for HOD/Admin scope */}
                 {(scope === 'department' || scope === 'university') && course.instructors && course.instructors.length > 0 && (
-                  <p className="text-xs text-slate-400 mt-1">Instructor: {course.instructors.join(', ')}</p>
+                  <p className="text-xs text-slate-400 mt-2">Instructor: {course.instructors.join(', ')}</p>
                 )}
                 
                 <div className="mt-4 space-y-2">
@@ -593,8 +613,15 @@ export default function FacultyAttendanceTab() {
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-start border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-lg font-black text-slate-900">Mark Attendance: {selectedCourse.course_code}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{selectedCourse.course_name}</p>
+                <h3 className="text-lg font-black text-slate-900">Mark Attendance: {selectedCourse.course_code} - {selectedCourse.course_name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[11px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
+                    {selectedCourse.class_label || `${selectedCourse.academic_year || '1st Year'} • Sem ${selectedCourse.semester} • Section A`}
+                  </span>
+                  <span className="text-[11px] font-medium text-slate-500">
+                    {selectedCourse.credits} Credits • {selectedCourse.enrolled_students} Enrolled
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setIsMarkingOpen(false)}

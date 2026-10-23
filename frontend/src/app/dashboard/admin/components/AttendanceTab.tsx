@@ -35,12 +35,16 @@ export default function AttendanceTab({
               setSelectedCourse(courses.find((c) => c.id === cId) || null);
             }}
           >
-            <option value="">-- Choose --</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} - {c.name}
-              </option>
-            ))}
+            <option value="">-- Choose Course & Class --</option>
+            {courses.map((c) => {
+              const yr = Math.floor(((c.semester || 1) + 1) / 2);
+              const suffix = yr === 1 ? 'st' : yr === 2 ? 'nd' : yr === 3 ? 'rd' : 'th';
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.code} - {c.name} ({yr}{suffix} Year • Sem {c.semester || 1} • Sec A)
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="flex-1 w-full">
@@ -56,6 +60,17 @@ export default function AttendanceTab({
       </div>
       {selectedCourse ? (
         <>
+          <div className="mb-4 flex items-center justify-between bg-blue-50/60 border border-blue-200/80 px-4 py-3 rounded-lg">
+            <div>
+              <p className="text-sm font-bold text-slate-800">{selectedCourse.code} - {selectedCourse.name}</p>
+              <p className="text-xs text-blue-700 font-semibold mt-0.5">
+                {Math.floor(((selectedCourse.semester || 1) + 1) / 2)}{Math.floor(((selectedCourse.semester || 1) + 1) / 2) === 1 ? 'st' : 'nd'} Year • Semester {selectedCourse.semester || 1} • Section A
+              </p>
+            </div>
+            <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm">
+              {selectedCourse.credits || 3} Credits
+            </span>
+          </div>
           <div className="bg-slate-50/50 rounded-md border border-slate-200 overflow-hidden">
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-white">

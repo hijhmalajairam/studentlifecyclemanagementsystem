@@ -24,11 +24,36 @@ class AttendanceSerializer(serializers.ModelSerializer):
 class TimetableSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(source='course_section.course.code', read_only=True)
     course_name = serializers.CharField(source='course_section.course.name', read_only=True)
+    semester = serializers.IntegerField(source='course_section.course.semester', read_only=True)
+    department_code = serializers.CharField(source='course_section.course.department.code', read_only=True)
+    department_name = serializers.CharField(source='course_section.course.department.name', read_only=True)
+    academic_year = serializers.SerializerMethodField()
+    class_label = serializers.SerializerMethodField()
+    section = serializers.SerializerMethodField()
     faculty_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Timetable
         fields = '__all__'
+
+    def get_academic_year(self, obj):
+        if obj.course_section and obj.course_section.course:
+            sem = obj.course_section.course.semester
+            yr = (sem + 1) // 2
+            suffix = 'st' if yr == 1 else 'nd' if yr == 2 else 'rd' if yr == 3 else 'th'
+            return f"{yr}{suffix} Year"
+        return "1st Year"
+
+    def get_class_label(self, obj):
+        if obj.course_section and obj.course_section.course:
+            sem = obj.course_section.course.semester
+            yr = (sem + 1) // 2
+            suffix = 'st' if yr == 1 else 'nd' if yr == 2 else 'rd' if yr == 3 else 'th'
+            return f"{yr}{suffix} Year • Sem {sem} • Sec A"
+        return "1st Year • Sem 1 • Sec A"
+
+    def get_section(self, obj):
+        return "Section A"
 
     def get_faculty_name(self, obj):
         if obj.faculty:

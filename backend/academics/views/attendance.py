@@ -246,12 +246,21 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 f"{fn} {ln}".strip() or un for fn, ln, un in instructors if un
             ]
 
+            yr = (c.semester + 1) // 2
+            suffix = 'st' if yr == 1 else 'nd' if yr == 2 else 'rd' if yr == 3 else 'th'
+            academic_year = f"{yr}{suffix} Year"
+            class_label = f"{academic_year} • Semester {c.semester} • Section A"
+
             course_list.append({
                 'course_id': c.id,
                 'course_code': c.code,
                 'course_name': c.name,
                 'credits': c.credits,
                 'semester': c.semester,
+                'academic_year': academic_year,
+                'semester_label': f"Semester {c.semester}",
+                'class_label': class_label,
+                'section': 'Section A',
                 'department_code': c.department.code if c.department else None,
                 'department_name': c.department.name if c.department else None,
                 'instructors': instructor_names,

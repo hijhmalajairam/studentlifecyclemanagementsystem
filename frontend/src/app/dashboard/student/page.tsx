@@ -73,14 +73,25 @@ export default function StudentDashboard() {
     queryFn: () => fetchAPI('/academics/courses/')
   });
 
+  const { data: registrationsResponse = [], isLoading: loadingRegistrations } = useQuery({
+    queryKey: ['my_registrations'],
+    queryFn: () => fetchAPI('/academics/registrations/my_registrations/')
+  });
+
   const { data: timetable = [], isLoading: loadingTimetable } = useQuery({
     queryKey: ['timetable'],
     queryFn: () => fetchAPI('/academics/timetable/my_timetable/')
   });
   
-  const courses = coursesResponse?.results || coursesResponse || [];
+  const allCourses = coursesResponse?.results || coursesResponse || [];
+  const registrationsList = Array.isArray(registrationsResponse) ? registrationsResponse : [];
+  const registeredCourses = registrationsList.length > 0 && registrationsList[0]?.courses_details?.length > 0
+    ? registrationsList[0].courses_details
+    : (allCourses.filter((c: any) => c.semester === 1).length > 0
+        ? allCourses.filter((c: any) => c.semester === 1)
+        : allCourses);
 
-  const loading = loadingProfile || loadingEnrollment || loadingAttendance || loadingResults || loadingCourses || loadingTimetable;
+  const loading = loadingProfile || loadingEnrollment || loadingAttendance || loadingResults || loadingCourses || loadingRegistrations || loadingTimetable;
 
   if (loading) {
     return (
@@ -102,7 +113,7 @@ export default function StudentDashboard() {
         return <AcademicDashboard results={results} attendance={attendance} />;
 
       case 'my_registration':
-        return <RegistrationView courses={courses} />;
+        return <RegistrationView courses={registeredCourses} enrollment={enrollment} />;
         
       case 'fees_billing':
         return <StudentFeesTab user={user} enrollment={enrollment} />;
@@ -138,13 +149,13 @@ export default function StudentDashboard() {
         return <ProfileSection profile={studentProfile} />;
         
       case 'attendance':
-        return <AttendanceTable attendanceRecords={attendance} />;
+        return <AttendanceTable attendanceRecords={attendance} enrollment={enrollment} />;
         
       case 'my_results':
         return <GradeList results={results} />;
         
       case 'my_courses':
-        return <MyCoursesView courses={courses} />;
+        return <MyCoursesView courses={registeredCourses} enrollment={enrollment} />;
 
       case 'my_hall_ticket':
         return <HallTicketView user={user} />;

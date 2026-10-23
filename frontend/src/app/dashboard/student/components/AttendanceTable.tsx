@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { fetchAPI } from '@/lib/api';
 
-export default function AttendanceTable({ attendanceRecords }: { attendanceRecords: any }) {
+export default function AttendanceTable({ attendanceRecords, enrollment }: { attendanceRecords: any; enrollment?: any }) {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ELIGIBLE' | 'SHORTAGE'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -86,6 +86,32 @@ export default function AttendanceTable({ attendanceRecords }: { attendanceRecor
 
   return (
     <div className="space-y-6">
+      {/* Top Academic Banner */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Official Attendance Register
+            </div>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight">
+              Class Attendance • 1st Year • Semester 1
+            </h2>
+            <p className="text-slate-300 text-xs md:text-sm mt-1">
+              {enrollment?.program_name || 'B.Tech Computer Science & Engineering'} • Section A • Academic Year 2026-2027
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold text-white">
+              75% Statutory Minimum
+            </span>
+            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-bold">
+              Active Session
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Top Quick KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">

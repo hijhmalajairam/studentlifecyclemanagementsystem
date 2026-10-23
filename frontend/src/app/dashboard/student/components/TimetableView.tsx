@@ -1,112 +1,139 @@
 'use client';
 
 export default function TimetableView({ timetable }: { timetable: any[] }) {
-  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
   
-  // A mapping of slots. This assumes typical 1-hour slots from 9 AM to 4 PM.
-  // We can derive columns dynamically or use a fixed grid.
-  const slots = [
-    { label: 'Slot 1', time: '09:00 - 10:00' },
-    { label: 'Slot 2', time: '10:00 - 11:00' },
-    { label: 'Slot 3', time: '11:00 - 12:00' },
-    { label: 'Slot 4', time: '12:00 - 13:00' },
-    { label: 'Slot 5', time: '14:00 - 15:00' },
-    { label: 'Slot 6', time: '15:00 - 16:00' },
+  const periods = [
+    { label: 'Period 1', time: '09:00 - 10:00', prefix: '09' },
+    { label: 'Period 2', time: '10:00 - 11:00', prefix: '10' },
+    { label: 'Period 3', time: '11:00 - 12:00', prefix: '11' },
+    { label: 'Period 4', time: '12:00 - 13:00', prefix: '12' },
+    { label: 'Period 5', time: '14:00 - 15:00', prefix: '14' },
+    { label: 'Period 6', time: '15:00 - 16:00', prefix: '15' },
   ];
 
-  // Helper to color-code cards based on course code
   const getCardColor = (courseCode: string) => {
-    if (!courseCode) return 'bg-slate-50 border-slate-200';
-    
-    // Hash the course code to consistently pick a color
+    if (!courseCode) return 'bg-slate-50 border-slate-200 text-slate-800';
     let hash = 0;
     for (let i = 0; i < courseCode.length; i++) {
       hash = courseCode.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
     const colors = [
-      'bg-blue-50 border-blue-200 text-blue-900',
-      'bg-green-50 border-green-200 text-green-900',
-      'bg-yellow-50 border-yellow-200 text-yellow-900',
-      'bg-pink-50 border-pink-200 text-pink-900',
-      'bg-indigo-50 border-indigo-200 text-indigo-900',
-      'bg-purple-50 border-purple-200 text-purple-900',
+      'bg-blue-50/80 border-blue-200 text-blue-900',
+      'bg-emerald-50/80 border-emerald-200 text-emerald-900',
+      'bg-amber-50/80 border-amber-200 text-amber-900',
+      'bg-purple-50/80 border-purple-200 text-purple-900',
+      'bg-indigo-50/80 border-indigo-200 text-indigo-900',
+      'bg-cyan-50/80 border-cyan-200 text-cyan-900',
     ];
     return colors[Math.abs(hash) % colors.length];
   };
 
-  // Organize data by day and time
   const getSlotData = (day: string, timePrefix: string) => {
     if (!timetable || timetable.length === 0) return null;
-    return timetable.find(t => t.day === day && t.start_time.startsWith(timePrefix));
+    const hour = parseInt(timePrefix);
+    return timetable.find((t: any) => {
+      if (t.day !== day) return false;
+      const startHour = parseInt(t.start_time?.split(':')[0] || '0');
+      const endHour = parseInt(t.end_time?.split(':')[0] || '0');
+      return hour >= startHour && hour < endHour;
+    });
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-        <h2 className="font-bold text-slate-800 text-lg">My Timetable</h2>
-        <div className="flex space-x-3">
-          <select className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20">
-            <option>All sessions</option>
-            <option>Regular classes</option>
-          </select>
-          <button className="border border-slate-300 rounded-lg px-4 py-1.5 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 flex items-center shadow-sm">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-            Filter
-          </button>
+    <div className="space-y-4">
+      {/* Top Academic Banner */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Academic Year 2026-27 • Autumn Term
+            </div>
+            <h2 className="text-2xl font-black tracking-tight">Class Timetable & Lecture Schedule</h2>
+            <p className="text-xs text-slate-300 mt-1">
+              B.Tech Computer Science & Engineering • 1st Year (Semester 1) • Section A
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/10 border border-white/20 text-xs font-bold px-3 py-1.5 rounded-xl">
+              5 Courses Enrolled
+            </span>
+            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+              Mon – Fri
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse min-w-[900px]">
-          <thead>
-            <tr>
-              <th className="bg-slate-50 border-b border-slate-200 p-4 text-center font-bold text-slate-500 uppercase tracking-widest text-xs w-24">Day</th>
-              {slots.map((slot, i) => (
-                <th key={i} className="bg-slate-50 border-b border-l border-slate-200 p-4 text-center">
-                  <div className="font-bold text-slate-700">{slot.label}</div>
-                  <div className="text-xs text-slate-400 font-medium mt-1">{slot.time}</div>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-sm border-collapse min-w-[950px]">
+            <thead>
+              <tr>
+                <th className="bg-slate-50 border-b border-slate-200 p-4 text-center font-bold text-slate-500 uppercase tracking-widest text-xs w-28">
+                  Day
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {days.map(day => (
-              <tr key={day} className="border-b border-slate-200 last:border-0">
-                <td className="p-4 text-center font-bold text-slate-700 bg-slate-50 border-r border-slate-200">
-                  {day}
-                </td>
-                
-                {/* Fixed time prefixes for slots */}
-                {[ '09', '10', '11', '12', '14', '15' ].map((prefix, idx) => {
-                  const entry = getSlotData(day, prefix);
-                  return (
-                    <td key={idx} className="p-2 border-r border-slate-200 last:border-0 align-top h-32 w-48 bg-white">
-                      {entry ? (
-                        <div className={`p-3 rounded-xl border ${getCardColor(entry.course_code)} h-full flex flex-col transition hover:shadow-md cursor-default`}>
-                          <div className="font-black text-xs mb-1 tracking-wide uppercase">{entry.course_code} - A</div>
-                          <div className="font-medium text-sm leading-tight flex-1 opacity-90">{entry.course_name}</div>
-                          <div className="mt-3 text-xs opacity-75 font-semibold flex items-center">
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            {entry.faculty_name || 'TBA'}
-                          </div>
-                          <div className="text-xs opacity-75 font-medium mt-0.5 flex items-center">
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            {entry.room || 'TBA'}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300 font-medium text-xs">
-                          Free
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
+                {periods.map((slot, i) => (
+                  <th key={i} className="bg-slate-50 border-b border-l border-slate-200 p-4 text-center">
+                    <div className="font-bold text-slate-800">{slot.label}</div>
+                    <div className="text-[11px] text-slate-400 font-mono mt-0.5">{slot.time}</div>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {days.map(day => (
+                <tr key={day} className="border-b border-slate-100 last:border-0">
+                  <td className="p-4 text-center font-black text-slate-800 bg-slate-50/70 border-r border-slate-200">
+                    <span className="bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm text-xs font-bold">
+                      {day}
+                    </span>
+                  </td>
+                  
+                  {periods.map((period, idx) => {
+                    const entry = getSlotData(day, period.prefix);
+                    return (
+                      <td key={idx} className="p-2 border-r border-slate-100 last:border-0 align-top h-36 w-44 bg-white">
+                        {entry ? (
+                          <div className={`p-3 rounded-xl border ${getCardColor(entry.course_code)} h-full flex flex-col justify-between transition hover:shadow-md cursor-default`}>
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-black text-xs tracking-wider uppercase">{entry.course_code}</span>
+                                <span className="text-[9px] font-bold bg-white/70 px-1.5 py-0.5 rounded shadow-2xs">
+                                  {entry.section || 'Sec A'}
+                                </span>
+                              </div>
+                              <p className="font-bold text-xs leading-tight line-clamp-2">{entry.course_name}</p>
+                              <p className="text-[10px] font-medium opacity-70 mt-0.5">
+                                {entry.academic_year || '1st Year'} • Sem {entry.semester || 1}
+                              </p>
+                            </div>
+
+                            <div className="space-y-1 mt-2 pt-2 border-t border-black/5 text-[11px] font-medium opacity-90">
+                              <div className="flex items-center text-[10px] font-semibold truncate">
+                                <span className="mr-1">👨‍🏫</span>
+                                <span className="truncate">{entry.faculty_name || 'Prof. Faculty'}</span>
+                              </div>
+                              <div className="flex items-center text-[10px] font-semibold">
+                                <span className="mr-1">📍</span>
+                                <span>{entry.room || 'Room TBA'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300 font-medium text-xs bg-slate-50/40 rounded-xl border border-dashed border-slate-100">
+                            Free
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
