@@ -54,7 +54,7 @@ export default function FacultyDashboard() {
 
     fetchAPI('/academics/faculty/my_profile/')
       .then(data => setFacultyProfile(data))
-      .catch(err => console.error(err));
+      .catch(() => {});
 
     fetchAPI('/academics/attendance/faculty_stats/')
       .then(data => setAttendanceAvg(data?.kpis?.overall_avg_percentage ?? null))
@@ -66,15 +66,17 @@ export default function FacultyDashboard() {
   const fetchAdmissionsData = async () => {
     try {
       const [apps, depts, progs] = await Promise.all([
-        fetchAPI('/admission/applications/'),
-        fetchAPI('/academics/departments/'),
-        fetchAPI('/academics/programs/')
+        fetchAPI('/admission/applications/').catch(() => []),
+        fetchAPI('/academics/departments/').catch(() => []),
+        fetchAPI('/academics/programs/').catch(() => [])
       ]);
-      setApplications(apps || []);
-      setDepartments(depts || []);
-      setPrograms(progs || []);
-    } catch (err) {
-      console.error(err);
+      setApplications(Array.isArray(apps) ? apps : (apps?.results || []));
+      setDepartments(Array.isArray(depts) ? depts : (depts?.results || []));
+      setPrograms(Array.isArray(progs) ? progs : (progs?.results || []));
+    } catch {
+      setApplications([]);
+      setDepartments([]);
+      setPrograms([]);
     }
   };
 

@@ -39,8 +39,8 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'my_application']:
             return [permissions.IsAuthenticated()]
-        if self.action in ['pool_interviews', 'partial_update', 'update']:
-            return [permissions.IsAuthenticated()]
+        if self.action in ['pool_interviews', 'partial_update', 'update', 'list', 'retrieve']:
+            return [IsAdminOrInterviewer()]
         return [IsAdminRole()]
 
     def perform_create(self, serializer):

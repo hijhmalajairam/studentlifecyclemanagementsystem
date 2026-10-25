@@ -16,15 +16,33 @@ class IsAdminUserOrReadOnly(permissions.IsAdminUser):
 
 class IsAdminRole(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (has_role(request.user, 'ADMIN') or request.user.is_staff or has_role(request.user, 'DEAN')))
+        return bool(request.user and request.user.is_authenticated and (
+            has_role(request.user, 'ADMIN') or 
+            request.user.is_staff or 
+            has_role(request.user, 'DEAN') or 
+            has_role(request.user, 'HOD')
+        ))
 
 class IsInterviewerRole(permissions.BasePermission):
     def has_permission(self, request, view):
-        return has_role(request.user, 'INTERVIEWER')
+        return bool(request.user and request.user.is_authenticated and (
+            has_role(request.user, 'INTERVIEWER') or 
+            has_role(request.user, 'FACULTY') or 
+            has_role(request.user, 'HOD') or 
+            has_role(request.user, 'DEAN') or 
+            has_role(request.user, 'ADMIN')
+        ))
 
 class IsAdminOrInterviewer(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (has_role(request.user, 'ADMIN') or has_role(request.user, 'INTERVIEWER') or request.user.is_staff or has_role(request.user, 'DEAN')))
+        return bool(request.user and request.user.is_authenticated and (
+            has_role(request.user, 'ADMIN') or 
+            has_role(request.user, 'INTERVIEWER') or 
+            request.user.is_staff or 
+            has_role(request.user, 'DEAN') or 
+            has_role(request.user, 'HOD') or 
+            has_role(request.user, 'FACULTY')
+        ))
 
 class IsProspectiveStudent(permissions.BasePermission):
     def has_permission(self, request, view):
