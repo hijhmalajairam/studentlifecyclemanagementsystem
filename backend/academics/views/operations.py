@@ -18,14 +18,44 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         enrollment = Enrollment.objects.get(user=self.request.user)
-        serializer.save(enrollment=enrollment)
+        leave = serializer.save(enrollment=enrollment, status='PENDING')
+        Notification.objects.create(
+            user=self.request.user,
+            title='Leave Application Submitted',
+            message=f'Your leave request for {leave.start_date} to {leave.end_date} has been submitted for approval.',
+            notification_type='INFO'
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if instance.status == 'APPROVED':
+            from ..models import Attendance
+            updated_count = Attendance.objects.filter(
+                enrollment=instance.enrollment,
+                date__gte=instance.start_date,
+                date__lte=instance.end_date,
+                status='ABSENT'
+            ).update(status='EXCUSED')
+            Notification.objects.create(
+                user=instance.enrollment.user,
+                title='Leave Request Approved',
+                message=f'Your leave request ({instance.start_date} to {instance.end_date}) was approved. {updated_count} missed lecture(s) protected as Excused / On-Duty.',
+                notification_type='SUCCESS'
+            )
+        elif instance.status == 'REJECTED':
+            Notification.objects.create(
+                user=instance.enrollment.user,
+                title='Leave Request Rejected',
+                message=f'Your leave request ({instance.start_date} to {instance.end_date}) was rejected by the administration.',
+                notification_type='ALERT'
+            )
 
     @action(detail=False, methods=['get'])
     def my_leaves(self, request):
         try:
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
-            leaves = Leave.objects.filter(enrollment=enrollment)
+            leaves = Leave.objects.filter(enrollment=enrollment).order_by('-applied_on')
             serializer = self.get_serializer(leaves, many=True)
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
@@ -200,6 +230,15 @@ class NoDuesViewSet(viewsets.ModelViewSet):
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
             no_dues, _ = NoDues.objects.get_or_create(enrollment=enrollment)
+            unpaid_fees = Fee.objects.filter(enrollment=enrollment).exclude(status='PAID').exists()
+            has_fees = Fee.objects.filter(enrollment=enrollment).exists()
+            if (has_fees and not unpaid_fees) or enrollment.fee_paid:
+                no_dues.fees_cleared = True
+            if enrollment.academic_status == 'ACTIVE':
+                no_dues.department_cleared = True
+            if no_dues.fees_cleared and no_dues.department_cleared and no_dues.library_cleared and no_dues.hostel_cleared:
+                no_dues.all_cleared = True
+            no_dues.save()
             serializer = self.get_serializer(no_dues)
             return Response(serializer.data)
         except Enrollment.DoesNotExist:

@@ -27,6 +27,8 @@ import HallTicketView from './components/HallTicketView';
 import MobilePortalView from './components/MobilePortalView';
 import NoticeBoardView from './components/NoticeBoardView';
 import StudentFeesTab from './components/StudentFeesTab';
+import StudentLeavesTab from './components/StudentLeavesTab';
+import StudentClearanceTab from './components/StudentClearanceTab';
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -104,7 +106,7 @@ export default function StudentDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <StudentOverviewTab attendance={attendance} />;
+        return <StudentOverviewTab attendance={attendance} results={results} enrollment={enrollment} courses={registeredCourses} />;
 
       case 'timetable':
         return <TimetableView timetable={timetable} />;
@@ -120,6 +122,9 @@ export default function StudentDashboard() {
 
       case 'financial_aid':
         return <FinancialAidTab user={user} enrollment={enrollment} onNavigate={(tab) => setActiveSection(tab)} />;
+
+      case 'clearance':
+        return <StudentClearanceTab user={user} enrollment={enrollment} onNavigateToFees={() => setActiveSection('fees_billing')} />;
         
       case 'grievance':
         return <GrievanceTab />;
@@ -150,6 +155,9 @@ export default function StudentDashboard() {
         
       case 'attendance':
         return <AttendanceTable attendanceRecords={attendance} enrollment={enrollment} />;
+
+      case 'leaves':
+        return <StudentLeavesTab user={user} enrollment={enrollment} />;
         
       case 'my_results':
         return <GradeList results={results} />;

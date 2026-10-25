@@ -8,7 +8,14 @@ type UpcomingCourse = {
   grade: number; // 0 - 10 scale
 };
 
-export default function StudentOverviewTab({ attendance }: { attendance?: any[] }) {
+interface StudentOverviewTabProps {
+  attendance?: any[];
+  results?: any;
+  enrollment?: any;
+  courses?: any[];
+}
+
+export default function StudentOverviewTab({ attendance, results, enrollment, courses }: StudentOverviewTabProps) {
   // Aggregate real attendance
   const realTotal = useMemo(() => {
     if (!attendance || !Array.isArray(attendance)) return 100;
@@ -52,15 +59,59 @@ export default function StudentOverviewTab({ attendance }: { attendance?: any[] 
     return Math.ceil(Math.max(0, raw));
   }, [attendedClasses, totalClasses, attendancePercent]);
 
-  // What-If GPA Simulator state
-  const [currentCGPA, setCurrentCGPA] = useState<number>(7.6); // on 10 scale
-  const [completedCredits, setCompletedCredits] = useState<number>(90);
+  // Results & Real CGPA derivation
+  const resultsList = Array.isArray(results) ? results : (results?.results || []);
+  const initialCGPA = useMemo(() => {
+    if (!resultsList || resultsList.length === 0) return 8.2;
+    const gradePoints: Record<string, number> = { 'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'P': 4, 'F': 0 };
+    let totalPoints = 0;
+    let creditsSum = 0;
+    for (const r of resultsList) {
+      const cr = Number(r.course?.credits || 3);
+      const gp = gradePoints[r.grade] ?? 8.0;
+      totalPoints += gp * cr;
+      creditsSum += cr;
+    }
+    return creditsSum > 0 ? Math.round((totalPoints / creditsSum) * 100) / 100 : 8.2;
+  }, [resultsList]);
 
-  const [upcomingCourses, setUpcomingCourses] = useState<UpcomingCourse[]>([
-    { id: "c1", name: "Math", credits: 4, grade: 8.0 },
-    { id: "c2", name: "Physics", credits: 3, grade: 7.5 },
-    { id: "c3", name: "Elective", credits: 2, grade: 9.0 },
-  ]);
+  const initialCompletedCredits = useMemo(() => {
+    if (!resultsList || resultsList.length === 0) {
+      const yr = enrollment?.current_year || 1;
+      return yr > 1 ? (yr - 1) * 30 : 0;
+    }
+    return resultsList.filter((r: any) => r.grade !== 'F').reduce((s: number, r: any) => s + (Number(r.course?.credits) || 3), 0);
+  }, [resultsList, enrollment]);
+
+  // What-If GPA Simulator state (dynamically bound to real courses & student level)
+  const [currentCGPA, setCurrentCGPA] = useState<number>(initialCGPA);
+  const [completedCredits, setCompletedCredits] = useState<number>(initialCompletedCredits);
+
+  const defaultUpcoming = useMemo(() => {
+    if (courses && Array.isArray(courses) && courses.length > 0) {
+      return courses.slice(0, 5).map((c: any) => ({
+        id: String(c.id || c.code),
+        name: `${c.code} (${c.name})`,
+        credits: Number(c.credits) || 3,
+        grade: 8.5
+      }));
+    }
+    return [
+      { id: "c1", name: "CS101 (Intro to Programming)", credits: 3, grade: 8.5 },
+      { id: "c2", name: "CS102 (Data Structures)", credits: 3, grade: 8.0 },
+      { id: "c3", name: "MA101 (Engg Mathematics I)", credits: 3, grade: 8.0 },
+      { id: "c4", name: "PY101 (Engineering Physics)", credits: 3, grade: 8.0 },
+      { id: "c5", name: "CY101 (Engineering Chemistry)", credits: 3, grade: 8.5 },
+    ];
+  }, [courses]);
+
+  const [upcomingCourses, setUpcomingCourses] = useState<UpcomingCourse[]>(defaultUpcoming);
+
+  React.useEffect(() => {
+    if (defaultUpcoming.length > 0) {
+      setUpcomingCourses(defaultUpcoming);
+    }
+  }, [defaultUpcoming]);
 
   // Derived calculations for GPA projection
   const upcomingCredits = useMemo(() => upcomingCourses.reduce((s, c) => s + c.credits, 0), [upcomingCourses]);

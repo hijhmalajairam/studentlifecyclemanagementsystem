@@ -40,10 +40,17 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                     'course_name': record.course.name,
                     'total': 0,
                     'present': 0,
+                    'excused': 0,
+                    'absent': 0,
                 }
             summary[cid]['total'] += 1
             if record.status == 'PRESENT':
                 summary[cid]['present'] += 1
+            elif record.status == 'EXCUSED':
+                summary[cid]['excused'] += 1
+                summary[cid]['present'] += 1  # Excused / On-Duty counts toward statutory eligibility
+            else:
+                summary[cid]['absent'] += 1
 
         result = []
         for v in summary.values():
@@ -65,14 +72,26 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         # Auto-set faculty to the logged-in user if they are faculty
         marking_faculty = request.user if request.user.role == 'FACULTY' else None
 
+        from ..models.operations import Leave
         created_count = 0
         for student in students:
+            req_status = student['status']
+            if req_status == 'ABSENT':
+                has_approved_leave = Leave.objects.filter(
+                    enrollment_id=student['enrollment_id'],
+                    status='APPROVED',
+                    start_date__lte=date,
+                    end_date__gte=date
+                ).exists()
+                if has_approved_leave:
+                    req_status = 'EXCUSED'
+
             _, created = Attendance.objects.update_or_create(
                 course_id=course_id,
                 date=date,
                 enrollment_id=student['enrollment_id'],
                 defaults={
-                    'status': student['status'],
+                    'status': req_status,
                     'faculty': marking_faculty
                 }
             )
@@ -192,7 +211,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                         'present': 0
                     }
                 student_stats[eid]['total'] += 1
-                if rec.status == 'PRESENT':
+                if rec.status in ['PRESENT', 'EXCUSED']:
                     student_stats[eid]['present'] += 1
 
                 # Group for recent sessions
@@ -209,7 +228,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                         'absent': 0
                     }
                 recent_sessions_map[session_key]['total'] += 1
-                if rec.status == 'PRESENT':
+                if rec.status in ['PRESENT', 'EXCUSED']:
                     recent_sessions_map[session_key]['present'] += 1
                 else:
                     recent_sessions_map[session_key]['absent'] += 1

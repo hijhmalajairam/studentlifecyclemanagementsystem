@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Calendar, BookOpen, UserCheck, User, FileText, ClipboardList, BookMarked, Smartphone, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Calendar, BookOpen, UserCheck, User, FileText, ClipboardList, BookMarked, Smartphone, CreditCard, Shield } from 'lucide-react';
 
 type SidebarProps = {
   activeSection: string;
@@ -68,6 +68,11 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
           {!collapsed && <span>My Attendance</span>}
         </div>
 
+        <div className={navItemClass('leaves')} onClick={() => setActiveSection('leaves')}>
+          <Calendar size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Leave & Absence</span>}
+        </div>
+
         <div className={navItemClass('profile')} onClick={() => setActiveSection('profile')}>
           <User size={18} className={collapsed ? 'mx-auto' : ''} />
           {!collapsed && <span>My Profile</span>}
@@ -102,6 +107,11 @@ export default function StudentSidebar({ activeSection, setActiveSection, user }
         <div className={navItemClass('financial_aid')} onClick={() => setActiveSection('financial_aid')}>
           <FileText size={18} className={collapsed ? 'mx-auto' : ''} />
           {!collapsed && <span>Financial Aid</span>}
+        </div>
+
+        <div className={navItemClass('clearance')} onClick={() => setActiveSection('clearance')}>
+          <Shield size={18} className={collapsed ? 'mx-auto' : ''} />
+          {!collapsed && <span>Clearance & Bonafide</span>}
         </div>
 
         <div className={navItemClass('grievance')} onClick={() => setActiveSection('grievance')}>

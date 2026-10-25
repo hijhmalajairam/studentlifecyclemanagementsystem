@@ -8,6 +8,7 @@ class Attendance(SoftDeleteModel):
     STATUS_CHOICES = (
         ('PRESENT', 'Present'),
         ('ABSENT', 'Absent'),
+        ('EXCUSED', 'Excused / On Duty'),
     )
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='attendance')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='attendance')

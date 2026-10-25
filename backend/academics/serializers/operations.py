@@ -2,10 +2,19 @@ from rest_framework import serializers
 from ..models import Leave, TransferRequest, NoDues, DisciplinaryCase, Internship, Fee, Notification, Company, FacultyInternshipOpportunity, InternshipAuditLog, InternshipDocument, InternshipWindow
 
 class LeaveSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    enrollment_number = serializers.CharField(source='enrollment.enrollment_number', read_only=True)
+    program_name = serializers.CharField(source='enrollment.program.name', read_only=True)
+
     class Meta:
         model = Leave
         fields = '__all__'
         read_only_fields = ('enrollment', 'status', 'applied_on')
+
+    def get_student_name(self, obj):
+        if obj.enrollment and obj.enrollment.user:
+            return obj.enrollment.user.get_full_name() or obj.enrollment.user.username
+        return 'Student' 
 
 class TransferRequestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,10 +23,25 @@ class TransferRequestSerializer(serializers.ModelSerializer):
         read_only_fields = ('enrollment', 'status', 'requested_at')
 
 class NoDuesSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    enrollment_number = serializers.CharField(source='enrollment.enrollment_number', read_only=True)
+    program_name = serializers.CharField(source='enrollment.program.name', read_only=True)
+    current_year = serializers.IntegerField(source='enrollment.current_year', read_only=True)
+    current_semester = serializers.IntegerField(source='enrollment.current_semester', read_only=True)
+    bonafide_eligible = serializers.SerializerMethodField()
+
     class Meta:
         model = NoDues
         fields = '__all__'
         read_only_fields = ('enrollment', 'created_at')
+
+    def get_student_name(self, obj):
+        if obj.enrollment and obj.enrollment.user:
+            return obj.enrollment.user.get_full_name() or obj.enrollment.user.username
+        return 'Student'
+
+    def get_bonafide_eligible(self, obj):
+        return bool(obj.fees_cleared and obj.department_cleared)
 
 class DisciplinaryCaseSerializer(serializers.ModelSerializer):
     reported_by_name = serializers.SerializerMethodField()

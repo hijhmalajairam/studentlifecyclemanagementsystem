@@ -23,7 +23,9 @@ export default function LeavesTab({ leaves, updateLeaveStatus, isAdmin, hasWrite
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className="font-mono text-sm font-bold text-slate-700">ENR-{l.enrollment}</span>
+                    <span className="font-mono text-sm font-bold text-slate-700">{l.enrollment_number || `ENR-${l.enrollment}`}</span>
+                    {l.student_name && <span className="text-xs font-bold text-blue-600">({l.student_name})</span>}
+                    {l.program_name && <span className="text-[10px] text-slate-400 font-semibold">• {l.program_name}</span>}
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                         l.status === 'APPROVED'

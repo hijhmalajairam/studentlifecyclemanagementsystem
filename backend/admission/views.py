@@ -135,17 +135,25 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
                 if not Enrollment.objects.filter(enrollment_number=enrollment_num).exists():
                     break
 
+            default_sem = 3 if application.entry_type == 'LATERAL' else 1
+            default_year = 2 if application.entry_type == 'LATERAL' else 1
+
             enrollment, created = Enrollment.objects.get_or_create(
                 user=user,
                 defaults={
                     'enrollment_number': enrollment_num,
                     'fee_paid': True,
-                    'program': application.program
+                    'program': application.program,
+                    'current_year': default_year,
+                    'current_semester': default_sem,
+                    'academic_status': 'ACTIVE'
                 }
             )
 
-            if not created and not enrollment.fee_paid:
+            if not created:
                 enrollment.fee_paid = True
+                if application.program and not enrollment.program:
+                    enrollment.program = application.program
                 enrollment.save()
 
             # 4. Create StudentProfile
@@ -155,11 +163,48 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
             profile.institutional_email = inst_email
             profile.save()
 
-            # 5. Create Notification
+            # 5. Cross-Module Integration: Auto-Create Semester Registration with Core Courses
+            from academics.models import SemesterRegistration, Course, Fee, NoDues
+            sem_reg, sr_created = SemesterRegistration.objects.get_or_create(
+                enrollment=enrollment,
+                semester=enrollment.current_semester
+            )
+            if sr_created or sem_reg.courses.count() == 0:
+                courses = Course.objects.filter(semester=enrollment.current_semester)
+                if application.program and application.program.department:
+                    dept_courses = Course.objects.filter(department=application.program.department, semester=enrollment.current_semester)
+                    if dept_courses.exists():
+                        courses = dept_courses
+                sem_reg.courses.set(courses[:5])
+
+            # 6. Cross-Module Integration: Auto-Create Paid Fee Record for Term 1
+            Fee.objects.get_or_create(
+                enrollment=enrollment,
+                semester=enrollment.current_semester,
+                defaults={
+                    'amount': 45000.00,
+                    'status': 'PAID',
+                    'due_date': timezone.now().date(),
+                    'paid_date': timezone.now().date()
+                }
+            )
+
+            # 7. Cross-Module Integration: Auto-Create NoDues Record
+            NoDues.objects.get_or_create(
+                enrollment=enrollment,
+                defaults={
+                    'fees_cleared': True,
+                    'department_cleared': True,
+                    'library_cleared': True,
+                    'hostel_cleared': True
+                }
+            )
+
+            # 8. Create Notification
             Notification.objects.create(
                 user=user,
                 title='Welcome to the University!',
-                message=f'Your fee is paid and enrollment number is {enrollment.enrollment_number}.',
+                message=f'Your fee is paid and enrollment number is {enrollment.enrollment_number}. Your Semester {enrollment.current_semester} course registration has been confirmed.',
                 notification_type='SUCCESS'
             )
 

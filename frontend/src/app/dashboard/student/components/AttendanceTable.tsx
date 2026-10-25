@@ -31,7 +31,7 @@ export default function AttendanceTable({ attendanceRecords, enrollment }: { att
       courseStats[code].present += Number(record.present);
     } else {
       courseStats[code].total += 1;
-      if (record.status === 'PRESENT') {
+      if (record.status === 'PRESENT' || record.status === 'EXCUSED') {
         courseStats[code].present += 1;
       }
     }
@@ -336,10 +336,12 @@ export default function AttendanceTable({ attendanceRecords, enrollment }: { att
                       className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
                         log.status === 'PRESENT'
                           ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : log.status === 'EXCUSED'
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
                           : 'bg-red-100 text-red-700 border border-red-200'
                       }`}
                     >
-                      {log.status}
+                      {log.status === 'EXCUSED' ? 'EXCUSED / OD' : log.status}
                     </span>
                   </div>
                 ))
