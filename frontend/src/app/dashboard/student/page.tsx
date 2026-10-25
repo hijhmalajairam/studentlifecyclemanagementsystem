@@ -106,7 +106,17 @@ export default function StudentDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <StudentOverviewTab attendance={attendance} results={results} enrollment={enrollment} courses={registeredCourses} />;
+        return (
+          <StudentOverviewTab 
+            attendance={attendance} 
+            results={results} 
+            enrollment={enrollment} 
+            courses={registeredCourses} 
+            user={user}
+            studentProfile={studentProfile}
+            onNavigate={(tab) => setActiveSection(tab)}
+          />
+        );
 
       case 'timetable':
         return <TimetableView timetable={timetable} />;
@@ -199,17 +209,36 @@ export default function StudentDashboard() {
         />
 
         {/* Dynamic Breadcrumbs */}
-        <div className="bg-white border-b border-slate-200 px-8 py-3 flex justify-between items-center z-10 shrink-0">
+        <div className="bg-white border-b border-slate-200 px-8 py-3.5 flex justify-between items-center z-10 shrink-0">
           <div className="flex items-center text-xs font-bold text-slate-500">
             <span className="hover:text-blue-600 cursor-pointer transition" onClick={() => setActiveSection('overview')}>Home</span>
             <span className="mx-2 text-slate-300">/</span>
-            <span className="hover:text-blue-600 cursor-pointer transition">Academics</span>
+            <span className="hover:text-blue-600 cursor-pointer transition" onClick={() => setActiveSection('overview')}>Academics</span>
             <span className="mx-2 text-slate-300">/</span>
-            <span className="text-slate-800 capitalize">{activeSection.replace('_', ' ')}</span>
+            <span className="text-slate-900 font-extrabold capitalize">
+              {{
+                overview: 'Student Overview',
+                notice_board: 'Notice Board',
+                timetable: 'Class Timetable',
+                my_courses: 'My Courses',
+                attendance: 'Attendance Register',
+                leaves: 'Leave & Absence',
+                profile: 'My Profile',
+                my_results: 'My Results',
+                my_hall_ticket: 'My Hall Ticket',
+                my_registration: 'Course Registration',
+                fees_billing: 'Fees & Billing',
+                financial_aid: 'Financial Aid',
+                clearance: 'Clearance & Bonafide',
+                grievance: 'Helpdesk & Grievance',
+                placement_prep: 'AI Placement Prep',
+                internships: 'Internships',
+              }[activeSection] || activeSection.replace('_', ' ')}
+            </span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm">
-              AY 2025-26
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+              AY 2026-27
             </span>
           </div>
         </div>
