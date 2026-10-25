@@ -1,6 +1,20 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Search, Sun, Moon, Bell, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
+import { 
+  Search, 
+  Sun, 
+  Moon, 
+  Bell, 
+  ChevronDown, 
+  LogOut, 
+  User as UserIcon,
+  CheckCheck,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  Clock
+} from 'lucide-react';
+import { fetchAPI } from '@/lib/api';
 
 interface TopBarProps {
   user: any;
@@ -15,8 +29,14 @@ interface TopBarProps {
 export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDarkMode, activeRole, setActiveRole }: TopBarProps) {
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
   const roleRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -26,14 +46,58 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
     }
   }, [darkMode]);
 
+  // Click outside to dismiss dropdowns
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (roleRef.current && !roleRef.current.contains(e.target as Node)) setShowRoleDropdown(false);
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfileDropdown(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Fetch unread count and notifications
+  const loadNotifications = async () => {
+    try {
+      const [countRes, listRes] = await Promise.all([
+        fetchAPI('/academics/notifications/unread_count/'),
+        fetchAPI('/academics/notifications/')
+      ]);
+      setUnreadCount(countRes?.count ?? 0);
+      setNotifications(Array.isArray(listRes) ? listRes : (listRes?.results || []));
+    } catch (err) {
+      // Graceful silence if unauthenticated or offline
+      console.warn('Could not fetch notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    // Poll every 45 seconds for new alerts
+    const interval = setInterval(loadNotifications, 45000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await fetchAPI('/academics/notifications/mark_all_read/', { method: 'POST' });
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error('Failed to mark all read:', err);
+    }
+  };
+
+  const handleMarkSingleRead = async (id: number) => {
+    try {
+      await fetchAPI(`/academics/notifications/${id}/mark_read/`, { method: 'POST' });
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
 
   const allRoles = (() => {
     const roles: string[] = [];
@@ -67,6 +131,22 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
     }
     return roles.length > 0 ? roles : ['Faculty'];
   })();
+
+  const formatTimestamp = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 2) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
     <header className="h-16 bg-[var(--card-bg)]/80 backdrop-blur-md border-b border-[var(--sidebar-border)] flex items-center justify-between px-8 shrink-0 z-20 sticky top-0 transition-colors duration-300">
@@ -125,11 +205,123 @@ export default function TopBar({ user, isAdmin, facultyProfile, darkMode, setDar
           {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
         </button>
 
-        {/* Notifications */}
-        <button className="w-10 h-10 rounded flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all relative shadow-sm">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md">3</span>
-        </button>
+        {/* Notifications Bell Dropdown */}
+        <div className="relative" ref={notifRef}>
+          <button 
+            onClick={() => {
+              setShowNotifications(!showNotifications);
+              if (!showNotifications) loadNotifications();
+            }}
+            className="w-10 h-10 rounded flex items-center justify-center bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)] hover:text-[var(--text-primary)] transition-all relative shadow-sm"
+            title="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-md animate-pulse">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-[var(--card-bg)] border border-[var(--sidebar-border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              {/* Header */}
+              <div className="p-4 border-b border-[var(--sidebar-border)] flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-extrabold text-[var(--text-primary)]">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="inline-flex items-center space-x-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Mark all read</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Notification List */}
+              <div className="max-h-80 overflow-y-auto divide-y divide-[var(--sidebar-border)]">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[var(--text-tertiary)]">
+                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="font-semibold">No notifications right now.</p>
+                    <p className="mt-0.5">You're completely up to date!</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 15).map(n => {
+                    const isWarning = n.notification_type === 'WARNING';
+                    const isSuccess = n.notification_type === 'SUCCESS';
+
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => !n.is_read && handleMarkSingleRead(n.id)}
+                        className={`p-3.5 flex items-start space-x-3 cursor-pointer transition-colors ${
+                          !n.is_read 
+                            ? 'bg-blue-500/5 hover:bg-blue-500/10 dark:bg-blue-500/10 dark:hover:bg-blue-500/15' 
+                            : 'hover:bg-[var(--card-hover)] opacity-75'
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5 ${
+                          isWarning 
+                            ? 'bg-amber-500/10 text-amber-600' 
+                            : isSuccess 
+                            ? 'bg-emerald-500/10 text-emerald-600' 
+                            : 'bg-blue-500/10 text-blue-600'
+                        }`}>
+                          {isWarning ? (
+                            <AlertTriangle className="w-4 h-4" />
+                          ) : isSuccess ? (
+                            <CheckCircle2 className="w-4 h-4" />
+                          ) : (
+                            <Info className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className={`text-xs font-bold truncate ${!n.is_read ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                              {n.title}
+                            </p>
+                            {!n.is_read && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">
+                            {n.message}
+                          </p>
+                          <div className="flex items-center space-x-1 text-[10px] text-[var(--text-tertiary)] mt-1.5 font-medium">
+                            <Clock className="w-3 h-3" />
+                            <span>{formatTimestamp(n.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-2.5 border-t border-[var(--sidebar-border)] bg-slate-50/50 dark:bg-slate-800/30 text-center">
+                <a
+                  href="/dashboard/student"
+                  className="text-[11px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors inline-block"
+                >
+                  View Veritas Grove Notification Center
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Profile */}
         <div className="relative pl-2" ref={profileRef}>

@@ -25,6 +25,7 @@ const sidebarSections = [
     items: [
       { id: 'university_mgmt', label: 'University Setup', icon: <Building size={18} /> },
       { id: 'academics', label: 'Attendance', icon: <FileText size={18} /> },
+      { id: 'progression', label: 'Term Progression', icon: <GraduationCap size={18} /> },
       { id: 'timetable', label: 'Timetable', icon: <Calendar size={18} /> },
       { id: 'students', label: 'Students', icon: <FileText size={18} /> },
       { id: 'grade_entry', label: 'Grade Entry', icon: <Edit3 size={18} /> },
