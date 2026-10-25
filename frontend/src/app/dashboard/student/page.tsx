@@ -125,7 +125,14 @@ export default function StudentDashboard() {
         return <AcademicDashboard results={results} attendance={attendance} />;
 
       case 'my_registration':
-        return <RegistrationView courses={registeredCourses} enrollment={enrollment} />;
+        return (
+          <RegistrationView 
+            courses={registeredCourses} 
+            enrollment={enrollment} 
+            user={user}
+            onNavigate={(tab) => setActiveSection(tab)}
+          />
+        );
         
       case 'fees_billing':
         return <StudentFeesTab user={user} enrollment={enrollment} />;

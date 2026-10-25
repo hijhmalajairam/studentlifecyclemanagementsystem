@@ -248,8 +248,187 @@ class SemesterRegistrationViewSet(viewsets.ModelViewSet):
         try:
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
-            registrations = SemesterRegistration.objects.filter(enrollment=enrollment).prefetch_related('courses')
+            registrations = SemesterRegistration.objects.filter(enrollment=enrollment).prefetch_related('courses').order_by('semester')
             serializer = self.get_serializer(registrations, many=True)
             return Response(serializer.data)
         except Enrollment.DoesNotExist:
             return Response({"detail": "Not enrolled yet."}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'])
+    def registration_window(self, request):
+        from academics.models import Attendance, Fee, Course
+        try:
+            target_user = get_target_user(request.user)
+            enrollment = Enrollment.objects.get(user=target_user)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Student enrollment record not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        current_sem = enrollment.current_semester
+        target_sem = current_sem + 1
+        target_year = (target_sem + 1) // 2
+
+        # Check existing registration for target semester
+        existing_reg = SemesterRegistration.objects.filter(enrollment=enrollment, semester=target_sem).first()
+
+        # Eligibility checks
+        att_records = Attendance.objects.filter(enrollment=enrollment)
+        total_classes = att_records.count()
+        attended = att_records.filter(status__in=['PRESENT', 'EXCUSED']).count()
+        att_pct = round((attended / total_classes) * 100, 1) if total_classes > 0 else 100.0
+        att_passed = att_pct >= 75.0
+
+        unpaid_fee = Fee.objects.filter(enrollment=enrollment, semester=current_sem).exclude(status='PAID').exists()
+        fee_passed = not unpaid_fee
+
+        eligible = att_passed and fee_passed
+
+        # Fetch available courses for target semester
+        dept = enrollment.program.department if enrollment.program else None
+        courses_qs = Course.objects.filter(semester=target_sem).select_related('department')
+        if dept:
+            courses_qs = courses_qs.filter(
+                db_models.Q(department=dept) | 
+                db_models.Q(department__code__in=['MATH', 'PHY', 'CHEM', 'ECE', 'CSE'])
+            )
+
+        courses_data = []
+        for c in courses_qs.order_by('-course_type', 'code'):
+            courses_data.append({
+                'id': c.id,
+                'code': c.code,
+                'name': c.name,
+                'credits': c.credits,
+                'semester': c.semester,
+                'department_code': c.department.code if c.department else 'GEN',
+                'department_name': c.department.name if c.department else 'General',
+                'course_type': c.course_type,
+                'is_core': c.course_type == 'CORE',
+                'is_elective': c.course_type in ['ELECTIVE', 'OPEN_ELECTIVE'],
+                'description': f"{c.name} course conducted by the {c.department.name if c.department else 'Engineering'} department.",
+            })
+
+        return Response({
+            'student_name': target_user.get_full_name() or target_user.username,
+            'enrollment_number': enrollment.enrollment_number,
+            'program_name': enrollment.program.name if enrollment.program else 'General Degree',
+            'current_semester': current_sem,
+            'target_semester': target_sem,
+            'target_year': target_year,
+            'academic_year': '2026-27',
+            'term_name': f"Semester {target_sem} (Autumn 2026-27)",
+            'is_registered': existing_reg is not None,
+            'existing_registration': SemesterRegistrationSerializer(existing_reg).data if existing_reg else None,
+            'eligibility': {
+                'eligible': eligible,
+                'attendance_percentage': att_pct,
+                'attendance_passed': att_passed,
+                'fee_passed': fee_passed,
+                'message': 'Eligible for subject choice & next-semester registration.' if eligible else (
+                    'Attendance below statutory 75% minimum.' if not att_passed else 'Outstanding fees pending for current term.'
+                )
+            },
+            'credit_rules': {
+                'min_credits': 12,
+                'max_credits': 24,
+                'recommended_credits': 18
+            },
+            'available_courses': courses_data
+        })
+
+    @action(detail=False, methods=['post'])
+    def register_semester(self, request):
+        from academics.models import Attendance, Fee, Course, Notification
+        from datetime import timedelta
+
+        try:
+            target_user = get_target_user(request.user)
+            enrollment = Enrollment.objects.get(user=target_user)
+        except Enrollment.DoesNotExist:
+            return Response({"detail": "Student enrollment record not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        target_sem = request.data.get('target_semester', enrollment.current_semester + 1)
+        course_ids = request.data.get('course_ids', [])
+
+        if not course_ids or not isinstance(course_ids, list):
+            return Response({"detail": "Please select at least one course to register."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Eligibility verification (75% attendance + fee clearance)
+        att_records = Attendance.objects.filter(enrollment=enrollment)
+        total_classes = att_records.count()
+        attended = att_records.filter(status__in=['PRESENT', 'EXCUSED']).count()
+        att_pct = (attended / total_classes) * 100 if total_classes > 0 else 100.0
+        if att_pct < 75.0:
+            return Response(
+                {"detail": f"Cannot register: Current attendance ({att_pct:.1f}%) is below the statutory 75% bar."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        unpaid = Fee.objects.filter(enrollment=enrollment, semester=enrollment.current_semester).exclude(status='PAID').exists()
+        if unpaid:
+            return Response(
+                {"detail": f"Cannot register: Term fees for Semester {enrollment.current_semester} are unpaid."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Credit verification
+        selected_courses = Course.objects.filter(id__in=course_ids)
+        if not selected_courses.exists():
+            return Response({"detail": "No valid courses found for the provided IDs."}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_credits = sum(c.credits for c in selected_courses)
+        if total_credits < 12:
+            return Response(
+                {"detail": f"Selected load of {total_credits} credits is below the minimum statutory threshold of 12 credits."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if total_credits > 24:
+            return Response(
+                {"detail": f"Selected load of {total_credits} credits exceeds the institutional cap of 24 credits."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Create or update SemesterRegistration
+        sem_reg, created = SemesterRegistration.objects.get_or_create(
+            enrollment=enrollment,
+            semester=int(target_sem),
+            defaults={
+                'status': 'APPROVED',
+                'total_credits': total_credits,
+                'academic_year': '2026-27'
+            }
+        )
+        sem_reg.courses.set(selected_courses)
+        sem_reg.status = 'APPROVED'
+        sem_reg.total_credits = total_credits
+        sem_reg.academic_year = '2026-27'
+        sem_reg.save()
+
+        # 4. Generate fee invoice for the new semester if not exists
+        prev_fee = Fee.objects.filter(enrollment=enrollment, semester=int(target_sem) - 1).first()
+        discount = prev_fee.scholarship_discount if prev_fee else 0.00
+        Fee.objects.get_or_create(
+            enrollment=enrollment,
+            semester=int(target_sem),
+            defaults={
+                'amount': 45000.00,
+                'scholarship_discount': discount,
+                'status': 'PENDING',
+                'due_date': timezone.now().date() + timedelta(days=30)
+            }
+        )
+
+        # 5. Dispatch notification
+        Notification.objects.create(
+            user=enrollment.user,
+            title=f"Semester {target_sem} Course Registration Confirmed",
+            message=f"You have successfully selected your subjects and registered for Semester {target_sem} ({selected_courses.count()} courses, {total_credits} Credits).",
+            notification_type="SUCCESS"
+        )
+
+        return Response({
+            'success': True,
+            'detail': f"Successfully registered for Semester {target_sem}.",
+            'registration': SemesterRegistrationSerializer(sem_reg).data,
+            'total_credits': total_credits,
+            'courses_count': selected_courses.count()
+        })

@@ -24,9 +24,18 @@ class Enrollment(SoftDeleteModel):
         return f"{self.enrollment_number} - {self.user.username}"
 
 class SemesterRegistration(SoftDeleteModel):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Approval'),
+        ('APPROVED', 'Approved & Registered'),
+        ('PROVISIONAL', 'Provisional Registration'),
+        ('REJECTED', 'Rejected'),
+    ]
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='registrations')
     semester = models.IntegerField()
     courses = models.ManyToManyField(Course, related_name='registrations')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='APPROVED')
+    total_credits = models.IntegerField(default=0)
+    academic_year = models.CharField(max_length=20, blank=True, default='2026-27')
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

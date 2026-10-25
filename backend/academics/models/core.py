@@ -21,11 +21,18 @@ class Program(SoftDeleteModel):
         return f"{self.name} ({self.department.code})"
 
 class Course(SoftDeleteModel):
+    COURSE_TYPES = [
+        ('CORE', 'Core Compulsory'),
+        ('ELECTIVE', 'Department Elective'),
+        ('OPEN_ELECTIVE', 'Open Elective'),
+        ('LAB', 'Laboratory / Practical'),
+    ]
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
     code = models.CharField(max_length=15, unique=True)
     name = models.CharField(max_length=255)
     credits = models.IntegerField(default=3)
     semester = models.IntegerField(default=1)
+    course_type = models.CharField(max_length=20, choices=COURSE_TYPES, default='CORE')
 
     def __str__(self):
         return f"{self.code} - {self.name}"
