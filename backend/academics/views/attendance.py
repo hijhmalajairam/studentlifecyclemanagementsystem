@@ -14,7 +14,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['my_attendance', 'my_daily_logs']:
             return [permissions.IsAuthenticated()]
-        if self.action in ['bulk_mark', 'faculty_stats', 'send_warning']:
+        if self.action in ['bulk_mark', 'faculty_stats', 'send_warning', 'course_roster']:
             class IsAdminOrFaculty(permissions.BasePermission):
                 def has_permission(self, request, view):
                     return request.user.is_authenticated and (request.user.is_staff or request.user.role in ['ADMIN', 'FACULTY'] or getattr(request.user, 'is_faculty_user', False))
@@ -98,6 +98,93 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             created_count += 1
 
         return Response({"detail": f"Attendance marked for {created_count} students."})
+
+    @action(detail=False, methods=['get'])
+    def course_roster(self, request):
+        from ..models.operations import Leave
+
+        course_id = request.query_params.get('course_id')
+        date_str = request.query_params.get('date') or timezone.now().date().isoformat()
+
+        if not course_id:
+            return Response({"detail": "course_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            course = Course.objects.select_related('department').get(id=course_id)
+        except Course.DoesNotExist:
+            return Response({"detail": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        registrations = SemesterRegistration.objects.filter(courses=course).select_related('enrollment__user')
+        enrollments = [r.enrollment for r in registrations if r.enrollment]
+
+        existing_records = {
+            att.enrollment_id: att.status
+            for att in Attendance.objects.filter(course=course, date=date_str)
+        }
+
+        approved_leaves = {
+            l.enrollment_id: l.reason
+            for l in Leave.objects.filter(
+                enrollment__in=enrollments,
+                status='APPROVED',
+                start_date__lte=date_str,
+                end_date__gte=date_str
+            )
+        }
+
+        roster = []
+        for e in enrollments:
+            c_records = Attendance.objects.filter(enrollment=e, course=course)
+            total_held = c_records.count()
+            attended = c_records.filter(status__in=['PRESENT', 'EXCUSED']).count()
+            overall_pct = round((attended / total_held) * 100, 1) if total_held > 0 else 100.0
+
+            has_leave = e.id in approved_leaves
+            leave_reason = approved_leaves.get(e.id, '')
+
+            saved_status = existing_records.get(e.id, None)
+            if saved_status:
+                effective_status = saved_status
+            elif has_leave:
+                effective_status = 'EXCUSED'
+            else:
+                effective_status = 'PRESENT'
+
+            roster.append({
+                'enrollment_id': e.id,
+                'enrollment_number': e.enrollment_number,
+                'student_name': e.user.get_full_name() or e.user.username,
+                'student_email': e.user.email,
+                'academic_status': e.academic_status,
+                'current_year': e.current_year,
+                'current_semester': e.current_semester,
+                'attendance_status': effective_status,
+                'is_already_saved': saved_status is not None,
+                'overall_total_classes': total_held,
+                'overall_attended': attended,
+                'overall_percentage': overall_pct,
+                'has_approved_leave': has_leave,
+                'leave_reason': leave_reason,
+            })
+
+        roster.sort(key=lambda s: s['enrollment_number'])
+
+        return Response({
+            'course': {
+                'id': course.id,
+                'code': course.code,
+                'name': course.name,
+                'credits': course.credits,
+                'semester': course.semester,
+                'department_id': course.department_id,
+                'department_name': course.department.name if course.department else 'General',
+                'department_code': course.department.code if course.department else 'GEN',
+            },
+            'date': date_str,
+            'total_students': len(roster),
+            'already_marked': len(existing_records) > 0,
+            'students': roster
+        })
 
     def _get_faculty_department(self, user):
         """Get the department of a faculty member via their FacultyProfile."""

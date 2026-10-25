@@ -432,6 +432,7 @@ export default function AdminDashboard() {
             {activeTab === 'academics' && (
               <AttendanceTab
                 courses={visibleCourses}
+                departments={visibleDepartments}
                 selectedCourse={selectedCourse}
                 setSelectedCourse={setSelectedCourse}
                 attendanceDate={attendanceDate}
