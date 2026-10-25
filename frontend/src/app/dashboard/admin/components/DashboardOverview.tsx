@@ -70,19 +70,19 @@ export default function DashboardOverview({ enrollments, applications, programs,
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-slate-900 rounded-lg p-8 text-white relative overflow-hidden shadow-md border border-white/10">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-8 shadow-sm relative overflow-hidden">
         
         
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <p className="text-blue-200 text-xs font-semibold uppercase tracking-[0.2em] mb-2 flex items-center">
+            <p className="text-blue-700 text-xs font-semibold uppercase tracking-[0.2em] mb-2 flex items-center">
               <span className="w-2 h-2 rounded-full bg-green-400 mr-2 shadow-[0_0_10px_rgba(74,222,128,0.8)]"></span>
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
-            <h1 className="text-3xl md:text-4xl font-semibold mb-2 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight text-slate-900">
               {isAdmin ? 'Admin Control Center' : `Hello, ${facultyProfile?.user?.first_name || 'Faculty'}!`}
             </h1>
-            <p className="text-blue-100/80 text-sm md:text-base font-medium max-w-xl">
+            <p className="text-slate-500 text-sm md:text-base font-medium max-w-xl">
               {isAdmin
                 ? 'Manage university operations, review applications, and orchestrate student lifecycles with absolute clarity.'
                 : `${facultyProfile?.designation || 'Faculty Member'} · ${facultyProfile?.department?.name || ''}`

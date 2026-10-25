@@ -138,14 +138,14 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
     <div className="p-6 space-y-6">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Bunk Budget Card */}
-        <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl shadow">
+        <div className="flex-1 bg-slate-50  p-6 rounded-3xl shadow">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-slate-200 text-slate-800">
                 <Shield className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Bunk Budget</h3>
+                <h3 className="text-lg font-semibold text-slate-900 ">Bunk Budget</h3>
                 <p className="text-sm text-slate-500">Attendance health & safe-miss estimate</p>
               </div>
             </div>
@@ -158,11 +158,11 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
           <div className="mt-6">
             <div className="flex items-center justify-between">
               <div className="text-sm text-slate-500">Current Attendance</div>
-              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{attendancePercent.toFixed(1)}%</div>
+              <div className="text-sm font-medium text-slate-900 ">{attendancePercent.toFixed(1)}%</div>
             </div>
 
             {/* Health bar */}
-            <div className="mt-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
+            <div className="mt-3 w-full bg-slate-100  rounded-full h-4 overflow-hidden">
               <div
                 className={`h-4 rounded-full transition-all duration-300 ${
                   attendancePercent >= 90
@@ -175,12 +175,12 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
               />
             </div>
 
-            <div className="mt-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="mt-4 p-4 rounded-2xl bg-white  border border-slate-200  shadow-sm">
               {attendancePercent >= 75 ? (
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Safe Buffer</span>
-                    <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
+                    <div className="text-2xl font-black text-emerald-700  mt-0.5">
                       {allowedMisses} {allowedMisses === 1 ? 'class' : 'classes'}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">You can safely miss without dropping below 75%</p>
@@ -201,7 +201,7 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
                   <div className="text-3xl">🚨</div>
                 </div>
               )}
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-400">
+              <div className="mt-3 pt-3 border-t border-slate-100  flex justify-between text-xs text-slate-400">
                 <span>Total Classes: <b>{totalClasses}</b></span>
                 <span>Attended: <b>{attendedClasses}</b></span>
                 <span>Absent: <b>{Math.max(0, totalClasses - attendedClasses)}</b></span>
@@ -209,9 +209,9 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
             </div>
 
             {/* What-If Future Simulator */}
-            <div className="mt-4 p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 space-y-3">
+            <div className="mt-4 p-4 rounded-2xl bg-slate-100/70 /50 border border-slate-200/80 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Simulate Future Classes</span>
+                <span className="text-xs font-bold text-slate-700 ">Simulate Future Classes</span>
                 {(totalClasses !== realTotal || attendedClasses !== realAttended) && (
                   <button
                     onClick={() => {
@@ -253,14 +253,14 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
         </div>
 
         {/* What-If GPA Simulator Card */}
-        <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow">
+        <div className="flex-1 bg-white  p-6 rounded-3xl shadow">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-blue-100 text-blue-700">
                 <Zap className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">What-If GPA Simulator</h3>
+                <h3 className="text-lg font-semibold text-slate-900 ">What-If GPA Simulator</h3>
                 <p className="text-sm text-slate-500">Play with upcoming grades to see projected CGPA</p>
               </div>
             </div>
@@ -272,9 +272,9 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
 
           <div className="mt-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+              <div className="bg-slate-50  p-3 rounded-xl">
                 <div className="text-xs text-slate-500">Current CGPA</div>
-                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{currentCGPA.toFixed(2)}</div>
+                <div className="text-2xl font-bold text-slate-900 ">{currentCGPA.toFixed(2)}</div>
                 <div className="text-xs text-slate-400">Completed Credits: {completedCredits}</div>
                 <div className="mt-2 flex items-center gap-2">
                   <input
@@ -306,10 +306,10 @@ export default function StudentOverviewTab({ attendance, results, enrollment, co
 
             <div className="space-y-3">
               {upcomingCourses.map((course) => (
-                <div key={course.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div key={course.id} className="p-3 bg-slate-50  rounded-xl">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{course.name}</div>
+                      <div className="text-sm font-medium text-slate-900 ">{course.name}</div>
                       <div className="text-xs text-slate-500">Credits: {course.credits}</div>
                     </div>
                     <div className="text-sm text-slate-500">Projected Grade: {course.grade.toFixed(1)}</div>

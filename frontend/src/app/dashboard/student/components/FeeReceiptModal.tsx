@@ -31,8 +31,8 @@ export default function FeeReceiptModal({ fee, user, enrollment, isOpen, onClose
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden print:shadow-none print:border-none print:max-w-none print:m-0">
         
         {/* Top Control Bar (Hidden when printing) */}
-        <div className="bg-slate-900 px-6 py-3 text-white flex justify-between items-center print:hidden">
-          <span className="text-xs font-mono font-bold tracking-wider text-slate-400">DIGITAL RECEIPT PREVIEW</span>
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 flex justify-between items-center print:hidden">
+          <span className="text-xs font-mono font-bold tracking-wider text-slate-500">DIGITAL RECEIPT PREVIEW</span>
           <div className="flex items-center space-x-2">
             <button
               onClick={handlePrint}
@@ -43,7 +43,7 @@ export default function FeeReceiptModal({ fee, user, enrollment, isOpen, onClose
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
             >
               <X className="w-4 h-4" />
             </button>

@@ -290,7 +290,7 @@ export default function FinancialAidTab({ user, enrollment, onNavigate }: Financ
           
           {/* My Current Aid Widget */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white relative overflow-hidden">
+            <div className="p-6 bg-gradient-to-br from-blue-700 via-indigo-700 to-indigo-800 text-white relative overflow-hidden rounded-t-xl">
               <div className="absolute -right-4 -top-4 p-4 opacity-10">
                 <Wallet className="w-32 h-32" />
               </div>
@@ -591,7 +591,7 @@ export default function FinancialAidTab({ user, enrollment, onNavigate }: Financ
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
+            <div className="p-6 bg-gradient-to-r from-blue-700 to-indigo-800 text-white flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">
                   Institutional Aid Application

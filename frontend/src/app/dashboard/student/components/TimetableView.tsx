@@ -43,23 +43,23 @@ export default function TimetableView({ timetable }: { timetable: any[] }) {
   return (
     <div className="space-y-4">
       {/* Top Academic Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200/60 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Academic Year 2026-27 • Autumn Term
             </div>
-            <h2 className="text-2xl font-black tracking-tight">Class Timetable & Lecture Schedule</h2>
-            <p className="text-xs text-slate-300 mt-1">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Class Timetable & Lecture Schedule</h2>
+            <p className="text-xs text-slate-500 mt-1">
               B.Tech Computer Science & Engineering • 1st Year (Semester 1) • Section A
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-white/10 border border-white/20 text-xs font-bold px-3 py-1.5 rounded-xl">
+            <span className="bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl">
               5 Courses Enrolled
             </span>
-            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-xl">
               Mon – Fri
             </span>
           </div>

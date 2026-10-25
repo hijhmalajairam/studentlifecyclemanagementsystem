@@ -17,30 +17,30 @@ export default function RegistrationView({ courses, enrollment }: { courses: any
   return (
     <div className="space-y-6">
       {/* Top Academic Context Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200/60 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Institutional Registration Record
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">
+            <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
               Course Registration • 1st Year • Semester 1
             </h2>
-            <p className="text-slate-300 text-xs md:text-sm mt-1">
+            <p className="text-slate-500 text-xs md:text-sm mt-1">
               {enrollment?.program_name || 'B.Tech Computer Science & Engineering'} • Section A • Academic Year 2026-2027
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-xl text-center">
-              <span className="block text-xl font-black text-white">{sem1.length}</span>
-              <span className="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Courses</span>
+            <div className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-center">
+              <span className="block text-xl font-black text-slate-900">{sem1.length}</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Courses</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-xl text-center">
-              <span className="block text-xl font-black text-emerald-300">{totalCredits}</span>
-              <span className="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Credits</span>
+            <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl text-center">
+              <span className="block text-xl font-black text-emerald-700">{totalCredits}</span>
+              <span className="text-[10px] text-emerald-600 uppercase font-bold tracking-wider">Credits</span>
             </div>
-            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-bold">
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold">
               Approved
             </span>
           </div>

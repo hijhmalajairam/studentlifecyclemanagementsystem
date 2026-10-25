@@ -57,17 +57,17 @@ export default function StudentClearanceTab({ user, enrollment, onNavigateToFees
   return (
     <div className="space-y-6">
       {/* Top Academic Context Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200/60 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Institutional Clearance & Certifications
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
               Student Clearance & Credential Vault
             </h1>
-            <p className="text-slate-300 text-sm max-w-2xl font-medium">
+            <p className="text-slate-500 text-sm max-w-2xl font-medium">
               {programName} • {enrollmentNum} • Real-time synchronization across Bursar, Academic Department, Library, and Housing registries.
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function StudentClearanceTab({ user, enrollment, onNavigateToFees
           {isBonafideEligible && (
             <button
               onClick={() => setShowCertificateModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs px-6 py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 flex-shrink-0"
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs px-6 py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2 flex-shrink-0"
             >
               <span className="text-base">📜</span> View Bonafide Certificate
             </button>

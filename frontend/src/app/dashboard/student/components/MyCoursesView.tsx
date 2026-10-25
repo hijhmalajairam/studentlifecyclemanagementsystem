@@ -185,34 +185,33 @@ export default function MyCoursesView({ courses, enrollment }: MyCoursesViewProp
   return (
     <div className="space-y-6">
       {/* Top Academic Context Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200/60 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Enrolled Curriculum • Autumn 2026-27
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
               My Courses • 1st Year • {currentSemester}
             </h1>
-            <p className="text-slate-300 text-sm max-w-2xl font-medium">
-              {programName} • <span className="text-blue-300 font-bold">{section}</span> • Regular Academic Term
+            <p className="text-slate-500 text-sm max-w-2xl font-medium">
+              {programName} • <span className="text-blue-600 font-bold">{section}</span> • Regular Academic Term
             </p>
           </div>
 
           <div className="flex flex-wrap md:flex-nowrap items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 text-center min-w-[100px]">
-              <span className="block text-2xl font-black text-white">{courses?.length || 0}</span>
-              <span className="text-[11px] text-blue-200 font-bold uppercase tracking-wider">Enrolled</span>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-3 text-center min-w-[90px]">
+              <span className="block text-2xl font-black text-slate-900">{courses?.length || 0}</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Enrolled</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 text-center min-w-[100px]">
-              <span className="block text-2xl font-black text-emerald-300">{totalCredits}</span>
-              <span className="text-[11px] text-blue-200 font-bold uppercase tracking-wider">Credits</span>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3 text-center min-w-[90px]">
+              <span className="block text-2xl font-black text-emerald-700">{totalCredits}</span>
+              <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Credits</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 text-center min-w-[100px]">
-              <span className="block text-2xl font-black text-amber-300">100%</span>
-              <span className="text-[11px] text-blue-200 font-bold uppercase tracking-wider">Registered</span>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 text-center min-w-[90px]">
+              <span className="block text-2xl font-black text-blue-700">100%</span>
+              <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Approved</span>
             </div>
           </div>
         </div>
@@ -288,7 +287,7 @@ export default function MyCoursesView({ courses, enrollment }: MyCoursesViewProp
                 <div>
                   {/* Badges Bar */}
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="font-mono font-black text-xs px-2.5 py-1 rounded-md bg-slate-900 text-white tracking-wider">
+                    <span className="font-mono font-black text-xs px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 tracking-wider">
                       {c.code}
                     </span>
                     <div className="flex items-center gap-1.5">
