@@ -16,9 +16,9 @@ import {
   CheckCircle2, 
   ArrowLeft, 
   ShieldCheck, 
-  Sparkles,
+  GraduationCap,
   ChevronRight,
-  GraduationCap
+  Sparkles
 } from 'lucide-react';
 
 interface AttendanceTabProps {
@@ -60,7 +60,6 @@ export default function AttendanceTab({
   setAttendanceDate,
   attendanceData,
   handleAttendanceChange,
-  submitAttendance,
 }: AttendanceTabProps) {
   // Cascading Filters
   const [selectedDept, setSelectedDept] = useState<string>('');
@@ -119,6 +118,33 @@ export default function AttendanceTab({
 
     loadRoster();
   }, [selectedCourse, attendanceDate]);
+
+  // Department Badge Helper
+  const getDeptBadgeTheme = (deptCode: string) => {
+    const code = (deptCode || '').toUpperCase();
+    if (code.includes('CSE') || code.includes('CS')) {
+      return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
+    }
+    if (code.includes('ECE') || code.includes('EC')) {
+      return { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' };
+    }
+    if (code.includes('MECH') || code.includes('ME')) {
+      return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
+    }
+    if (code.includes('CIVIL') || code.includes('CE')) {
+      return { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
+    }
+    if (code.includes('MGMT') || code.includes('MB')) {
+      return { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' };
+    }
+    if (code.includes('LAW') || code.includes('LW')) {
+      return { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' };
+    }
+    if (code.includes('PHAR') || code.includes('PHR')) {
+      return { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' };
+    }
+    return { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' };
+  };
 
   // Filter courses by department, semester, and search query
   const filteredCourses = courses.filter((c: any) => {
@@ -185,7 +211,6 @@ export default function AttendanceTab({
       setSuccessMsg(res.detail || `Attendance recorded for ${roster.length} students in ${selectedCourse.code}.`);
       setAlreadyMarked(true);
 
-      // Refresh roster data to reflect saved states
       const data = await fetchAPI(
         `/academics/attendance/course_roster/?course_id=${selectedCourse.id}&date=${attendanceDate}`
       );
@@ -208,29 +233,29 @@ export default function AttendanceTab({
   return (
     <div className="space-y-6">
       {/* ─── TOP SECTION: CASCADING FILTERS & SEARCH ─── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div>
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
-              <GraduationCap className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 text-xs font-bold uppercase tracking-wider mb-2">
+              <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
               <span>Academic Attendance Engine</span>
             </div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Attendance Management & Roster</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Attendance Management & Roster</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
               Select an academic department, semester, and course to review the class roster, track leaves, and mark statutory attendance.
             </p>
           </div>
 
           {/* Date Picker */}
-          <div className="flex items-center space-x-3 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
-            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+          <div className="flex items-center space-x-3 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 shrink-0">
+            <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Lecture Date</label>
               <input
                 type="date"
                 value={attendanceDate}
                 onChange={e => setAttendanceDate(e.target.value)}
-                className="bg-transparent font-bold text-xs text-slate-900 dark:text-white outline-none cursor-pointer"
+                className="bg-transparent font-bold text-xs text-slate-800 outline-none cursor-pointer"
               />
             </div>
           </div>
@@ -241,7 +266,7 @@ export default function AttendanceTab({
           {/* 1. Department */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              1. Department
+              1. Academic Department
             </label>
             <select
               value={selectedDept}
@@ -249,7 +274,7 @@ export default function AttendanceTab({
                 setSelectedDept(e.target.value);
                 setSelectedCourse(null);
               }}
-              className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
               <option value="">All Academic Departments ({allDepartments.length})</option>
               {allDepartments.map((d: any) => (
@@ -271,7 +296,7 @@ export default function AttendanceTab({
                 setSelectedSem(e.target.value);
                 setSelectedCourse(null);
               }}
-              className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
               <option value="">All Semesters (1 - 8)</option>
               {[1, 2, 3, 4, 5, 6, 7, 8].map(s => {
@@ -289,7 +314,7 @@ export default function AttendanceTab({
           {/* 3. Search input */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              3. Search Course
+              3. Search Course Code or Title
             </label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -298,7 +323,7 @@ export default function AttendanceTab({
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search code or title (e.g. CS101, Data)..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-medium border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-medium border border-slate-300 bg-slate-50 text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
           </div>
@@ -307,9 +332,9 @@ export default function AttendanceTab({
 
       {/* ─── NOTIFICATIONS & TOAST FEEDBACK ─── */}
       {successMsg && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successMsg}</span>
           </div>
           <button onClick={() => setSuccessMsg(null)} className="text-slate-400 hover:text-slate-600">
@@ -319,9 +344,9 @@ export default function AttendanceTab({
       )}
 
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{errorMsg}</span>
           </div>
           <button onClick={() => setErrorMsg(null)} className="text-slate-400 hover:text-slate-600">
@@ -334,7 +359,7 @@ export default function AttendanceTab({
       {!selectedCourse ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Select a Course to Open Roster ({filteredCourses.length} classes available)
             </h3>
             {(selectedDept || selectedSem || searchQuery) && (
@@ -344,7 +369,7 @@ export default function AttendanceTab({
                   setSelectedSem('');
                   setSearchQuery('');
                 }}
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center space-x-1"
+                className="text-xs font-bold text-blue-600 hover:underline inline-flex items-center space-x-1"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Reset Filters</span>
@@ -353,10 +378,10 @@ export default function AttendanceTab({
           </div>
 
           {filteredCourses.length === 0 ? (
-            <div className="p-16 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+            <div className="p-16 text-center bg-white border border-slate-200 rounded-2xl shadow-sm">
               <BookOpen className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No courses match the active filters.</p>
-              <p className="text-xs text-slate-400 mt-1">Try selecting "All Departments" or clear your search term.</p>
+              <p className="text-sm font-bold text-slate-700">No courses match the active filters.</p>
+              <p className="text-xs text-slate-400 mt-1">Try selecting "All Academic Departments" or clear your search term.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -364,44 +389,44 @@ export default function AttendanceTab({
                 const yr = Math.floor(((c.semester || 1) + 1) / 2);
                 const suffix = yr === 1 ? 'st' : yr === 2 ? 'nd' : yr === 3 ? 'rd' : 'th';
                 const deptName = c.department_name || allDepartments.find(d => d.id === c.department || d.id === c.department_id)?.name || 'General';
+                const deptCode = c.department_code || allDepartments.find(d => d.id === c.department || d.id === c.department_id)?.code || '';
+                const deptTheme = getDeptBadgeTheme(deptCode || c.code);
 
                 return (
                   <div
                     key={c.id}
                     onClick={() => setSelectedCourse(c)}
-                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between"
+                    className="group bg-white border border-slate-200/90 hover:border-blue-500 hover:shadow-xl rounded-2xl p-5.5 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between hover:-translate-y-1"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 group-hover:bg-blue-500/10 rounded-full blur-2xl pointer-events-none transition-colors" />
-
                     <div>
                       {/* Top Badges */}
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${deptTheme.bg} ${deptTheme.text} ${deptTheme.border}`}>
                           {c.code}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                        <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
                           {c.credits || 3} Credits
                         </span>
                       </div>
 
                       {/* Course Title */}
-                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                      <h4 className="font-extrabold text-slate-900 text-base group-hover:text-blue-600 transition-colors line-clamp-1">
                         {c.name}
                       </h4>
 
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">
                         {deptName}
                       </p>
                     </div>
 
-                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <div className="inline-flex items-center space-x-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600">
                         <span>{yr}{suffix} Year</span>
                         <span>•</span>
                         <span>Sem {c.semester || 1}</span>
                       </div>
 
-                      <div className="flex items-center space-x-1 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+                      <div className="flex items-center space-x-1 text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
                         <span>Open Roster</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </div>
@@ -416,29 +441,29 @@ export default function AttendanceTab({
         /* ─── CASE B: COURSE IS SELECTED -> RICH STUDENT ROSTER ─── */
         <div className="space-y-6">
           {/* Active Course Banner */}
-          <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-start space-x-4">
                 <button
                   onClick={() => setSelectedCourse(null)}
-                  className="mt-1 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all shadow-sm shrink-0"
-                  title="Back to Course Grid"
+                  className="mt-1 p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shadow-sm shrink-0"
+                  title="Back to All Courses"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
 
                 <div>
                   <div className="flex items-center space-x-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-blue-500/30 text-blue-200 border border-blue-400/20 font-mono">
+                    <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-blue-50 text-blue-700 border border-blue-200 font-mono">
                       {selectedCourse.code}
                     </span>
-                    <span className="text-xs text-blue-200 font-bold">
-                      {selectedCourse.credits || 3} Credits • Semester {selectedCourse.semester || 1}
+                    <span className="text-xs text-slate-500 font-bold">
+                      {selectedCourse.credits || 3} Credits • Semester {selectedCourse.semester || 1} • Section A
                     </span>
                   </div>
-                  <h3 className="text-2xl font-black">{selectedCourse.name}</h3>
-                  <p className="text-xs text-blue-200/80 mt-0.5">
-                    {selectedCourse.department_name || allDepartments.find(d => d.id === selectedCourse.department)?.name || 'General Department'} • Section A
+                  <h3 className="text-2xl font-black text-slate-900">{selectedCourse.name}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {selectedCourse.department_name || allDepartments.find(d => d.id === selectedCourse.department)?.name || 'General Department'}
                   </p>
                 </div>
               </div>
@@ -446,20 +471,20 @@ export default function AttendanceTab({
               {/* Status Indicator */}
               <div className="flex items-center gap-3">
                 {alreadyMarked ? (
-                  <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Attendance Logged for {attendanceDate}</span>
                   </span>
                 ) : (
-                  <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
-                    <Clock className="w-4 h-4 text-amber-400" />
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold shadow-sm">
+                    <Clock className="w-4 h-4 text-amber-600" />
                     <span>Pending Submission for {attendanceDate}</span>
                   </span>
                 )}
 
                 <button
                   onClick={() => setSelectedCourse(null)}
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all border border-white/10"
+                  className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-all"
                 >
                   Change Course
                 </button>
@@ -468,7 +493,7 @@ export default function AttendanceTab({
           </div>
 
           {/* Faculty Speed Controls & Live Class Metrics */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               {/* Quick Actions */}
               <div className="flex flex-wrap items-center gap-2">
@@ -476,16 +501,16 @@ export default function AttendanceTab({
                 <button
                   type="button"
                   onClick={handleMarkAllPresent}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all active:scale-95 shadow-sm shadow-emerald-600/20"
                 >
-                  <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCheck className="w-3.5 h-3.5" />
                   <span>Mark All Present</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleMarkAllAbsent}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-bold transition-all active:scale-95 shadow-sm"
                 >
                   <X className="w-3.5 h-3.5 text-rose-600" />
                   <span>Mark All Absent</span>
@@ -494,7 +519,7 @@ export default function AttendanceTab({
                 <button
                   type="button"
                   onClick={handleInvert}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 text-xs font-bold transition-all active:scale-95 shadow-sm"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Invert</span>
@@ -502,22 +527,22 @@ export default function AttendanceTab({
               </div>
 
               {/* Stats Chips */}
-              <div className="flex items-center space-x-3 text-xs font-bold">
-                <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              <div className="flex items-center space-x-2.5 text-xs font-bold">
+                <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-700">
                   Total: {totalRosterCount}
                 </span>
-                <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Present: {presentCount}
                 </span>
-                <span className="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <span className="px-3 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
                   Absent: {absentCount}
                 </span>
                 {excusedCount > 0 && (
-                  <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
                     Excused: {excusedCount}
                   </span>
                 )}
-                <span className="px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-extrabold">
+                <span className="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-extrabold">
                   Session Rate: {dailyAttendancePct}%
                 </span>
               </div>
@@ -525,7 +550,7 @@ export default function AttendanceTab({
           </div>
 
           {/* Roster Table */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
             {loadingRoster ? (
               <div className="py-20 flex flex-col items-center justify-center space-y-3">
                 <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
@@ -534,13 +559,13 @@ export default function AttendanceTab({
             ) : roster.length === 0 ? (
               <div className="p-16 text-center">
                 <Users className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No students are currently registered for this course.</p>
+                <p className="text-sm font-bold text-slate-700">No students are currently registered for this course.</p>
                 <p className="text-xs text-slate-400 mt-1">Check that Semester Registrations have been provisioned.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="px-6 py-4">Student & ID</th>
                       <th className="px-6 py-4">Current Course Attendance</th>
@@ -548,7 +573,7 @@ export default function AttendanceTab({
                       <th className="px-6 py-4 text-center">Attendance For {attendanceDate}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-slate-100">
                     {roster.map(student => {
                       const currentStatus = attendanceData[student.enrollment_id] || student.attendance_status || 'PRESENT';
                       const isShortage = student.overall_percentage < 75.0;
@@ -556,7 +581,7 @@ export default function AttendanceTab({
                       return (
                         <tr
                           key={student.enrollment_id}
-                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                          className="hover:bg-slate-50/70 transition-colors"
                         >
                           {/* Student Info */}
                           <td className="px-6 py-4">
@@ -565,10 +590,10 @@ export default function AttendanceTab({
                                 {student.student_name ? student.student_name[0].toUpperCase() : 'S'}
                               </div>
                               <div>
-                                <div className="font-extrabold text-slate-900 dark:text-white text-sm">
+                                <div className="font-extrabold text-slate-900 text-sm">
                                   {student.student_name}
                                 </div>
-                                <div className="font-mono text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                                <div className="font-mono text-[11px] text-blue-600 font-medium">
                                   {student.enrollment_number}
                                 </div>
                               </div>
@@ -578,13 +603,13 @@ export default function AttendanceTab({
                           {/* Cumulative Attendance % */}
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-2">
-                              <span className={`font-black text-sm ${isShortage ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              <span className={`font-black text-sm ${isShortage ? 'text-rose-600' : 'text-emerald-600'}`}>
                                 {student.overall_percentage}%
                               </span>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                 isShortage 
-                                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' 
-                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               }`}>
                                 {isShortage ? 'Shortage (< 75%)' : 'Good Standing'}
                               </span>
@@ -597,8 +622,8 @@ export default function AttendanceTab({
                           {/* Leave / OD Protection */}
                           <td className="px-6 py-4">
                             {student.has_approved_leave ? (
-                              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
-                                <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                                 <span>Approved Leave (OD)</span>
                               </div>
                             ) : (
@@ -608,14 +633,14 @@ export default function AttendanceTab({
 
                           {/* 3-State Segmented Toggle */}
                           <td className="px-6 py-4">
-                            <div className="flex items-center justify-center space-x-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 max-w-[320px] mx-auto shadow-inner">
+                            <div className="flex items-center justify-center space-x-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-[310px] mx-auto shadow-inner">
                               <button
                                 type="button"
                                 onClick={() => handleAttendanceChange(student.enrollment_id, 'PRESENT')}
                                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
                                   currentStatus === 'PRESENT'
                                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    : 'text-slate-600 hover:text-slate-900'
                                 }`}
                               >
                                 Present
@@ -627,7 +652,7 @@ export default function AttendanceTab({
                                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
                                   currentStatus === 'ABSENT'
                                     ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    : 'text-slate-600 hover:text-slate-900'
                                 }`}
                               >
                                 Absent
@@ -639,7 +664,7 @@ export default function AttendanceTab({
                                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
                                   currentStatus === 'EXCUSED'
                                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    : 'text-slate-600 hover:text-slate-900'
                                 }`}
                               >
                                 Excused / OD
@@ -656,8 +681,8 @@ export default function AttendanceTab({
 
             {/* Bottom Submit Footer */}
             {roster.length > 0 && (
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-slate-500">
                   Submitting will update the university attendance registry, notify low-attendance students, and count towards statutory exam eligibility.
                 </div>
 
@@ -665,7 +690,7 @@ export default function AttendanceTab({
                   <button
                     type="button"
                     onClick={() => setSelectedCourse(null)}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
                   >
                     Cancel
                   </button>
