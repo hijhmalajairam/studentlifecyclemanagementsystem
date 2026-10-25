@@ -17,7 +17,7 @@ export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
       credentials: 'include',
     });
   } catch (error: any) {
-    console.error(`Network Error fetching ${endpoint}:`, error);
+    console.warn(`Network warning fetching ${endpoint}:`, error?.message || error);
     // Return null instead of throwing to prevent Next.js error overlays when backend is down
     return null;
   }
