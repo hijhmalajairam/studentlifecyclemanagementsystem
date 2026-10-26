@@ -62,7 +62,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Not enrolled yet.'}, status=status.HTTP_404_NOT_FOUND)
 
 class FeeViewSet(viewsets.ModelViewSet):
-    queryset = Fee.objects.select_related('enrollment').all()
+    queryset = Fee.objects.select_related('enrollment__user', 'enrollment__program').all()
     serializer_class = FeeSerializer
 
     def get_permissions(self):
@@ -93,7 +93,7 @@ class FeeViewSet(viewsets.ModelViewSet):
         try:
             target_user = get_target_user(request.user)
             enrollment = Enrollment.objects.get(user=target_user)
-            fees = Fee.objects.filter(enrollment=enrollment).order_by('semester')
+            fees = Fee.objects.filter(enrollment=enrollment).select_related('enrollment__user', 'enrollment__program').order_by('semester')
             serializer = self.get_serializer(fees, many=True)
             return Response(serializer.data)
         except Enrollment.DoesNotExist:

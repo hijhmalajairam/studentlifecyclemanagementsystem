@@ -133,6 +133,10 @@ class InternshipWindowSerializer(serializers.ModelSerializer):
 
 class FeeSerializer(serializers.ModelSerializer):
     net_amount = serializers.SerializerMethodField()
+    student_name = serializers.SerializerMethodField()
+    enrollment_number = serializers.CharField(source='enrollment.enrollment_number', read_only=True)
+    program_name = serializers.CharField(source='enrollment.program.name', read_only=True)
+    program_code = serializers.CharField(source='enrollment.program.code', read_only=True)
 
     class Meta:
         model = Fee
@@ -140,6 +144,11 @@ class FeeSerializer(serializers.ModelSerializer):
 
     def get_net_amount(self, obj):
         return obj.net_amount()
+
+    def get_student_name(self, obj):
+        if obj.enrollment and obj.enrollment.user:
+            return obj.enrollment.user.get_full_name() or obj.enrollment.user.username
+        return 'Student'
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
