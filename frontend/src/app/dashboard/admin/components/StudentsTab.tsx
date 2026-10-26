@@ -82,34 +82,70 @@ export default function StudentsTab({ enrollments, applications, expandedRow, se
                       // Find corresponding application to show profile details
                       const studentApp = applications.find(a => a.enrollment_number === e.enrollment_number);
                       return studentApp ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
-                            <h4 className="font-bold text-slate-900 text-sm mb-4">Profile Details</h4>
-                            <div className="space-y-2">
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Username:</span> <span className="text-slate-800">{studentApp.profile_details?.username}</span></p>
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Email:</span> <span className="text-slate-800">{studentApp.profile_details?.email || 'N/A'}</span></p>
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Phone:</span> <span className="text-slate-800">{studentApp.profile_details?.phone || 'N/A'}</span></p>
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Entry Type:</span> <span className="text-slate-800">{studentApp.entry_type}</span></p>
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                              <h4 className="font-bold text-slate-900 text-sm mb-4">Profile Details</h4>
+                              <div className="space-y-2">
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Username:</span> <span className="text-slate-800">{studentApp.profile_details?.username}</span></p>
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Email:</span> <span className="text-slate-800">{studentApp.profile_details?.email || 'N/A'}</span></p>
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Phone:</span> <span className="text-slate-800">{studentApp.profile_details?.phone || 'N/A'}</span></p>
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Entry Type:</span> <span className="text-slate-800">{studentApp.entry_type}</span></p>
+                              </div>
+                            </div>
+                            <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                              <h4 className="font-bold text-slate-900 text-sm mb-4">Academic & Seat Info</h4>
+                              <div className="space-y-2">
+                                {studentApp.seat_allocation ? (
+                                  <>
+                                    <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Department:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_department}</span></p>
+                                    <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Program:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_program}</span></p>
+                                    <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Batch:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_batch}</span></p>
+                                  </>
+                                ) : (
+                                  <p className="text-sm text-slate-400 italic">No seat allocated yet.</p>
+                                )}
+                                <div className="border-t border-slate-100 my-2 pt-2"></div>
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">10th %:</span> <span className="text-slate-800">{studentApp.tenth_percentage || 'N/A'}%</span></p>
+                                <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">12th %:</span> <span className="text-slate-800">{studentApp.twelfth_percentage || 'N/A'}%</span></p>
+                              </div>
                             </div>
                           </div>
-                          <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
-                            <h4 className="font-bold text-slate-900 text-sm mb-4">Academic & Seat Info</h4>
-                            <div className="space-y-2">
-                              {studentApp.seat_allocation ? (
-                                <>
-                                  <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Department:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_department}</span></p>
-                                  <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Program:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_program}</span></p>
-                                  <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">Batch:</span> <span className="text-slate-800">{studentApp.seat_allocation.allocated_batch}</span></p>
-                                </>
-                              ) : (
-                                <p className="text-sm text-slate-400 italic">No seat allocated yet.</p>
-                              )}
-                              <div className="border-t border-slate-100 my-2 pt-2"></div>
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">10th %:</span> <span className="text-slate-800">{studentApp.tenth_percentage || 'N/A'}%</span></p>
-                              <p className="text-sm"><span className="font-bold text-slate-500 w-24 inline-block">12th %:</span> <span className="text-slate-800">{studentApp.twelfth_percentage || 'N/A'}%</span></p>
+
+                          {/* Course Registrations & Electives Section */}
+                          <div className="bg-white p-5 rounded border border-slate-200 shadow-sm mt-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="font-bold text-slate-900 text-sm">Course Registrations & Subject Choices</h4>
+                              <span className="text-xs font-semibold text-slate-500">{(e.registrations || []).length} Enrolled Semesters</span>
                             </div>
+                            {(e.registrations || []).length === 0 ? (
+                              <p className="text-xs text-slate-400 italic">No semester subject registrations on file.</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {e.registrations.map((reg: any) => (
+                                  <div key={reg.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-xs font-black text-indigo-700">Semester {reg.semester} ({reg.academic_year || '2026-27'})</span>
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-xs font-bold text-slate-600 font-mono">{reg.total_credits} Credits</span>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{reg.status}</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(reg.courses_details || []).map((c: any) => (
+                                        <span key={c.id} className="px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700" title={`${c.title} (${c.credits} Cr)`}>
+                                          <span className="font-bold text-indigo-600 mr-1">{c.code}</span>
+                                          <span>{c.title}</span>
+                                          <span className="text-slate-400 text-[10px] ml-1">({c.credits}C)</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        </>
                       ) : (
                         <p className="text-sm text-slate-500">No application details found for this enrollment.</p>
                       );
