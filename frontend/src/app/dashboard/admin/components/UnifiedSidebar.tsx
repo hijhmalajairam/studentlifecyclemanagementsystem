@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Users, Settings, FileText, Calendar, Edit3, Briefcase, GraduationCap, Building, Search, Home, Library, Bus, LogOut, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, FileText, Calendar, Edit3, Briefcase, GraduationCap, Building, Search, Home, Library, Bus, LogOut, CheckSquare, BookOpen } from 'lucide-react';
 
 interface SidebarProps {
   activeSection: string;
@@ -25,6 +25,7 @@ const sidebarSections = [
     items: [
       { id: 'university_mgmt', label: 'University Setup', icon: <Building size={18} /> },
       { id: 'academics', label: 'Attendance', icon: <FileText size={18} /> },
+      { id: 'course_registrations', label: 'Course Registrations', icon: <BookOpen size={18} /> },
       { id: 'progression', label: 'Term Progression', icon: <GraduationCap size={18} /> },
       { id: 'timetable', label: 'Timetable', icon: <Calendar size={18} /> },
       { id: 'students', label: 'Students', icon: <FileText size={18} /> },

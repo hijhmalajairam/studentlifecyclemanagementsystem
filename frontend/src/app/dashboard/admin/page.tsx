@@ -20,6 +20,7 @@ import TransportTab from './components/TransportTab';
 import PlacementTab from './components/PlacementTab';
 import AttendanceTab from './components/AttendanceTab';
 import ProgressionTab from './components/ProgressionTab';
+import CourseRegistrationsTab from './components/CourseRegistrationsTab';
 import GradeEntryTab from './components/GradeEntryTab';
 import LeavesTab from './components/LeavesTab';
 import FeesTab from './components/FeesTab';
@@ -417,6 +418,13 @@ export default function AdminDashboard() {
                 setFeeVerifications={setFeeVerifications}
                 verifyFeePayment={verifyFeePayment}
                 showOfflineForm={showOfflineForm}
+              />
+            )}
+
+            {/* ─── COURSE REGISTRATIONS TAB ─── */}
+            {activeTab === 'course_registrations' && (
+              <CourseRegistrationsTab
+                isAdmin={isAdmin}
               />
             )}
 
