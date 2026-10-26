@@ -36,6 +36,7 @@ export default function FacultySidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
+  const isHOD = user?.additional_roles?.includes('HOD') || user?.role === 'HOD';
   const isFinance = isFinanceIncharge || 
     user?.additional_roles?.includes('FINANCE') || 
     user?.additional_roles?.includes('BURSAR') || 
@@ -120,10 +121,17 @@ export default function FacultySidebar({
           {!collapsed && <span>Student Feedback</span>}
         </div>
 
-        {(isDean || isInterviewer || isFinance) && (
+        {(isDean || isHOD || isInterviewer || isFinance) && (
           <>
-            {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administration & Bursar</div>}
+            {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administration & Governance</div>}
             
+            {(isDean || isHOD) && (
+              <div className={navItemClass('course_registrations')} onClick={() => setActiveSection('course_registrations')}>
+                <BookOpen size={18} className={collapsed ? 'mx-auto' : ''} />
+                {!collapsed && <span>Course Registrations</span>}
+              </div>
+            )}
+
             {(isDean || isInterviewer) && (
               <div className={navItemClass('admissions')} onClick={() => setActiveSection('admissions')}>
                 <Users size={18} className={collapsed ? 'mx-auto' : ''} />

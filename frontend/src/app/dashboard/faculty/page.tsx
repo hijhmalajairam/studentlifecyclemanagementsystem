@@ -15,6 +15,7 @@ import FacultyGradingTab from './components/FacultyGradingTab';
 import FacultyMentoringTab from './components/FacultyMentoringTab';
 import FacultyFeedbackTab from './components/FacultyFeedbackTab';
 import FeesTab from '../admin/components/FeesTab';
+import CourseRegistrationsTab from '../admin/components/CourseRegistrationsTab';
 
 export default function FacultyDashboard() {
   const router = useRouter();
@@ -204,6 +205,7 @@ export default function FacultyDashboard() {
 
   const additionalRoles = currentUser.additional_roles || [];
   const isDean = additionalRoles.includes('DEAN');
+  const isHOD = additionalRoles.includes('HOD') || currentUser.role === 'HOD';
   const isInterviewer = additionalRoles.includes('INTERVIEWER');
   const isFinanceIncharge = 
     additionalRoles.includes('FINANCE') || 
@@ -396,6 +398,15 @@ export default function FacultyDashboard() {
           return <InterviewPool />;
         }
         return <div>Access Denied</div>;
+      case 'course_registrations':
+        if (isDean || isHOD) {
+          return (
+            <div className="space-y-6">
+              <CourseRegistrationsTab isAdmin={true} />
+            </div>
+          );
+        }
+        return <div className="p-8 text-center text-slate-500 font-bold bg-white rounded-2xl border border-slate-200">Access Denied: Requires Dean or HOD Authorization</div>;
       case 'bursar_fees':
         if (isDean || isFinanceIncharge) {
           return (
