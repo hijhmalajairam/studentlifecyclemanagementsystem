@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions, status, serializers
-from users.permissions import IsAdminRole, IsAdminOrInterviewer
+from users.permissions import IsAdminRole, IsAdminOrInterviewer, IsAdminOrFinanceOfficer, is_finance_incharge
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import AdmissionApplication, Document, Scholarship, ApplicantProfile, SeatAllocation
@@ -247,22 +247,75 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
 
 class ScholarshipViewSet(viewsets.ModelViewSet):
-    queryset = Scholarship.objects.all()
+    queryset = Scholarship.objects.select_related('application__profile__user', 'application__program').all()
     serializer_class = ScholarshipSerializer
 
     def get_permissions(self):
         if self.action in ['create', 'my_scholarship']:
             return [permissions.IsAuthenticated()]
-        if self.action in ['partial_update', 'update']:
-            return [IsAdminRole()]
+        if self.action in ['partial_update', 'update', 'approve', 'reject']:
+            return [IsAdminOrFinanceOfficer()]
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        if self.request.user.is_authenticated and self.request.user.role in ['ADMIN', 'INTERVIEWER']:
-            return Scholarship.objects.all()
+        if is_finance_incharge(self.request.user) or (self.request.user.is_authenticated and self.request.user.role in ['ADMIN', 'INTERVIEWER']):
+            return Scholarship.objects.select_related('application__profile__user', 'application__program').all()
         if self.request.user.is_authenticated:
-            return Scholarship.objects.filter(application__profile__user=self.request.user)
+            return Scholarship.objects.filter(application__profile__user=self.request.user).select_related('application__profile__user', 'application__program')
         return Scholarship.objects.none()
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        from decimal import Decimal
+        scholarship = self.get_object()
+        concession = request.data.get('concession_percentage')
+        if concession is not None:
+            try:
+                scholarship.concession_percentage = Decimal(str(concession))
+            except Exception:
+                pass
+        scholarship.status = 'APPROVED'
+        scholarship.save()
+
+        # Cross-module sync: Apply scholarship discount to all Fee invoices of this student
+        try:
+            from academics.models import Enrollment, Fee, Notification
+            if scholarship.application and scholarship.application.profile and scholarship.application.profile.user:
+                student_user = scholarship.application.profile.user
+                enr = Enrollment.objects.filter(user=student_user).first()
+                if enr:
+                    Fee.objects.filter(enrollment=enr).update(scholarship_discount=scholarship.concession_percentage)
+                    Notification.objects.create(
+                        user=student_user,
+                        title='Scholarship Approved!',
+                        message=f'Your scholarship request has been approved with a {scholarship.concession_percentage}% tuition concession. Your fee ledger has been updated.',
+                        notification_type='SUCCESS'
+                    )
+        except Exception as e:
+            print("Error syncing fee discount:", e)
+
+        return Response(self.get_serializer(scholarship).data)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        scholarship = self.get_object()
+        remarks = request.data.get('remarks', 'Application does not meet current eligibility criteria.')
+        scholarship.status = 'REJECTED'
+        scholarship.save()
+
+        try:
+            from academics.models import Notification
+            if scholarship.application and scholarship.application.profile and scholarship.application.profile.user:
+                Notification.objects.create(
+                    user=scholarship.application.profile.user,
+                    title='Scholarship Status Update',
+                    message=f'Your scholarship application was not approved. Remarks: {remarks}',
+                    notification_type='WARNING'
+                )
+        except Exception:
+            pass
+
+        return Response(self.get_serializer(scholarship).data)
 
     @action(detail=False, methods=['get'])
     def my_scholarship(self, request):

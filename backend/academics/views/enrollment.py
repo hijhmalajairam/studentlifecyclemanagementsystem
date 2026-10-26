@@ -78,6 +78,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
 
         enrollment = self.get_object()
         override_checks = request.data.get('override_checks', False)
+        promote_without_fees = request.data.get('promote_without_fees', False)
 
         if not override_checks:
             att_records = Attendance.objects.filter(enrollment=enrollment)
@@ -90,12 +91,13 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            unpaid = Fee.objects.filter(enrollment=enrollment, semester=enrollment.current_semester).exclude(status='PAID').exists()
-            if unpaid:
-                return Response(
-                    {'detail': f'Cannot progress: Term fees for Semester {enrollment.current_semester} are unpaid.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            if not promote_without_fees:
+                unpaid = Fee.objects.filter(enrollment=enrollment, semester=enrollment.current_semester).exclude(status='PAID').exists()
+                if unpaid:
+                    return Response(
+                        {'detail': f'Cannot progress: Term fees for Semester {enrollment.current_semester} are unpaid. Enable "Promote without Fees" to grant provisional clearance.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
         next_sem = enrollment.current_semester + 1
         next_yr = (next_sem + 1) // 2
@@ -164,6 +166,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         program_id = request.data.get('program_id')
         current_sem = request.data.get('current_semester')
         override_checks = request.data.get('override_checks', False)
+        promote_without_fees = request.data.get('promote_without_fees', False)
 
         students = Enrollment.objects.filter(academic_status='ACTIVE')
         if program_id:
@@ -180,10 +183,14 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
                 total_classes = att_records.count()
                 attended = att_records.filter(status__in=['PRESENT', 'EXCUSED']).count()
                 att_pct = (attended / total_classes) * 100 if total_classes > 0 else 100.0
-                unpaid = Fee.objects.filter(enrollment=e, semester=e.current_semester).exclude(status='PAID').exists()
-                if att_pct < 75.0 or unpaid:
+                if att_pct < 75.0:
                     skipped += 1
                     continue
+                if not promote_without_fees:
+                    unpaid = Fee.objects.filter(enrollment=e, semester=e.current_semester).exclude(status='PAID').exists()
+                    if unpaid:
+                        skipped += 1
+                        continue
 
             next_s = e.current_semester + 1
             next_y = (next_s + 1) // 2

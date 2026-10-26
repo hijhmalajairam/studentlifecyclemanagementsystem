@@ -1,17 +1,47 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Calendar, BookOpen, User, Users, FileText, Briefcase, UserCheck, Star, ClipboardList, Award } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Calendar, 
+  BookOpen, 
+  User, 
+  Users, 
+  FileText, 
+  Briefcase, 
+  UserCheck, 
+  Star, 
+  ClipboardList, 
+  Award,
+  CreditCard
+} from 'lucide-react';
 
 type SidebarProps = {
   activeSection: string;
   setActiveSection: (section: string) => void;
   user: any;
+  facultyProfile?: any;
   isDean: boolean;
   isInterviewer: boolean;
+  isFinanceIncharge?: boolean;
 };
 
-export default function FacultySidebar({ activeSection, setActiveSection, user, isDean, isInterviewer }: SidebarProps) {
+export default function FacultySidebar({ 
+  activeSection, 
+  setActiveSection, 
+  user, 
+  facultyProfile,
+  isDean, 
+  isInterviewer,
+  isFinanceIncharge 
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+
+  const isFinance = isFinanceIncharge || 
+    user?.additional_roles?.includes('FINANCE') || 
+    user?.additional_roles?.includes('BURSAR') || 
+    facultyProfile?.admin_role === 'Finance Officer' ||
+    user?.role === 'ADMIN' || 
+    isDean;
 
   const navItemClass = (section: string) => `
     flex items-center space-x-3 px-6 py-3.5 text-sm transition-all duration-200 cursor-pointer
@@ -25,14 +55,17 @@ export default function FacultySidebar({ activeSection, setActiveSection, user, 
       <div className="p-5 flex items-center justify-between bg-[#23254c] mb-2 shadow-sm">
         {!collapsed && (
           <div className="flex items-center space-x-3 text-white pl-2">
-          <div className="bg-[#e41a4a] text-white p-2 rounded-lg shadow-sm border border-[#f52b5b]">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+            <div className="bg-[#e41a4a] text-white p-2 rounded-lg shadow-sm border border-[#f52b5b]">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold tracking-tight leading-tight">Veritas Grove</h2>
+              <p className="text-[10px] text-indigo-200 tracking-wider font-semibold uppercase mt-0.5">Faculty Portal</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold tracking-tight leading-tight">Veritas Grove</h2>
-            <p className="text-[10px] text-indigo-200 tracking-wider font-semibold uppercase mt-0.5">Faculty Portal</p>
-          </div>
-        </div>
         )}
         <button 
           onClick={() => setCollapsed(!collapsed)}
@@ -87,52 +120,38 @@ export default function FacultySidebar({ activeSection, setActiveSection, user, 
           {!collapsed && <span>Student Feedback</span>}
         </div>
 
-        {(isDean || isInterviewer) && (
+        {(isDean || isInterviewer || isFinance) && (
           <>
-            {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administration</div>}
+            {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administration & Bursar</div>}
             
-            <div className={navItemClass('admissions')} onClick={() => setActiveSection('admissions')}>
-              <Users size={18} className={collapsed ? 'mx-auto' : ''} />
-              {!collapsed && <span>Admissions & Interviews</span>}
-            </div>
-          </>
-        )}
-        
-        {isInterviewer && (
-          <>
-            {!collapsed && <div className="px-6 py-3 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Interviewer</div>}
-            
-            <div className={navItemClass('interviews')} onClick={() => setActiveSection('interviews')}>
-              <Briefcase size={18} className={collapsed ? 'mx-auto' : ''} />
-              {!collapsed && <span>Interview Pool</span>}
-            </div>
+            {(isDean || isInterviewer) && (
+              <div className={navItemClass('admissions')} onClick={() => setActiveSection('admissions')}>
+                <Users size={18} className={collapsed ? 'mx-auto' : ''} />
+                {!collapsed && <span>Admissions & Interviews</span>}
+              </div>
+            )}
+
+            {(isDean || isFinance) && (
+              <div className={navItemClass('bursar_fees')} onClick={() => setActiveSection('bursar_fees')}>
+                <CreditCard size={18} className={collapsed ? 'mx-auto' : ''} />
+                {!collapsed && <span>Fees & Scholarships</span>}
+              </div>
+            )}
           </>
         )}
       </div>
 
-      <div className="p-4 bg-[#23254c] mt-auto flex flex-col border-t border-[#343663]">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-slate-200 text-[#2b2d5c] flex items-center justify-center font-bold text-xs shrink-0">
-            {user?.first_name?.charAt(0) || 'F'}{user?.last_name?.charAt(0) || ''}
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold truncate text-white uppercase">{user?.first_name} {user?.last_name}</p>
-              <p className="text-[10px] text-slate-400 truncate">{isDean ? 'Academics Dean' : isInterviewer ? 'Interviewer' : 'Faculty'}</p>
+      {user && !collapsed && (
+        <div className="p-4 bg-[#23254c] border-t border-[#343663] text-xs">
+          <div className="font-bold text-white truncate">{user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username}</div>
+          <div className="text-indigo-200 text-[10px] truncate">{facultyProfile?.designation || user.role}</div>
+          {facultyProfile?.admin_role && (
+            <div className="mt-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded font-bold text-[10px] inline-block border border-indigo-400/30">
+              {facultyProfile.admin_role}
             </div>
           )}
         </div>
-        <button
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              window.location.href = '/login';
-            }}
-            className="w-full flex items-center justify-center px-4 py-2 rounded text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all duration-300"
-          >
-            Logout
-        </button>
-      </div>
+      )}
     </div>
   );
 }

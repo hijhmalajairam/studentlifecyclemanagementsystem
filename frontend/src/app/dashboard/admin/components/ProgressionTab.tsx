@@ -52,6 +52,7 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
   const [selectedSemester, setSelectedSemester] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [overrideChecks, setOverrideChecks] = useState(false);
+  const [allowFeeWaiver, setAllowFeeWaiver] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -83,13 +84,14 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
     fetchAuditData();
   }, [selectedProgram, selectedSemester]);
 
-  const handlePromoteSingle = async (enrollmentId: number, studentName: string, targetSem: number) => {
+  const handlePromoteSingle = async (enrollmentId: number, studentName: string, targetSem: number, forceFeeWaiver: boolean = false) => {
     if (!hasWriteAccess) {
       alert('Read-only mode: Cannot promote students.');
       return;
     }
 
-    if (!confirm(`Confirm academic promotion for ${studentName} to Semester ${targetSem}?`)) {
+    const waiverNote = (allowFeeWaiver || forceFeeWaiver) ? ' (with Provisional Fee Clearance)' : '';
+    if (!confirm(`Confirm academic promotion for ${studentName} to Semester ${targetSem}${waiverNote}?`)) {
       return;
     }
 
@@ -100,7 +102,10 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
 
       const res = await fetchAPI(`/academics/enrollment/${enrollmentId}/progress_semester/`, {
         method: 'POST',
-        body: JSON.stringify({ override_checks: overrideChecks }),
+        body: JSON.stringify({ 
+          override_checks: overrideChecks,
+          promote_without_fees: allowFeeWaiver || forceFeeWaiver
+        }),
       });
 
       setSuccessMessage(res.detail || `Successfully promoted ${studentName}!`);
@@ -131,7 +136,10 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
       setErrorMessage(null);
       setSuccessMessage(null);
 
-      const body: any = { override_checks: overrideChecks };
+      const body: any = { 
+        override_checks: overrideChecks,
+        promote_without_fees: allowFeeWaiver
+      };
       if (selectedProgram) body.program_id = selectedProgram;
       if (selectedSemester) body.current_semester = selectedSemester;
 
@@ -161,9 +169,13 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
   });
 
   const totalCount = auditData.length;
-  const eligibleCount = auditData.filter(s => s.eligible).length;
-  const attDeficitCount = auditData.filter(s => !s.attendance_passed).length;
   const feeDeficitCount = auditData.filter(s => !s.fee_passed).length;
+  const attDeficitCount = auditData.filter(s => !s.attendance_passed).length;
+  const eligibleCount = auditData.filter(s => {
+    if (overrideChecks) return true;
+    if (allowFeeWaiver) return s.attendance_passed;
+    return s.eligible;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -316,19 +328,35 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
             </div>
           </div>
 
-          {/* Dean Override Toggle */}
-          <div className="flex items-center space-x-2 pl-2 border-t md:border-t-0 md:border-l border-slate-200 pt-3 md:pt-0">
-            <input
-              type="checkbox"
-              id="deanOverride"
-              checked={overrideChecks}
-              onChange={e => setOverrideChecks(e.target.checked)}
-              className="w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer"
-            />
-            <label htmlFor="deanOverride" className="text-xs font-bold text-slate-700 cursor-pointer flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
-              <span>Dean / Council Override</span>
-            </label>
+          {/* Promote without Fees & Dean Override Toggles */}
+          <div className="flex flex-wrap items-center gap-4 pl-2 border-t md:border-t-0 md:border-l border-slate-200 pt-3 md:pt-0">
+            <div className="flex items-center space-x-1.5">
+              <input
+                type="checkbox"
+                id="feeWaiverToggle"
+                checked={allowFeeWaiver}
+                onChange={e => setAllowFeeWaiver(e.target.checked)}
+                className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+              />
+              <label htmlFor="feeWaiverToggle" className="text-xs font-bold text-amber-900 cursor-pointer flex items-center space-x-1">
+                <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                <span>Promote without Fees (Provisional)</span>
+              </label>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <input
+                type="checkbox"
+                id="deanOverride"
+                checked={overrideChecks}
+                onChange={e => setOverrideChecks(e.target.checked)}
+                className="w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer"
+              />
+              <label htmlFor="deanOverride" className="text-xs font-bold text-slate-700 cursor-pointer flex items-center space-x-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
+                <span>Dean Override (All)</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -363,7 +391,8 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredStudents.map(student => {
-                  const isEligible = student.eligible || overrideChecks;
+                  const feeCleared = student.fee_passed || allowFeeWaiver;
+                  const isEligible = overrideChecks || (student.attendance_passed && feeCleared);
                   const isGraduating = student.current_semester === 8;
 
                   return (
@@ -432,13 +461,25 @@ export default function ProgressionTab({ isAdmin = true, hasWriteAccess = true }
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handlePromoteSingle(student.enrollment_id, student.student_name, student.target_semester)}
-                          disabled={!isEligible || actionLoading === student.enrollment_id}
-                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                        >
-                          {actionLoading === student.enrollment_id ? 'Promoting...' : isGraduating ? 'Graduate' : 'Promote'}
-                        </button>
+                        <div className="flex items-center justify-end space-x-2">
+                          {!student.fee_passed && (
+                            <button
+                              onClick={() => handlePromoteSingle(student.enrollment_id, student.student_name, student.target_semester, true)}
+                              disabled={actionLoading === student.enrollment_id || (!student.attendance_passed && !overrideChecks)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-amber-600 hover:bg-amber-700 text-white shadow-sm flex items-center space-x-1"
+                              title="Promote immediately without fee clearance under provisional waiver"
+                            >
+                              <span>{actionLoading === student.enrollment_id ? 'Promoting...' : 'Promote (Fee Waiver)'}</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handlePromoteSingle(student.enrollment_id, student.student_name, student.target_semester, false)}
+                            disabled={!isEligible || actionLoading === student.enrollment_id}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                          >
+                            {actionLoading === student.enrollment_id ? 'Promoting...' : isGraduating ? 'Graduate' : 'Promote'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

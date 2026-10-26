@@ -9,6 +9,26 @@ def has_role(user, role):
         return True
     return False
 
+def is_finance_incharge(user):
+    if not user or not user.is_authenticated:
+        return False
+    if (
+        has_role(user, 'ADMIN') or 
+        user.is_staff or 
+        has_role(user, 'DEAN') or 
+        has_role(user, 'FINANCE') or 
+        has_role(user, 'BURSAR')
+    ):
+        return True
+    if hasattr(user, 'faculty_profile') and user.faculty_profile:
+        fp = user.faculty_profile
+        admin_role = (fp.admin_role or '').upper()
+        if 'FINANCE' in admin_role or 'BURSAR' in admin_role or 'SCHOLARSHIP' in admin_role:
+            return True
+        if fp.additional_roles and any(r in ['FINANCE', 'BURSAR'] for r in fp.additional_roles):
+            return True
+    return False
+
 class IsAdminUserOrReadOnly(permissions.IsAdminUser):
     def has_permission(self, request, view):
         is_admin = super().has_permission(request, view)
@@ -20,8 +40,14 @@ class IsAdminRole(permissions.BasePermission):
             has_role(request.user, 'ADMIN') or 
             request.user.is_staff or 
             has_role(request.user, 'DEAN') or 
-            has_role(request.user, 'HOD')
+            has_role(request.user, 'HOD') or
+            has_role(request.user, 'FINANCE') or
+            is_finance_incharge(request.user)
         ))
+
+class IsAdminOrFinanceOfficer(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return is_finance_incharge(request.user)
 
 class IsInterviewerRole(permissions.BasePermission):
     def has_permission(self, request, view):

@@ -1,3 +1,4 @@
+from users.permissions import IsAdminOrFinanceOfficer, is_finance_incharge
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -68,7 +69,14 @@ class FeeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['my_fees', 'pay_semester_fee']:
             return [permissions.IsAuthenticated()]
-        return [permissions.IsAdminUser()]
+        return [IsAdminOrFinanceOfficer()]
+
+    def get_queryset(self):
+        if is_finance_incharge(self.request.user) or (self.request.user.is_authenticated and self.request.user.role == 'ADMIN'):
+            return Fee.objects.select_related('enrollment__user', 'enrollment__program').all()
+        if self.request.user.is_authenticated:
+            return Fee.objects.filter(enrollment__user=self.request.user).select_related('enrollment__user', 'enrollment__program')
+        return Fee.objects.none()
 
     def perform_create(self, serializer):
         enrollment = serializer.validated_data.get('enrollment')

@@ -36,7 +36,13 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class ScholarshipSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
+    student_username = serializers.SerializerMethodField()
+    student_email = serializers.SerializerMethodField()
     application_number = serializers.CharField(source='application.application_number', read_only=True)
+    enrollment_number = serializers.SerializerMethodField()
+    program_name = serializers.CharField(source='application.program.name', read_only=True)
+    program_code = serializers.CharField(source='application.program.code', read_only=True)
+    family_income = serializers.CharField(source='application.profile.family_income', read_only=True)
 
     class Meta:
         model = Scholarship
@@ -47,6 +53,26 @@ class ScholarshipSerializer(serializers.ModelSerializer):
         if obj.application and obj.application.profile and obj.application.profile.user:
             user = obj.application.profile.user
             return f"{user.first_name} {user.last_name}".strip() or user.username
+        return ""
+
+    def get_student_username(self, obj):
+        if obj.application and obj.application.profile and obj.application.profile.user:
+            return obj.application.profile.user.username
+        return ""
+
+    def get_student_email(self, obj):
+        if obj.application and obj.application.profile and obj.application.profile.user:
+            return obj.application.profile.user.email
+        return ""
+
+    def get_enrollment_number(self, obj):
+        if obj.application and obj.application.enrollment_number:
+            return obj.application.enrollment_number
+        if obj.application and obj.application.profile and obj.application.profile.user:
+            from academics.models import Enrollment
+            enr = Enrollment.objects.filter(user=obj.application.profile.user).first()
+            if enr:
+                return enr.enrollment_number
         return ""
 
 

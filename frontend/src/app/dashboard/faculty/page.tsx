@@ -14,6 +14,7 @@ import FacultyAttendanceTab from './components/FacultyAttendanceTab';
 import FacultyGradingTab from './components/FacultyGradingTab';
 import FacultyMentoringTab from './components/FacultyMentoringTab';
 import FacultyFeedbackTab from './components/FacultyFeedbackTab';
+import FeesTab from '../admin/components/FeesTab';
 
 export default function FacultyDashboard() {
   const router = useRouter();
@@ -35,6 +36,11 @@ export default function FacultyDashboard() {
   const [feeVerifications, setFeeVerifications] = useState<Record<number, string>>({});
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [attendanceAvg, setAttendanceAvg] = useState<number | null>(null);
+
+  // Bursar & Financial Aid State
+  const [bursarFees, setBursarFees] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [feeForm, setFeeForm] = useState({ enrollment: '', semester: '1', amount: '', due_date: '', scholarship_discount: '' });
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,7 +67,36 @@ export default function FacultyDashboard() {
       .catch(() => {});
 
     fetchAdmissionsData();
+    fetchBursarData();
   }, []);
+
+  const fetchBursarData = async () => {
+    try {
+      const [fData, eData] = await Promise.all([
+        fetchAPI('/academics/fees/').catch(() => []),
+        fetchAPI('/academics/enrollment/').catch(() => [])
+      ]);
+      setBursarFees(Array.isArray(fData) ? fData : (fData?.results || []));
+      setEnrollments(Array.isArray(eData) ? eData : (eData?.results || []));
+    } catch {
+      setBursarFees([]);
+      setEnrollments([]);
+    }
+  };
+
+  const handleCreateFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetchAPI('/academics/fees/', {
+        method: 'POST',
+        body: JSON.stringify(feeForm),
+      });
+      alert('Fee invoice issued successfully.');
+      fetchBursarData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to issue fee invoice');
+    }
+  };
 
   const fetchAdmissionsData = async () => {
     try {
@@ -170,6 +205,12 @@ export default function FacultyDashboard() {
   const additionalRoles = currentUser.additional_roles || [];
   const isDean = additionalRoles.includes('DEAN');
   const isInterviewer = additionalRoles.includes('INTERVIEWER');
+  const isFinanceIncharge = 
+    additionalRoles.includes('FINANCE') || 
+    additionalRoles.includes('BURSAR') || 
+    facultyProfile?.admin_role === 'Finance Officer' || 
+    currentUser.role === 'ADMIN' ||
+    isDean;
 
   // Handle role switch => navigate to the right default tab
   const handleRoleSwitch = (role: string) => {
@@ -355,6 +396,21 @@ export default function FacultyDashboard() {
           return <InterviewPool />;
         }
         return <div>Access Denied</div>;
+      case 'bursar_fees':
+        if (isDean || isFinanceIncharge) {
+          return (
+            <FeesTab
+              fees={bursarFees}
+              enrollments={enrollments}
+              feeForm={feeForm}
+              setFeeForm={setFeeForm}
+              createFee={handleCreateFee}
+              isAdmin={true}
+              hasWriteAccess={true}
+            />
+          );
+        }
+        return <div className="p-8 text-center text-slate-500 font-bold bg-white rounded-2xl border border-slate-200">Access Denied: Requires Finance Officer / Bursar Authorization</div>;
       default:
         return (
           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center">
@@ -366,7 +422,7 @@ export default function FacultyDashboard() {
 
   return (
     <div className="h-screen bg-[#f4f7fa] text-slate-800 flex overflow-hidden theme-transition font-sans">
-      <FacultySidebar activeSection={activeSection} setActiveSection={setActiveSection} user={currentUser} isDean={isDean} isInterviewer={isInterviewer} />
+      <FacultySidebar activeSection={activeSection} setActiveSection={setActiveSection} user={currentUser} facultyProfile={facultyProfile} isDean={isDean} isInterviewer={isInterviewer} isFinanceIncharge={isFinanceIncharge} />
       
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar 
